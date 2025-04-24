@@ -48,11 +48,6 @@ const IssueList: React.FC = () => {
     );
   }
 
-  const getRandomVotes = () => {
-    // Simulate upvotes for display purposes
-    return Math.floor(Math.random() * 1000);
-  };
-
   return (
     <div className="posts-container">
       <Flex
@@ -79,7 +74,7 @@ const IssueList: React.FC = () => {
               borderRadius: 4,
               overflow: "hidden",
             }}
-            bodyStyle={{ padding: 0 }}
+            styles={{ body: { padding: 0 } }}
           >
             <div style={{ display: "flex" }}>
               {/* Voting sidebar */}
@@ -100,7 +95,7 @@ const IssueList: React.FC = () => {
                   style={{ color: "#878A8C" }}
                 />
                 <Text strong style={{ margin: "4px 0", color: "#1A1A1B" }}>
-                  {getRandomVotes()}
+                  {issue.labels.length + 1}
                 </Text>
                 <Button
                   type="text"

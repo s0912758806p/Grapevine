@@ -113,7 +113,7 @@ const IssueDetail: React.FC = () => {
 
       <Card
         style={{ marginBottom: 16, borderRadius: 4 }}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         <div style={{ display: "flex" }}>
           {/* Voting sidebar */}

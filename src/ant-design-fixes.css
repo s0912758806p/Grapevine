@@ -1,0 +1,38 @@
+/* Fix for potential Ant Design + React 18 styling issues */
+
+/* Ensure Ant Design popover components render correctly */
+.ant-dropdown,
+.ant-dropdown-menu,
+.ant-popover,
+.ant-tooltip,
+.ant-select-dropdown {
+  z-index: 1050 !important;
+}
+
+/* Fix transition and animation issues with React 18 */
+.ant-motion-collapse,
+.ant-motion-collapse-active {
+  transition: height 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    opacity 0.2s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
+  overflow: hidden;
+}
+
+/* Fix Safari compatibility issues */
+@supports (-webkit-touch-callout: none) {
+  .ant-form-item-control-input,
+  .ant-input-affix-wrapper,
+  .ant-input,
+  .ant-select-selector {
+    -webkit-appearance: none;
+  }
+}
+
+/* Fix for potential layout shifts in React 18 StrictMode */
+.ant-layout-content {
+  transition: none !important;
+}
+
+/* Ensure form controls render properly in React 18 */
+.ant-form-item-control-input {
+  min-height: 32px;
+}

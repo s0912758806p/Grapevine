@@ -1,25 +1,17 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
-import { ConfigProvider } from "antd";
 import { store } from "./store";
 import AppLayout from "./components/AppLayout";
 import IssueList from "./components/IssueList";
 import IssueDetail from "./components/IssueDetail";
 import NewIssue from "./components/NewIssue";
+import AntConfigProvider from "./components/AntConfigProvider";
 import "./App.css";
 
 function App() {
   return (
     <Provider store={store}>
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: "#FF4500", // Reddit orange
-            colorLink: "#0079D3", // Reddit blue
-            borderRadius: 4,
-          },
-        }}
-      >
+      <AntConfigProvider>
         <Router>
           <AppLayout>
             <Routes>
@@ -29,7 +21,7 @@ function App() {
             </Routes>
           </AppLayout>
         </Router>
-      </ConfigProvider>
+      </AntConfigProvider>
     </Provider>
   );
 }
