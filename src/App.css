@@ -1,42 +1,48 @@
-#root {
-  max-width: 1280px;
+/* Custom application styles for Reddit theme */
+
+/* Layout transitions */
+.ant-layout-content {
+  transition: all 0.2s;
+}
+
+/* Reddit card styles */
+.reddit-post-list .ant-card {
+  transition: all 0.1s ease;
+}
+
+.reddit-post-list .ant-card:hover {
+  border-color: #878a8c;
+}
+
+/* Reddit vote buttons */
+.upvote-btn.active {
+  color: #ff4500 !important;
+}
+
+.downvote-btn.active {
+  color: #7193ff !important;
+}
+
+/* Reddit header */
+.reddit-header {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Comment section styling */
+.giscus-wrapper {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Responsive container */
+.container {
+  padding: 0 24px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+@media (max-width: 768px) {
+  .container {
+    padding: 0 12px;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
