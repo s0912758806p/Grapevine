@@ -75,7 +75,7 @@ Visit [Giscus](https://giscus.app) to get your repository configuration values.
 
 ## Technology Stack
 
-- React 19
+- React 18
 - TypeScript
 - Redux Toolkit
 - Ant Design 5
