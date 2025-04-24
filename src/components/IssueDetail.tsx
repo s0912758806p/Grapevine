@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Typography, Space, Tag, Button, Card } from "antd";
 import {
   ArrowLeftOutlined,
@@ -10,11 +10,13 @@ import {
   BookOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-import Giscus from "@giscus/react";
+// import Giscus from "@giscus/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { fetchIssueThunk } from "../store/issuesSlice";
+import { fetchIssueThunk, clearCurrentIssue, resetIssuesStatus } from "../store/issuesSlice";
 import { RootState, AppDispatch } from "../store";
+import { giscusConfig } from "../utils/giscusConfig";
+import GiscusAuth from "./GiscusAuth";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -41,19 +43,10 @@ const GiscusWrapper = () => {
         marginTop: "16px",
       }}
     >
-      <Giscus
-        repo="your-github-username/your-repo-name"
-        repoId="your-repo-id"
-        category="Announcements"
-        categoryId="your-category-id"
+      <GiscusAuth
+        {...giscusConfig}
         mapping="specific"
         term={`issue-${currentIssue.number}`}
-        reactionsEnabled="1"
-        emitMetadata="0"
-        inputPosition="top"
-        theme="light"
-        lang="en"
-        loading="lazy"
       />
     </div>
   );
@@ -62,6 +55,7 @@ const GiscusWrapper = () => {
 const IssueDetail: React.FC = () => {
   const { issueNumber } = useParams<keyof IssueParams>();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { currentIssue, status, error } = useSelector(
     (state: RootState) => state.issues
   );
@@ -70,11 +64,25 @@ const IssueDetail: React.FC = () => {
     if (issueNumber) {
       dispatch(fetchIssueThunk(parseInt(issueNumber, 10)));
     }
+
+    // 在組件卸載時清除當前文章
+    return () => {
+      dispatch(clearCurrentIssue());
+    };
   }, [issueNumber, dispatch]);
 
   const getRandomVotes = () => {
     // Simulate upvotes for display purposes
     return Math.floor(Math.random() * 1000);
+  };
+
+  // 處理返回首頁按鈕點擊事件
+  const handleBackToHome = () => {
+    // 清除當前文章，重置狀態
+    dispatch(clearCurrentIssue());
+    dispatch(resetIssuesStatus());
+    // 導航回首頁
+    navigate('/');
   };
 
   if (status === "loading") {
@@ -101,15 +109,14 @@ const IssueDetail: React.FC = () => {
 
   return (
     <div className="post-detail">
-      <Link to="/">
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
-          style={{ marginBottom: 16 }}
-        >
-          Back to Posts
-        </Button>
-      </Link>
+      <Button
+        type="text"
+        icon={<ArrowLeftOutlined />}
+        style={{ marginBottom: 16 }}
+        onClick={handleBackToHome}
+      >
+        Back to Posts
+      </Button>
 
       <Card
         style={{ marginBottom: 16, borderRadius: 4 }}

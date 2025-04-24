@@ -1,7 +1,6 @@
 import React from "react";
-import { Button, Avatar, Dropdown, Space, message } from "antd";
+import { Avatar, Dropdown, Space } from "antd";
 import {
-  GithubOutlined,
   UserOutlined,
   LogoutOutlined,
   DownOutlined,
@@ -10,15 +9,7 @@ import { useAuth } from "../auth/AuthContext";
 import type { MenuProps } from "antd";
 
 const GitHubLogin: React.FC = () => {
-  const { isAuthenticated, user, login, logout } = useAuth();
-
-  const handleLogin = () => {
-    login();
-    // Redirect users to the comments page where they can see the Sign in with GitHub button
-    message.info(
-      "Please use the GitHub sign-in button in the comments section to authenticate"
-    );
-  };
+  const { isAuthenticated, user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -44,7 +35,7 @@ const GitHubLogin: React.FC = () => {
 
   return (
     <>
-      {isAuthenticated ? (
+      {isAuthenticated && user && (
         <Dropdown menu={{ items }} trigger={["click"]}>
           <a onClick={(e) => e.preventDefault()}>
             <Space>
@@ -56,19 +47,13 @@ const GitHubLogin: React.FC = () => {
                   backgroundColor: user?.avatar_url ? "transparent" : "#1677ff",
                 }}
               />
+              <span style={{ marginLeft: "4px", color: "#fff" }}>
+                {user?.name || user?.login || "User"}
+              </span>
               <DownOutlined style={{ fontSize: "12px" }} />
             </Space>
           </a>
         </Dropdown>
-      ) : (
-        <Button
-          type="primary"
-          icon={<GithubOutlined />}
-          size="small"
-          onClick={handleLogin}
-        >
-          GitHub Login
-        </Button>
       )}
     </>
   );

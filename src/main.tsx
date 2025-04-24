@@ -2,8 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import router from "./routes";
-import "./index.css";
-import "./ant-design-fixes.css";
+import "./index.scss";
+import "./ant-design-fixes.scss";
 import { AuthProvider } from "./auth/AuthContext";
 
 // Configure Ant Design's CSS in JS

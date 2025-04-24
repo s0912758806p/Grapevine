@@ -4,18 +4,43 @@
  * Visit https://giscus.app to get your repository settings.
  */
 
+// 組合完整的倉庫路徑
+const repoOwner = import.meta.env.VITE_GITHUB_REPO_OWNER || '';
+const repoName = import.meta.env.VITE_GITHUB_REPO_NAME || '';
+const fullRepo = `${repoOwner}/${repoName}`;
+
+// 檢查環境變量是否存在
+if (!repoOwner || !repoName) {
+  console.error('GitHub repository information is missing in environment variables.');
+  console.log('Available env vars:', import.meta.env);
+}
+
 export const giscusConfig = {
-  // Replace these values with your actual GitHub repo details from https://giscus.app/
-  repo: "username/repo" as `${string}/${string}`, // Your GitHub repo in format: 'username/repository'
-  repoId: "R_kgDOJXxxxxxx", // Your GitHub repository ID
-  category: "Announcements", // The name of the discussion category
-  categoryId: "DIC_kwDOJXxxxxx", // The ID of the discussion category
+  // 使用正確組合的repo路徑
+  repo: fullRepo as `${string}/${string}`, // Your GitHub repo in format: 'username/repository'
+  repoId: import.meta.env.VITE_GITHUB_REPO_ID as string, // Your GitHub repository ID
+  category: import.meta.env.VITE_GITHUB_CATEGORY as string, // The name of the discussion category
+  categoryId: import.meta.env.VITE_GITHUB_CATEGORY_ID as string, // The ID of the discussion category
+  strict: "0" as const,
   mapping: "pathname" as const, // How Giscus should map discussions to pages
   reactionsEnabled: "1" as const, // Enable reactions
-  emitMetadata: "0" as const, // Don't emit metadata
+  emitMetadata: "1" as const, // Emit metadata to get user information
   inputPosition: "top" as const, // Comment box position
-  theme: "light", // Theme
+  theme: "preferred_color_scheme", // Theme
+  lang: "en", // Language
+  loading: "lazy" as "lazy" | "eager", // Loading behavior
+  crossorigin: "anonymous" as "anonymous" | "use-credentials", // Cross-origin policy
 };
+
+// 開發環境中顯示配置信息以便調試
+if (import.meta.env.DEV) {
+  console.log('Giscus config:', {
+    repo: giscusConfig.repo,
+    repoId: giscusConfig.repoId,
+    category: giscusConfig.category,
+    categoryId: giscusConfig.categoryId
+  });
+}
 
 /**
  * To set up Giscus:

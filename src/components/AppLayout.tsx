@@ -2,7 +2,7 @@ import React from "react";
 import { Layout, Typography, Input, Button, Space } from "antd";
 import { Link } from "react-router-dom";
 import {
-  RedditOutlined,
+  SmileOutlined,
   SearchOutlined,
   BellOutlined,
   PlusOutlined,
@@ -51,7 +51,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               marginRight: "20px",
             }}
           >
-            <RedditOutlined
+            <SmileOutlined
               style={{ fontSize: "28px", color: "#FF4500", marginRight: "8px" }}
             />
             <Title level={4} style={{ color: "black", margin: 0 }}>
@@ -120,7 +120,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <Footer
         style={{ textAlign: "center", background: "white", padding: "12px 0" }}
       >
-        Grapevine Forum ©{new Date().getFullYear()} - Reddit Style
+        Grapevine Forum by Gorman ©{new Date().getFullYear()} - Reddit Style
       </Footer>
     </Layout>
   );

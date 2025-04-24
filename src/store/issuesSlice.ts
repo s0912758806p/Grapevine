@@ -41,7 +41,14 @@ export const createIssueThunk = createAsyncThunk(
 export const issuesSlice = createSlice({
   name: "issues",
   initialState,
-  reducers: {},
+  reducers: {
+    resetIssuesStatus: (state) => {
+      state.status = "idle";
+    },
+    clearCurrentIssue: (state) => {
+      state.currentIssue = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       // Fetch issues
@@ -93,5 +100,7 @@ export const issuesSlice = createSlice({
       });
   },
 });
+
+export const { resetIssuesStatus, clearCurrentIssue } = issuesSlice.actions;
 
 export default issuesSlice.reducer;

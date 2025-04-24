@@ -1,13 +1,14 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { Tag, Space, Button, Typography, Flex, Card } from "antd";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Tag, Space, Button, Typography, Flex, Card, message } from "antd";
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   PlusOutlined,
   CommentOutlined,
   ShareAltOutlined,
+  ReloadOutlined
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -22,17 +23,30 @@ const { Text, Title } = Typography;
 
 const IssueList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const location = useLocation();
   const { issues, status, error } = useSelector(
     (state: RootState) => state.issues
   );
+  const navigate = useNavigate();
 
+  // 在組件掛載時或路由變化時獲取文章數據
   useEffect(() => {
-    if (status === "idle") {
-      dispatch(fetchIssuesThunk());
-    }
-  }, [status, dispatch]);
+    // 無論狀態如何，始終重新獲取數據
+    dispatch(fetchIssuesThunk());
+  }, [dispatch, location.key]); // 添加location.key作為依賴，使得每次路由變化都會觸發
 
-  if (status === "loading") {
+  // 用於手動刷新文章列表的函數
+  const handleRefresh = () => {
+    dispatch(fetchIssuesThunk());
+  };
+
+  const handleShare = (issueNumber: number) => {
+    const url = `${window.location.origin}/issue/${issueNumber}`;
+    navigator.clipboard.writeText(url);
+    message.success('Link copied to clipboard');
+  };
+
+  if (status === "loading" && issues.length === 0) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
         Loading posts...
@@ -58,11 +72,20 @@ const IssueList: React.FC = () => {
         <Title level={3} style={{ margin: 0 }}>
           Popular Posts
         </Title>
-        <Link to="/new-issue">
-          <Button type="primary" icon={<PlusOutlined />} shape="round">
-            Create Post
+        <Space>
+          <Button 
+            icon={<ReloadOutlined />} 
+            onClick={handleRefresh}
+            loading={status === "loading"}
+          >
+            Refresh
           </Button>
-        </Link>
+          <Link to="/new-issue">
+            <Button type="primary" icon={<PlusOutlined />} >
+              Create Post
+            </Button>
+          </Link>
+        </Space>
       </Flex>
 
       <div className="reddit-post-list">
@@ -144,13 +167,14 @@ const IssueList: React.FC = () => {
                   }}
                 >
                   <Space>
-                    <Button type="text" icon={<CommentOutlined />} size="small">
+                    <Button type="text" icon={<CommentOutlined />} size="small" onClick={() => navigate(`/issue/${issue.number}`)}>
                       {issue.comments} Comments
                     </Button>
                     <Button
                       type="text"
                       icon={<ShareAltOutlined />}
                       size="small"
+                      onClick={() => handleShare(issue.number)}
                     >
                       Share
                     </Button>

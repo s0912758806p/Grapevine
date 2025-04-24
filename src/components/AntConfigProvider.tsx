@@ -1,5 +1,5 @@
 import React from "react";
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App } from "antd";
 
 interface AntConfigProviderProps {
   children: React.ReactNode;
@@ -19,7 +19,9 @@ const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
         hashed: true, // Enables compatibility mode for newer React versions
       }}
     >
-      {children}
+      <App>
+        {children}
+      </App>
     </ConfigProvider>
   );
 };

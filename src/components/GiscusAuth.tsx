@@ -1,6 +1,5 @@
-import React from "react";
-import { Button, message } from "antd";
-import { GithubOutlined } from "@ant-design/icons";
+import React, { useEffect } from "react";
+import { message } from "antd";
 import Giscus from "@giscus/react";
 import { useAuth } from "../auth/AuthContext";
 
@@ -14,6 +13,10 @@ interface GiscusAuthProps {
   emitMetadata?: "0" | "1";
   inputPosition?: "top" | "bottom";
   theme?: string;
+  term?: string;
+  lang?: string;
+  loading?: "lazy" | "eager";
+  crossorigin?: "anonymous" | "use-credentials";
 }
 
 const GiscusAuth: React.FC<GiscusAuthProps> = ({
@@ -23,41 +26,41 @@ const GiscusAuth: React.FC<GiscusAuthProps> = ({
   categoryId,
   mapping,
   reactionsEnabled = "1",
-  emitMetadata = "0",
+  emitMetadata = "1",
   inputPosition = "top",
   theme = "light",
+  term,
+  lang = "en",
+  loading = "lazy",
+  // crossorigin = "anonymous",
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [messageApi, contextHolder] = message.useMessage();
 
-  const handleSignIn = () => {
-    // Trigger the GitHub OAuth flow by sending a message to the giscus iframe
-    const iframe = document.querySelector<HTMLIFrameElement>(
-      "iframe.giscus-frame"
-    );
-    if (!iframe) {
-      message.error("Cannot find Giscus frame");
-      return;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    
+    if (code) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      localStorage.setItem("giscus-code", code);
+      
+      messageApi.info("GitHub authentication code received");
     }
-
-    iframe.contentWindow?.postMessage(
-      { giscus: { setConfig: { authentication: true } } },
-      "https://giscus.app"
-    );
-  };
+  }, [messageApi]);
 
   return (
     <div className="giscus-container">
-      {!isAuthenticated && (
+      {contextHolder}      
+      {isAuthenticated && user && (
         <div style={{ marginBottom: 16, textAlign: "center" }}>
-          <Button
-            type="primary"
-            icon={<GithubOutlined />}
-            onClick={handleSignIn}
-          >
-            Sign in with GitHub to comment
-          </Button>
+          <div style={{ fontSize: "14px", color: "#389e0d", marginBottom: "8px" }}>
+            Logged in as <strong>{user.name || user.login}</strong>
+          </div>
         </div>
       )}
+      
       <Giscus
         id="comments"
         repo={repo}
@@ -65,10 +68,13 @@ const GiscusAuth: React.FC<GiscusAuthProps> = ({
         category={category}
         categoryId={categoryId}
         mapping={mapping}
+        term={term}
         reactionsEnabled={reactionsEnabled}
         emitMetadata={emitMetadata}
         inputPosition={inputPosition as "top" | "bottom"}
         theme={theme}
+        lang={lang}
+        loading={loading}
       />
     </div>
   );
