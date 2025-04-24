@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { message, App } from "antd";
+import { message } from "antd";
 
 interface GithubUser {
   login: string;
