@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Typography, Input, Button, Avatar, Space } from "antd";
+import { Layout, Typography, Input, Button, Space } from "antd";
 import { Link } from "react-router-dom";
 import {
   RedditOutlined,
@@ -7,8 +7,9 @@ import {
   BellOutlined,
   PlusOutlined,
   MessageOutlined,
-  UserOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
+import GitHubLogin from "./GitHubLogin";
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
@@ -86,13 +87,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             />
             <Button
               type="text"
+              icon={<CommentOutlined />}
+              href="/comments"
+              style={{ color: "#0079D3" }}
+            />
+            <Button
+              type="text"
               icon={<BellOutlined />}
               style={{ color: "#0079D3" }}
             />
-            <Avatar
-              icon={<UserOutlined />}
-              style={{ backgroundColor: "#FF4500" }}
-            />
+            <GitHubLogin />
           </Space>
         </div>
       </Header>

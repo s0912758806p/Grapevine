@@ -1,7 +1,7 @@
 import { Octokit } from "octokit";
 import { IssueType } from "../types";
 
-// Configure your GitHub repository details
+// login github information
 const GITHUB_REPO_OWNER = import.meta.env.VITE_GITHUB_REPO_OWNER;
 const GITHUB_REPO_NAME = import.meta.env.VITE_GITHUB_REPO_NAME;
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
