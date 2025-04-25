@@ -17,11 +17,8 @@ const GitHubLogin: React.FC = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      await login();
-      // 登錄過程可能很快或慢，所以我們設置一個超時
-      setTimeout(() => {
-        setLoading(false);
-      }, 2000);
+      login();
+      // 這裡不需要設置 loading=false，因為會重定向到 GitHub
     } catch (err) {
       console.error("Login error:", err);
       messageApi.error("Login failed. Please try again.");
@@ -76,13 +73,12 @@ const GitHubLogin: React.FC = () => {
       ) : (
         <Tooltip title="Sign in with GitHub">
           <Button
-            type="text"
+            type="primary"
             icon={<GithubOutlined />}
             onClick={handleLogin}
             loading={loading}
-            style={{ color: "#fff" }}
           >
-            Login
+            Login with GitHub
           </Button>
         </Tooltip>
       )}

@@ -27,6 +27,8 @@ import { createIssueAsUserThunk } from "../store/issuesSlice";
 import { RootState, AppDispatch } from "../store";
 import { useAuth } from "../auth/AuthContext";
 
+import { redirectToGitHubLogin } from "../api/githubAuth";
+
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -36,7 +38,7 @@ const NewIssue: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { status, error } = useSelector((state: RootState) => state.issues);
-  const { isAuthenticated, user, login, getUserToken } = useAuth();
+  const { isAuthenticated, user, getUserToken } = useAuth();
   const [useCustomRepo, setUseCustomRepo] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -85,6 +87,10 @@ const NewIssue: React.FC = () => {
     }
   };
 
+  const handleLogin = () => {
+    redirectToGitHubLogin();
+  };
+
   // 如果用戶未登錄，顯示登錄提示
   if (!isAuthenticated || !user) {
     return (
@@ -110,7 +116,7 @@ const NewIssue: React.FC = () => {
           <Button
             type="primary"
             icon={<LoginOutlined />}
-            onClick={() => login()}
+            onClick={handleLogin}
             size="large"
             style={{ marginTop: 16 }}
           >

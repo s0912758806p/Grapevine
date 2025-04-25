@@ -3,7 +3,6 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { store } from "./store";
 import AppLayout from "./components/AppLayout";
 import AntConfigProvider from "./components/AntConfigProvider";
-import GlobalGiscus from "./components/GlobalGiscus";
 import { useAuth } from "./auth/AuthContext";
 import { useEffect } from "react";
 import "./App.scss";
@@ -38,7 +37,6 @@ function App() {
   return (
     <Provider store={store}>
       <AntConfigProvider>
-        <GlobalGiscus />
         <AppLayout>
           <Outlet />
         </AppLayout>

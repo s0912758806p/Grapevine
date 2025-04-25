@@ -10,13 +10,16 @@ import {
   BookOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
-// import Giscus from "@giscus/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { fetchIssueThunk, clearCurrentIssue, resetIssuesStatus } from "../store/issuesSlice";
+import {
+  fetchIssueThunk,
+  clearCurrentIssue,
+  resetIssuesStatus,
+} from "../store/issuesSlice";
 import { RootState, AppDispatch } from "../store";
-import { giscusConfig } from "../utils/giscusConfig";
-import GiscusAuth from "./GiscusAuth";
+import { utterancesConfig } from "../utils/utterancesConfig";
+import Utterances from "./Utterances";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -27,15 +30,15 @@ interface IssueParams {
   issueNumber: string;
 }
 
-// GiscusWrapper component to handle potential React 19 compatibility issues
-const GiscusWrapper = () => {
+// Utterances wrapper component
+const CommentsWrapper = () => {
   const { currentIssue } = useSelector((state: RootState) => state.issues);
 
   if (!currentIssue) return null;
 
   return (
     <div
-      className="giscus-wrapper"
+      className="comments-wrapper"
       style={{
         background: "white",
         padding: "16px",
@@ -43,10 +46,9 @@ const GiscusWrapper = () => {
         marginTop: "16px",
       }}
     >
-      <GiscusAuth
-        {...giscusConfig}
-        mapping="specific"
-        term={`issue-${currentIssue.number}`}
+      <Utterances
+        {...utterancesConfig}
+        issueTerm={`issue-${currentIssue.number}`}
       />
     </div>
   );
@@ -82,7 +84,7 @@ const IssueDetail: React.FC = () => {
     dispatch(clearCurrentIssue());
     dispatch(resetIssuesStatus());
     // 導航回首頁
-    navigate('/');
+    navigate("/");
   };
 
   if (status === "loading") {
@@ -215,7 +217,7 @@ const IssueDetail: React.FC = () => {
         </Text>
       </div>
 
-      <GiscusWrapper />
+      <CommentsWrapper />
     </div>
   );
 };
