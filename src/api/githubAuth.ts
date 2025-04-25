@@ -1,4 +1,5 @@
 import { getAuthenticatedUser } from "./github";
+import axios from "axios";
 
 // GitHub OAuth 配置
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || "";
@@ -31,6 +32,37 @@ export const redirectToGitHubLogin = () => {
 };
 
 /**
+ * 使用Axios以CORS友好的方式獲取GitHub token
+ */
+const getTokenWithCorsFriendlyApproach = async (
+  code: string
+): Promise<string> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("client_id", GITHUB_CLIENT_ID);
+    params.append("client_secret", import.meta.env.VITE_GITHUB_CLIENT_SECRET);
+    params.append("code", code);
+    params.append("redirect_uri", GITHUB_REDIRECT_URI);
+
+    const response = await axios.post(GITHUB_TOKEN_URL, params.toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+    });
+
+    if (response.data && response.data.access_token) {
+      return response.data.access_token;
+    } else {
+      throw new Error("No access token in response");
+    }
+  } catch (error) {
+    console.error("CORS friendly approach failed:", error);
+    throw error;
+  }
+};
+
+/**
  * 使用授權碼交換 access token
  * 注意：在前端直接交換 token 不安全，應使用後端代理
  */
@@ -38,45 +70,66 @@ export const exchangeCodeForToken = async (code: string): Promise<string> => {
   try {
     // 方法 1: 使用代理服務器交換 token（推薦）
     if (TOKEN_PROXY_URL) {
-      const response = await fetch(`${TOKEN_PROXY_URL}?code=${code}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      try {
+        const response = await axios.post(
+          `${TOKEN_PROXY_URL}?code=${code}`,
+          {},
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error(`Failed to exchange code: ${response.status}`);
+        if (response.data && response.data.access_token) {
+          return response.data.access_token;
+        } else {
+          console.warn(
+            "Proxy server response missing access_token, falling back to CORS-friendly approach"
+          );
+          throw new Error("Proxy server failed");
+        }
+      } catch (proxyError) {
+        console.warn(
+          "Proxy server failed, falling back to CORS-friendly approach:",
+          proxyError
+        );
+        // Fall back to CORS-friendly approach
       }
-
-      const data = await response.json();
-      return data.access_token;
     }
-    // 方法 2: 直接交換 token（僅用於開發）
-    else {
-      // 警告：此方法在生產環境中不安全，需要公開 client_secret
-      console.warn("直接在前端交換 token 不安全，僅供開發使用");
 
-      const response = await fetch(GITHUB_TOKEN_URL, {
-        method: "POST",
+    // 方法 2: 使用CORS友好的方式直接交換 token
+    try {
+      console.warn("Attempting to exchange token using CORS-friendly approach");
+      return await getTokenWithCorsFriendlyApproach(code);
+    } catch (corsError) {
+      console.warn("CORS-friendly approach failed:", corsError);
+      // 如果CORS方法失败，继续尝试普通直接交换方法
+    }
+
+    // 方法 3: 直接交換 token（最后的尝试）
+    console.warn("嘗試直接交換 token（最後備用方案）");
+
+    const response = await axios.post(
+      GITHUB_TOKEN_URL,
+      {
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET,
+        code,
+        redirect_uri: GITHUB_REDIRECT_URI,
+      },
+      {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          client_id: GITHUB_CLIENT_ID,
-          client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET,
-          code,
-          redirect_uri: GITHUB_REDIRECT_URI,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to exchange code: ${response.status}`);
       }
+    );
 
-      const data = await response.json();
-      return data.access_token;
+    if (response.data && response.data.access_token) {
+      return response.data.access_token;
+    } else {
+      throw new Error("No access token in response");
     }
   } catch (error) {
     console.error("Error exchanging code for token:", error);
