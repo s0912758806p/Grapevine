@@ -8,7 +8,7 @@ import React, {
 import { message } from "antd";
 import {
   redirectToGitHubLogin,
-  exchangeCodeForToken,
+  getTokenWithCorsFriendlyApproach,
   fetchGitHubUserProfile,
 } from "../api/githubAuth";
 import { getAuthenticatedUser } from "../api/github";
@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // 嘗試使用 token 獲取用戶信息
         try {
           const userData = await getAuthenticatedUser(token);
+          console.log(userData);
           if (userData) {
             setUser({
               login: userData.login,
@@ -132,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log("處理 OAuth 回調，獲取 token...");
       // 交換授權碼獲取 access token
-      const token = await exchangeCodeForToken(code);
+      const token = await getTokenWithCorsFriendlyApproach(code);
 
       if (!token) {
         throw new Error("Failed to obtain access token");
@@ -167,12 +168,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.log("延遲通知 Giscus (1秒後)");
         notifyGiscusAboutLogin(token);
       }, 1000);
-
-      // 再次延遲通知，以防萬一
-      setTimeout(() => {
-        console.log("再次延遲通知 Giscus (3秒後)");
-        notifyGiscusAboutLogin(token);
-      }, 3000);
 
       setLoading(false);
       messageApi.success("Successfully authenticated with GitHub");

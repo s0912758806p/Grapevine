@@ -110,6 +110,23 @@ export const createIssueAsUser = async (
 // Get authenticated user information
 export const getAuthenticatedUser = async (token: string) => {
   try {
+    // const userResponse = await axios.get("https://api.github.com/user", {
+    //   headers: {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    // });
+
+    // const emailResponse = await axios.get("https://api.github.com/user/emails", {
+    //   headers: {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    // });
+
+    // const user = {
+    //   ...userResponse.data,
+    //   email: emailResponse.data[0].email,
+    // };
+
     const userOctokit = createOctokitWithUserToken(token);
     const response = await userOctokit.request("GET /user");
     return response.data;
