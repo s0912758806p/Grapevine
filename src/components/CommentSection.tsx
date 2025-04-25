@@ -30,7 +30,7 @@ import { RootState, AppDispatch } from "../store";
 import { createSelector } from "@reduxjs/toolkit";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import "./markdown.scss";
+import "../styles/markdown.scss";
 
 dayjs.extend(relativeTime);
 const { Text } = Typography;

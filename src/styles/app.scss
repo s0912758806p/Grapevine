@@ -1,3 +1,6 @@
+/* Import responsive styles */
+@import './responsive.scss';
+
 /* Custom application styles for Reddit theme */
 
 /* Layout transitions */
@@ -197,4 +200,4 @@
   .profile-container {
     grid-template-columns: 1fr;
   }
-}
+} 

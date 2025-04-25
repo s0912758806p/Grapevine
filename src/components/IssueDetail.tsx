@@ -9,7 +9,7 @@ import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import "./markdown.scss";
+import "../styles/markdown.scss";
 import { RootState, AppDispatch } from "../store";
 import { fetchGithubIssueThunk } from "../store/githubIssuesSlice";
 
@@ -93,17 +93,21 @@ const IssueDetail: React.FC = () => {
   }
 
   return (
-    <div className="issue-detail">
+    <div className="issue-detail responsive-container">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         style={{ marginBottom: 16 }}
         onClick={handleBackToIssues}
+        className="responsive-spacing"
       >
         Back to issues
       </Button>
 
-      <Card style={{ marginBottom: 16, borderRadius: 4 }}>
+      <Card 
+        style={{ marginBottom: 16, borderRadius: 4 }}
+        className="responsive-card responsive-spacing"
+      >
         <div>
           <div style={{ marginBottom: 12 }}>
             {issue.labels.length > 0 && (
@@ -147,7 +151,7 @@ const IssueDetail: React.FC = () => {
             </div>
           </div>
 
-          <Title level={4} style={{ margin: "0 0 16px" }}>
+          <Title level={4} style={{ margin: "0 0 16px" }} className="responsive-text">
             {issue.title}
           </Title>
 
@@ -164,6 +168,7 @@ const IssueDetail: React.FC = () => {
           </div>
 
           <div
+            className="flex-col-mobile"
             style={{
               display: "flex",
               padding: "12px 0 0",
@@ -183,7 +188,7 @@ const IssueDetail: React.FC = () => {
 
       {/* GitHub Comments Section */}
       <div
-        className="comments-wrapper"
+        className="comments-wrapper responsive-card"
         style={{
           background: "white",
           padding: "16px",
@@ -191,7 +196,7 @@ const IssueDetail: React.FC = () => {
           marginTop: "16px",
         }}
       >
-        <Title level={4} style={{ marginTop: 0 }}>
+        <Title level={4} style={{ marginTop: 0 }} className="responsive-text">
           Comments
         </Title>
         <UtterancesComments

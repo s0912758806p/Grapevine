@@ -14,7 +14,7 @@ import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import "./markdown.scss";
+import "../styles/markdown.scss";
 
 dayjs.extend(relativeTime);
 const { Title, Text } = Typography;
@@ -85,17 +85,21 @@ const F2EIssueDetail: React.FC = () => {
   }
 
   return (
-    <div className="f2e-issue-detail">
+    <div className="f2e-issue-detail responsive-container">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         style={{ marginBottom: 16 }}
         onClick={handleBackToHome}
+        className="responsive-spacing"
       >
         Back to Jobs
       </Button>
 
-      <Card style={{ marginBottom: 16, borderRadius: 4 }}>
+      <Card 
+        style={{ marginBottom: 16, borderRadius: 4 }}
+        className="responsive-card responsive-spacing"
+      >
         <div>
           <div style={{ marginBottom: 12 }}>
             {currentIssue.labels.length > 0 && (
@@ -119,7 +123,7 @@ const F2EIssueDetail: React.FC = () => {
             </div>
           </div>
 
-          <Title level={4} style={{ margin: "0 0 16px" }}>
+          <Title level={4} style={{ margin: "0 0 16px" }} className="responsive-text">
             {currentIssue.title}
           </Title>
 
@@ -136,6 +140,7 @@ const F2EIssueDetail: React.FC = () => {
           </div>
 
           <div
+            className="flex-col-mobile"
             style={{
               display: "flex",
               padding: "12px 0 0",
@@ -159,7 +164,7 @@ const F2EIssueDetail: React.FC = () => {
 
       {/* Utterances Comments */}
       <div
-        className="comments-wrapper"
+        className="comments-wrapper responsive-card"
         style={{
           background: "white",
           padding: "16px",
@@ -167,7 +172,7 @@ const F2EIssueDetail: React.FC = () => {
           marginTop: "16px",
         }}
       >
-        <h3>Comments</h3>
+        <h3 className="responsive-text">Comments</h3>
         <UtterancesComments
           repo="f2etw/jobs"
           issueTerm={`issue-${currentIssue.number}`}

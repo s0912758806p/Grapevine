@@ -41,14 +41,36 @@ const UtterancesComments: React.FC<UtterancesCommentsProps> = ({
       containerRef.current.appendChild(script);
     }
 
+    // Add responsive styling to the Utterances iframe when it loads
+    const handleUtterancesLoad = () => {
+      const utterancesFrame = document.querySelector('.utterances-frame') as HTMLIFrameElement;
+      if (utterancesFrame) {
+        utterancesFrame.style.maxWidth = '100%';
+      }
+    };
+
+    // Use MutationObserver to detect when Utterances adds iframe to the DOM
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length) {
+          handleUtterancesLoad();
+        }
+      });
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current, { childList: true, subtree: true });
+    }
+
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
+      observer.disconnect();
     };
   }, [repo, issueTerm, label, theme]);
 
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="utterances-container" style={{ width: '100%', overflow: 'hidden' }} />;
 };
 
 export default UtterancesComments;

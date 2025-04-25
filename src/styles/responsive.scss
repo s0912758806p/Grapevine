@@ -1,0 +1,128 @@
+/* Responsive Breakpoints */
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+/* Responsive Mixins */
+@mixin sm {
+  @media (max-width: #{$breakpoint-sm}) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (max-width: #{$breakpoint-md}) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (max-width: #{$breakpoint-lg}) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (max-width: #{$breakpoint-xl}) {
+    @content;
+  }
+}
+
+/* Responsive Container */
+.responsive-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+
+  @include lg {
+    padding: 0 20px;
+  }
+
+  @include md {
+    padding: 0 16px;
+  }
+
+  @include sm {
+    padding: 0 12px;
+  }
+}
+
+/* Grid System */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+
+  @include md {
+    gap: 16px;
+  }
+
+  @include sm {
+    gap: 12px;
+  }
+}
+
+/* Responsive Layout Classes */
+.hide-on-mobile {
+  @include md {
+    display: none !important;
+  }
+}
+
+.hide-on-desktop {
+  @media (min-width: #{$breakpoint-md + 1px}) {
+    display: none !important;
+  }
+}
+
+.flex-col-mobile {
+  @include md {
+    flex-direction: column !important;
+  }
+}
+
+/* Layout Adjustments */
+.stack-on-mobile {
+  @include md {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Typography Adjustments */
+.responsive-text {
+  font-size: 16px;
+  
+  @include md {
+    font-size: 15px;
+  }
+  
+  @include sm {
+    font-size: 14px;
+  }
+}
+
+/* Card Adjustments */
+.responsive-card {
+  @include md {
+    padding: 16px !important;
+  }
+  
+  @include sm {
+    padding: 12px !important;
+  }
+}
+
+/* Margins and Paddings */
+.responsive-spacing {
+  margin-bottom: 24px;
+  
+  @include md {
+    margin-bottom: 20px;
+  }
+  
+  @include sm {
+    margin-bottom: 16px;
+  }
+} 

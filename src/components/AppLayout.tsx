@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider } from "antd";
+import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider, Drawer } from "antd";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { MenuProps } from "antd";
@@ -11,6 +11,7 @@ import {
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
 
@@ -27,6 +28,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Get user role information
   const { isAuthor } = useSelector((state: RootState) => state.user);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const userMenuItems: MenuItem[] = [
     {
@@ -64,6 +66,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
   ];
 
+  const handleMenuClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
     <Layout
       style={{ minHeight: "100vh", background: "var(--color-canvas-default)" }}
@@ -88,7 +94,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </Link>
 
           <div
-            className="header-nav-links"
+            className="header-nav-links hide-on-mobile"
             style={{ display: "flex", marginLeft: "24px" }}
           >
             <Menu
@@ -126,6 +132,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             }}
           >
             <div
+              className="search-container hide-on-mobile"
               style={{ position: "relative", maxWidth: "272px", width: "100%" }}
             >
               <Input
@@ -162,19 +169,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               )}
             </div>
 
-            <Dropdown menu={{ items: plusMenuItems }} placement="bottomRight">
+            <div className="hide-on-mobile">
+              <Dropdown menu={{ items: plusMenuItems }} placement="bottomRight">
+                <Button
+                  type="text"
+                  icon={<PlusOutlined />}
+                  style={{ color: "var(--color-fg-default)" }}
+                />
+              </Dropdown>
+
               <Button
                 type="text"
-                icon={<PlusOutlined />}
+                icon={<BellOutlined />}
                 style={{ color: "var(--color-fg-default)" }}
               />
-            </Dropdown>
-
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              style={{ color: "var(--color-fg-default)" }}
-            />
+            </div>
 
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Avatar
@@ -185,13 +194,60 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 icon={<UserOutlined />}
               />
             </Dropdown>
+
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+              className="hide-on-desktop"
+              style={{ color: "var(--color-fg-default)" }}
+            />
           </div>
         </div>
       </Header>
 
+      {/* Mobile Menu Drawer */}
+      <Drawer
+        title="Menu"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={250}
+      >
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <Input
+            placeholder="Search..."
+            prefix={<SearchOutlined />}
+            style={{ marginBottom: "16px" }}
+          />
+          
+          <Menu mode="vertical" selectedKeys={[location.pathname]}>
+            <Menu.Item key="/issues" onClick={handleMenuClick}>
+              <Link to="/">Issues</Link>
+            </Menu.Item>
+            <Menu.Item key="/pull-requests" onClick={handleMenuClick}>
+              <Link to="/">Pull requests</Link>
+            </Menu.Item>
+            <Menu.Item key="/discussions" onClick={handleMenuClick}>
+              <Link to="/">Discussions</Link>
+            </Menu.Item>
+            <Menu.Item key="/projects" onClick={handleMenuClick}>
+              <Link to="/">Projects</Link>
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item key="new-issue" onClick={handleMenuClick}>
+              <PlusOutlined /> New issue
+            </Menu.Item>
+            <Menu.Item key="notifications" onClick={handleMenuClick}>
+              <BellOutlined /> Notifications
+            </Menu.Item>
+          </Menu>
+        </div>
+      </Drawer>
+
       <Content>
         <div
-          className="container"
+          className="responsive-container"
           style={{
             padding: "24px 16px",
           }}
@@ -207,8 +263,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           padding: "40px 16px 24px",
         }}
       >
-        <div className="container">
+        <div className="responsive-container">
           <div
+            className="flex-col-mobile"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -216,13 +273,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               marginBottom: "24px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
               <SmileOutlined style={{ fontSize: "24px" }} />
               <span style={{ fontSize: "16px", fontWeight: 600 }}>
                 Grapevine
               </span>
             </div>
-            <div>
+            <div className="footer-links">
               <a href="#" style={{ color: "var(--color-fg-muted)" }}>
                 Terms
               </a>
@@ -247,24 +304,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <a href="#" style={{ color: "var(--color-fg-muted)" }}>
                 Status
               </a>
-              <Divider
-                type="vertical"
-                style={{ borderColor: "var(--color-border-muted)" }}
-              />
-              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
-                Help
-              </a>
             </div>
           </div>
-          <div
-            style={{
-              color: "var(--color-fg-muted)",
-              fontSize: "12px",
-              textAlign: "center",
-            }}
-          >
-            © {new Date().getFullYear()} Grapevine. All rights reserved.
-          </div>
+          
+          {/* Additional footer content */}
         </div>
       </Footer>
     </Layout>
@@ -272,3 +315,4 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 };
 
 export default AppLayout;
+
