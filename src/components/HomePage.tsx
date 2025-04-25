@@ -1,30 +1,16 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { Row, Col, Tabs, Button, Space, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import IssueList from "./IssueList";
-import F2EIssueList from "./F2EIssueList";
+import { Row, Col, Button, Space, Typography } from "antd";
+import { PlusOutlined, SettingOutlined } from "@ant-design/icons";
+import CategoryTabs from "./CategoryTabs";
+import RepositoryIssueList from "./RepositoryIssueList";
 import { RootState } from "../store";
 
 const { Title } = Typography;
 
 const HomePage: React.FC = () => {
   const { isAuthor } = useSelector((state: RootState) => state.user);
-
-  // Define Tabs items
-  const tabItems = [
-    {
-      key: "f2e-jobs",
-      label: "F2E Jobs",
-      children: <F2EIssueList />
-    },
-    {
-      key: "grapevine",
-      label: "Grapevine Community",
-      children: <IssueList />
-    }
-  ];
 
   return (
     <div className="home-container">
@@ -37,20 +23,36 @@ const HomePage: React.FC = () => {
               </Title>
             </Space>
 
-            {isAuthor && (
-              <div style={{ marginTop: 16 }}>
-                <Link to="/new-issue">
-                  <Button type="primary" icon={<PlusOutlined />}>
-                    Create New Post
-                  </Button>
-                </Link>
-              </div>
-            )}
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between" }}>
+              <Space>
+                {isAuthor && (
+                  <Link to="/new-issue">
+                    <Button type="primary" icon={<PlusOutlined />}>
+                      Create New Post
+                    </Button>
+                  </Link>
+                )}
+              </Space>
+              
+              <Space>
+                {window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`) && (
+                  <Link to="/manage-repositories">
+                    <Button icon={<SettingOutlined />}>
+                      Manage Sources
+                    </Button>
+                  </Link>
+                )}
+              </Space>
+            </div>
           </div>
         </Col>
 
         <Col span={24}>
-          <Tabs defaultActiveKey="f2e-jobs" style={{ padding: "0 16px" }} items={tabItems} />
+          <CategoryTabs />
+        </Col>
+        
+        <Col span={24} style={{ padding: "0 16px" }}>
+          <RepositoryIssueList />
         </Col>
       </Row>
     </div>

@@ -5,6 +5,8 @@ import HomePage from "../components/HomePage";
 import NewIssue from "../components/NewIssue";
 import CommentsExample from "../pages/CommentsExample";
 import F2EIssueDetail from "../components/F2EIssueDetail";
+import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
+import RepositoryManagementPage from "../components/RepositoryManagementPage";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +26,10 @@ const router = createBrowserRouter([
         element: <F2EIssueDetail />,
       },
       {
+        path: "repository-issue/:repoId/:issueNumber",
+        element: <RepositoryIssueDetail />,
+      },
+      {
         path: "new-issue",
         element: <NewIssue />,
       },
@@ -31,6 +37,10 @@ const router = createBrowserRouter([
         path: "comments",
         element: <CommentsExample />,
       },
+      {
+        path: "manage-repositories",
+        element: <RepositoryManagementPage />,
+      }
     ],
   },
 ]);

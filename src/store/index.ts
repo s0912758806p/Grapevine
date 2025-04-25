@@ -3,6 +3,8 @@ import commentsReducer from "./commentsSlice";
 import f2eIssuesReducer from "./f2eIssuesSlice";
 import userReducer from "./userSlice";
 import githubIssuesReducer from "./githubIssuesSlice";
+import repositoriesReducer from "./repositoriesSlice";
+import searchReducer from "./searchSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ export const store = configureStore({
     f2eIssues: f2eIssuesReducer,
     user: userReducer,
     githubIssues: githubIssuesReducer,
+    repositories: repositoriesReducer,
+    search: searchReducer,
   },
 });
 

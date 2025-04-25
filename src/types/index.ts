@@ -17,7 +17,43 @@ export interface IssueType {
   state: string;
   html_url?: string;
   comments_url?: string;
+  source?: string;
+  repoOwner?: string;
+  repoName?: string;
 }
+
+export interface RepositorySource {
+  id: string;
+  name: string;
+  owner: string;
+  repo: string;
+  description?: string;
+  isActive: boolean;
+  category?: string;
+  icon?: string;
+}
+
+export interface CategoryType {
+  id: string;
+  name: string;
+  description?: string;
+  isDefault?: boolean;
+  order?: number;
+  icon?: string;
+}
+
+export interface SearchFilter {
+  id?: string;
+  name?: string;
+  keyword?: string;
+  repositories?: string[];
+  labels?: string[];
+  authors?: string[];
+  dateRange?: [string | null, string | null] | null;
+  sortBy?: 'created' | 'updated';
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface CommentType {
   id: number;
   body: string;
@@ -27,6 +63,7 @@ export interface CommentType {
   };
   created_at: string;
 }
+
 export interface GiscusConfig {
   repo: string;
   repoId: string;
