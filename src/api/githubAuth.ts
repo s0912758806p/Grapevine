@@ -34,15 +34,14 @@ export const getTokenWithCorsFriendlyApproach = async (
   code: string
 ): Promise<string> => {
   try {
-    const params = new URLSearchParams();
-    params.append("client_id", GITHUB_CLIENT_ID);
-    params.append("client_secret", import.meta.env.VITE_GITHUB_CLIENT_SECRET);
-    params.append("code", code);
-    params.append("redirect_uri", GITHUB_REDIRECT_URI);
-
-    const response = await axios.post(GITHUB_TOKEN_URL, params.toString(), {
+    const response = await axios.post(GITHUB_TOKEN_URL, null, {
+      params: {
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET,
+        code: code,
+        redirect_uri: GITHUB_REDIRECT_URI,
+      },
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/json",
       },
     });

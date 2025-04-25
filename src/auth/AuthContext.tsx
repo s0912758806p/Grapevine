@@ -159,11 +159,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         });
       }
 
-      // 登錄成功後，多次通知 Giscus，確保能夠接收到
-      console.log("OAuth 認證成功，立即通知 Giscus");
-      notifyGiscusAboutLogin(token);
-
-      // 延遲再次通知，確保 Giscus iframe 已加載
       setTimeout(() => {
         console.log("延遲通知 Giscus (1秒後)");
         notifyGiscusAboutLogin(token);
