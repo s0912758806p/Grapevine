@@ -1,12 +1,12 @@
 /* Import all styles in the correct order */
 
 /* Base styles and variables */
-@import './index.scss';
+@use './index.scss';
 
 /* Component styles */
-@import './app.scss';
-@import './ant-design-fixes.scss';
-@import './markdown.scss';
+@use './app.scss';
+@use './ant-design-fixes.scss';
+@use './markdown.scss';
 
 /* Responsive styles should be last */
-@import './responsive.scss'; 
+@use './responsive.scss'; 
