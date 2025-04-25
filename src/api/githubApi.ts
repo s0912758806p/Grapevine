@@ -107,8 +107,8 @@ export const fetchGrapevineIssue = async (issueNumber: number) => {
     const response = await octokit.request(
       "GET /repos/{owner}/{repo}/issues/{issue_number}",
       {
-        owner: import.meta.env.VITE_GITHUB_OWNER,
-        repo: import.meta.env.VITE_GITHUB_REPO,
+        owner: import.meta.env.VITE_GITHUB_REPO_OWNER,
+        repo: import.meta.env.VITE_GITHUB_REPO_NAME,
         issue_number: issueNumber,
         headers: {
           "X-GitHub-Api-Version": "2022-11-28",

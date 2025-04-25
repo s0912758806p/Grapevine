@@ -28,7 +28,7 @@ import {
   setPage,
   clearIssues,
 } from "../store/githubIssuesSlice";
-
+import { useNavigate } from "react-router-dom";
 dayjs.extend(relativeTime);
 const { Title, Text } = Typography;
 
@@ -39,6 +39,7 @@ const IssueList: React.FC = () => {
   );
   const { isAuthor } = useSelector((state: RootState) => state.githubIssues);
   const { currentPage, perPage } = pagination;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (issues.length === 0) {
@@ -179,7 +180,7 @@ const IssueList: React.FC = () => {
           style={{ marginBottom: 16, padding: "0 16px" }}
         >
           <Title level={3} style={{ margin: 0 }}>
-            Issues
+            Grapevine Community
           </Title>
           <Space>
             <Button
@@ -214,6 +215,9 @@ const IssueList: React.FC = () => {
                   overflow: "hidden",
                 }}
                 hoverable
+                onClick={() => {
+                  navigate(`/issue/${issue.number}`);
+                }}
               >
                 <div style={{ padding: "12px 16px" }}>
                   <div style={{ marginBottom: 8 }}>

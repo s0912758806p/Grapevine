@@ -37,12 +37,12 @@ const HomePage: React.FC = () => {
         </Col>
 
         <Col span={24}>
-          <Tabs defaultActiveKey="grapevine" style={{ padding: "0 16px" }}>
-            <TabPane tab="Grapevine Community" key="grapevine">
-              <IssueList />
-            </TabPane>
+          <Tabs defaultActiveKey="f2e-jobs" style={{ padding: "0 16px" }}>
             <TabPane tab="F2E Jobs" key="f2e-jobs">
               <F2EIssueList />
+            </TabPane>
+            <TabPane tab="Grapevine Community" key="grapevine">
+              <IssueList />
             </TabPane>
           </Tabs>
         </Col>

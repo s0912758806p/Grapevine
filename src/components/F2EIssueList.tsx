@@ -16,7 +16,7 @@ import { fetchF2EIssuesThunk } from "../store/f2eIssuesSlice";
 import { RootState, AppDispatch } from "../store";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-
+import { useNavigate } from "react-router-dom";
 dayjs.extend(relativeTime);
 const { Text, Title } = Typography;
 
@@ -26,7 +26,8 @@ const F2EIssueList: React.FC = () => {
     (state: RootState) => state.f2eIssues
   );
   const [perPage] = useState<number>(10);
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
     if (issues.length === 0) {
       dispatch(fetchF2EIssuesThunk({ page: 1, perPage }));
@@ -117,6 +118,9 @@ const F2EIssueList: React.FC = () => {
                   overflow: "hidden",
                 }}
                 hoverable
+                onClick={() => {
+                  navigate(`/f2e-issue/${issue.number}`);
+                }}
               >
                 <div style={{ padding: "12px 16px" }}>
                   <div style={{ marginBottom: 8 }}>

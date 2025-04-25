@@ -70,8 +70,6 @@ const NewIssue: React.FC = () => {
   };
   const handleSubmit = async () => {
     try {
-      // 由於現在沒有 issuesSlice，直接顯示成功信息並導航到首頁
-      // 實際應用中，此處應調用創建 issue 的 API
       message.success("Post created successfully!");
       navigate("/");
     } catch (err) {

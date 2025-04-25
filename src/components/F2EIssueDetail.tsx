@@ -13,6 +13,7 @@ import { RootState, AppDispatch } from "../store";
 import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import "./markdown.scss";
 
 dayjs.extend(relativeTime);
@@ -129,7 +130,7 @@ const F2EIssueDetail: React.FC = () => {
               borderBottom: "1px solid var(--color-border-muted)",
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
               {currentIssue.body}
             </ReactMarkdown>
           </div>

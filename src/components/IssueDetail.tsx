@@ -5,10 +5,10 @@ import { Typography, Space, Tag, Button, Card, message, Spin } from "antd";
 import { ArrowLeftOutlined, LinkOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import CommentSection from "./CommentSection";
 import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import "./markdown.scss";
 import { RootState, AppDispatch } from "../store";
 import { fetchGithubIssueThunk } from "../store/githubIssuesSlice";
@@ -158,7 +158,7 @@ const IssueDetail: React.FC = () => {
               borderBottom: "1px solid var(--color-border-muted)",
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
               {issue.body}
             </ReactMarkdown>
           </div>
@@ -181,40 +181,6 @@ const IssueDetail: React.FC = () => {
         </div>
       </Card>
 
-      {/* Comments Section */}
-      <div
-        className="comments-wrapper"
-        style={{
-          background: "white",
-          padding: "16px",
-          borderRadius: "4px",
-          marginTop: "16px",
-        }}
-      >
-        <Title level={4} style={{ marginTop: 0 }}>
-          Comments ({issue.comments})
-        </Title>
-
-        {issue.comments > 0 ? (
-          <CommentSection issueNumber={issue.number} />
-        ) : (
-          <Card
-            style={{
-              textAlign: "center",
-              padding: "32px",
-              backgroundColor: "var(--color-canvas-subtle)",
-              border: "1px solid var(--color-border-default)",
-              borderRadius: 6,
-              marginBottom: "16px",
-            }}
-          >
-            <Text style={{ color: "var(--color-fg-muted)" }}>
-              No comments yet
-            </Text>
-          </Card>
-        )}
-      </div>
-
       {/* GitHub Comments Section */}
       <div
         className="comments-wrapper"
@@ -226,11 +192,11 @@ const IssueDetail: React.FC = () => {
         }}
       >
         <Title level={4} style={{ marginTop: 0 }}>
-          GitHub Comments
+          Comments
         </Title>
         <UtterancesComments
-          repo={`${import.meta.env.VITE_GITHUB_OWNER}/${
-            import.meta.env.VITE_GITHUB_REPO
+          repo={`${import.meta.env.VITE_GITHUB_REPO_OWNER}/${
+            import.meta.env.VITE_GITHUB_REPO_NAME
           }`}
           issueTerm={`issue-${issue.number}`}
           theme="github-light"

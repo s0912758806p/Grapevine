@@ -187,4 +187,34 @@
       vertical-align: middle;
     }
   }
+  
+  // Enhanced styling for rich HTML content
+  strong, b {
+    font-weight: 600;
+  }
+  
+  em, i {
+    font-style: italic;
+  }
+  
+  // Fix spacing for nested lists
+  ul, ol {
+    li p {
+      margin-bottom: 8px;
+    }
+    
+    li:last-child p:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  // Better support for job descriptions and similar content
+  div, span, section, article {
+    max-width: 100%;
+  }
+  
+  // Style for inline elements
+  u, s, sub, sup {
+    display: inline;
+  }
 }
