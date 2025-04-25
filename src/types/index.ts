@@ -16,7 +16,15 @@ export interface IssueType {
   }[];
   state: string;
 }
-
+export interface CommentType {
+  id: number;
+  body: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  created_at: string;
+}
 export interface GiscusConfig {
   repo: string;
   repoId: string;

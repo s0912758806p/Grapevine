@@ -9,16 +9,12 @@ import {
   MessageOutlined,
   CommentOutlined,
 } from "@ant-design/icons";
-import GitHubLogin from "./GitHubLogin";
-
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
 const { Search } = Input;
-
 interface AppLayoutProps {
   children: React.ReactNode;
 }
-
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <Layout style={{ minHeight: "100vh", background: "#DAE0E6" }}>
@@ -59,7 +55,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Title>
           </div>
         </Link>
-
         <Search
           placeholder="Search posts"
           allowClear
@@ -69,7 +64,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           }}
           prefix={<SearchOutlined style={{ color: "#818384" }} />}
         />
-
         <div
           style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}
         >
@@ -96,11 +90,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               icon={<BellOutlined />}
               style={{ color: "#0079D3" }}
             />
-            <GitHubLogin />
           </Space>
         </div>
       </Header>
-
       <Content style={{ padding: "24px 0" }}>
         <div
           className="container"
@@ -116,7 +108,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </div>
       </Content>
-
       <Footer
         style={{ textAlign: "center", background: "white", padding: "12px 0" }}
       >
@@ -125,5 +116,4 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     </Layout>
   );
 };
-
 export default AppLayout;

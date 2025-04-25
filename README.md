@@ -1,109 +1,122 @@
 # Grapevine Forum
 
-A minimalist forum application that uses GitHub Issues for data storage and Giscus for comments. Styled with Ant Design to present a Reddit-like experience.
+Grapevine is a lightweight forum application with a Reddit-style interface, using local mock data to implement posts and comments functionality.
 
 ## Features
 
 - Reddit-style user interface
-- Post upvoting/downvoting functionality
-- Posts and comments system
-- GitHub Issues integration for data storage
-- Giscus integration for comments
-- Fully responsive design for mobile devices
-- Secure GitHub OAuth authentication using Serverless API
-- Deployable to Vercel with Serverless Functions
+- Post voting system (upvote/downvote)
+- Complete post and comment system using local mock data
+- Custom username support for posts and comments
+- Tag categorization system for better content organization
+- Fully responsive design for both mobile and desktop devices
 
-## Setup
+## Quick Start
+
+### Installation
 
 1. Clone this repository
-2. Install dependencies:
-   ```
-   npm install --legacy-peer-deps
-   ```
-3. Configure environment variables:
-   Create a `.env` file in the project root directory and add the following:
 
    ```
-   VITE_GITHUB_REPO_OWNER=your-github-username
-   VITE_GITHUB_REPO_NAME=your-repository-name
-   VITE_GITHUB_TOKEN=your-personal-access-token
+   git clone https://github.com/yourusername/grapevine.git
+   cd grapevine
    ```
 
-4. Configure Giscus:
+2. Install dependencies
 
-   - Set up your repository at https://giscus.app
-   - Update the Giscus component configuration in `src/components/IssueDetail.tsx`
+   ```
+   npm install
+   ```
 
-5. Start the development server:
+3. Start the development server
+
    ```
    npm run dev
    ```
 
-## Environment Variables Configuration
+4. Open your browser and visit `http://localhost:5173`
 
-The project uses environment variables to configure GitHub API connections:
-
-### GitHub Issues API
-
-Set the following environment variables in the `.env` file for local development:
-
-```
-VITE_GITHUB_REPO_OWNER=your-github-username
-VITE_GITHUB_REPO_NAME=your-repository-name
-VITE_GITHUB_TOKEN=your-personal-access-token
-```
-
-For deployment on Vercel, configure these in the Vercel project settings:
-
-```
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-GITHUB_REPO_OWNER=your-github-username
-GITHUB_REPO_NAME=your-repository-name
-GITHUB_TOKEN=your-personal-access-token
-HOST=your-deployed-app-url
-```
-
-### Giscus Comments
-
-Update the GiscusWrapper component in `src/components/IssueDetail.tsx`:
-
-```jsx
-<Giscus
-  repo="your-github-username/your-repository-name"
-  repoId="your-repository-id"
-  category="Announcements"
-  categoryId="your-category-id"
-  // other properties...
-/>
-```
-
-Visit [Giscus](https://giscus.app) to get your repository configuration values.
-
-## Technology Stack
-
-- React 18
-- TypeScript
-- Redux Toolkit
-- Ant Design 5
-- React Router 6
-- Giscus (comment system)
-- Octokit (GitHub API client)
-- Dayjs (date formatting)
-- Vite 6 (build tool)
-- SASS (style preprocessor)
-
-## Deployment
-
-This application can be deployed to Vercel with Serverless Functions support:
+### Build for Production
 
 ```
 npm run build
-vercel
 ```
 
-See [DEPLOY.md](./DEPLOY.md) for detailed deployment instructions and environment variable configuration.
+The generated files will be in the `dist` folder.
+
+## Usage Guide
+
+### Browse Posts
+
+The homepage displays a list of all posts. Click on any post to view its details and comments.
+
+### Create a New Post
+
+1. Click the "+" button in the navigation bar
+2. Fill in your username (optional), title, and content
+3. Optionally add custom tags
+4. Click the "Post" button to publish
+
+### Add Comments
+
+1. Find the comment section at the bottom of the post detail page
+2. Enter your username (optional)
+3. Type your comment
+4. Click the "Post Comment" button
+
+## Project Structure
+
+```
+src/
+├── api/
+│   └── mockData.ts    # Mock data and API functions
+├── components/
+│   ├── AppLayout.tsx  # Application layout
+│   ├── CommentSection.tsx # Comments component
+│   ├── IssueDetail.tsx # Post detail
+│   ├── IssueList.tsx  # Post listing
+│   └── NewIssue.tsx   # New post creation
+├── pages/
+│   └── CommentsExample.tsx # Comment example page
+├── store/
+│   ├── commentsSlice.ts # Comment state management
+│   ├── index.ts        # Redux store configuration
+│   └── issuesSlice.ts  # Post state management
+├── types/
+│   └── index.ts        # TypeScript interfaces
+├── App.tsx             # Main application component
+└── main.tsx           # Application entry point
+```
+
+## Technology Stack
+
+- **Frontend Framework**: React 18
+- **Language**: TypeScript
+- **State Management**: Redux Toolkit
+- **UI Framework**: Ant Design 5
+- **Routing**: React Router 6
+- **Date Handling**: Dayjs
+- **Build Tool**: Vite 6
+- **Styling**: SASS
+
+## Customization
+
+### Adding More Mock Data
+
+You can add, modify, or delete mock data in the `src/api/mockData.ts` file.
+
+### Adjusting Interface Style
+
+The main style settings are in the individual components, using Ant Design's styling system.
+
+## Deployment
+
+For deployment instructions, see the [DEPLOY.md](./DEPLOY.md) file.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Author
+
+Gorman

@@ -1,22 +1,19 @@
 import React from "react";
 import { ConfigProvider, theme, App } from "antd";
-
 interface AntConfigProviderProps {
   children: React.ReactNode;
 }
-
-// This component centralizes all Ant Design configuration for better React 18 compatibility
 const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
   return (
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: "#FF4500", // Reddit orange
-          colorLink: "#0079D3", // Reddit blue
+          colorPrimary: "#FF4500", 
+          colorLink: "#0079D3", 
           borderRadius: 4,
         },
         algorithm: theme.defaultAlgorithm,
-        hashed: true, // Enables compatibility mode for newer React versions
+        hashed: true, 
       }}
     >
       <App>
@@ -25,5 +22,4 @@ const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
     </ConfigProvider>
   );
 };
-
 export default AntConfigProvider;

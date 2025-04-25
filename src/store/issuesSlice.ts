@@ -3,72 +3,65 @@ import {
   fetchIssues,
   fetchIssue,
   createIssue,
-  createIssueAsUser,
-} from "../api/github";
+  createIssueWithLabels,
+} from "../api/mockData";
 import { IssueType } from "../types";
-
 interface IssuesState {
   issues: IssueType[];
   currentIssue: IssueType | null;
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
+  votes: Record<number, number>; 
 }
-
 const initialState: IssuesState = {
   issues: [],
   currentIssue: null,
   status: "idle",
   error: null,
+  votes: {},
 };
-
-// Async thunks
 export const fetchIssuesThunk = createAsyncThunk(
   "issues/fetchIssues",
   async () => {
     return await fetchIssues();
   }
 );
-
 export const fetchIssueThunk = createAsyncThunk(
   "issues/fetchIssue",
   async (issueNumber: number) => {
     return await fetchIssue(issueNumber);
   }
 );
-
-// 使用應用默認 token 創建 Issue
 export const createIssueThunk = createAsyncThunk(
   "issues/createIssue",
-  async ({ title, body }: { title: string; body: string }) => {
-    return await createIssue(title, body);
-  }
-);
-
-// 使用用戶 token 創建 Issue
-export const createIssueAsUserThunk = createAsyncThunk(
-  "issues/createIssueAsUser",
   async ({
     title,
     body,
-    token,
-    owner,
-    repo,
+    userName,
   }: {
     title: string;
     body: string;
-    token: string;
-    owner?: string;
-    repo?: string;
+    userName?: string;
   }) => {
-    if (!token) {
-      throw new Error(
-        "Authentication required: Please log in to create an issue"
-      );
-    }
-    return await createIssueAsUser(title, body, token, owner, repo);
+    return await createIssue(title, body, userName);
   }
 );
-
+export const createIssueWithLabelsThunk = createAsyncThunk(
+  "issues/createIssueWithLabels",
+  async ({
+    title,
+    body,
+    tag,
+    userName,
+  }: {
+    title: string;
+    body: string;
+    tag: string;
+    userName?: string;
+  }) => {
+    return await createIssueWithLabels(title, body, [tag], userName);
+  }
+);
 export const issuesSlice = createSlice({
   name: "issues",
   initialState,
@@ -79,10 +72,19 @@ export const issuesSlice = createSlice({
     clearCurrentIssue: (state) => {
       state.currentIssue = null;
     },
+    upvoteIssue: (state, action: PayloadAction<number>) => {
+      const issueId = action.payload;
+      const currentVote = state.votes[issueId] || 0;
+      state.votes[issueId] = currentVote === 1 ? 0 : 1;
+    },
+    downvoteIssue: (state, action: PayloadAction<number>) => {
+      const issueId = action.payload;
+      const currentVote = state.votes[issueId] || 0;
+      state.votes[issueId] = currentVote === -1 ? 0 : -1;
+    },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch issues
       .addCase(fetchIssuesThunk.pending, (state) => {
         state.status = "loading";
       })
@@ -97,7 +99,6 @@ export const issuesSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || "Failed to fetch issues";
       })
-      // Fetch single issue
       .addCase(fetchIssueThunk.pending, (state) => {
         state.status = "loading";
       })
@@ -112,7 +113,6 @@ export const issuesSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || "Failed to fetch issue";
       })
-      // Create issue
       .addCase(createIssueThunk.pending, (state) => {
         state.status = "loading";
       })
@@ -129,12 +129,11 @@ export const issuesSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || "Failed to create issue";
       })
-      // Create issue as User
-      .addCase(createIssueAsUserThunk.pending, (state) => {
+      .addCase(createIssueWithLabelsThunk.pending, (state) => {
         state.status = "loading";
       })
       .addCase(
-        createIssueAsUserThunk.fulfilled,
+        createIssueWithLabelsThunk.fulfilled,
         (state, action: PayloadAction<IssueType | null>) => {
           state.status = "succeeded";
           if (action.payload) {
@@ -142,15 +141,17 @@ export const issuesSlice = createSlice({
           }
         }
       )
-      .addCase(createIssueAsUserThunk.rejected, (state, action) => {
+      .addCase(createIssueWithLabelsThunk.rejected, (state, action) => {
         state.status = "failed";
         state.error =
-          action.error.message ||
-          "Failed to create issue. Make sure you are logged in.";
+          action.error.message || "Failed to create issue with labels";
       });
   },
 });
-
-export const { resetIssuesStatus, clearCurrentIssue } = issuesSlice.actions;
-
+export const {
+  resetIssuesStatus,
+  clearCurrentIssue,
+  upvoteIssue,
+  downvoteIssue,
+} = issuesSlice.actions;
 export default issuesSlice.reducer;
