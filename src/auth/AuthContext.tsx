@@ -8,7 +8,7 @@ import React, {
 import { message } from "antd";
 import {
   redirectToGitHubLogin,
-  getTokenWithCorsFriendlyApproach,
+  getTokenWithSecureApproach,
   fetchGitHubUserProfile,
 } from "../api/githubAuth";
 import { getAuthenticatedUser } from "../api/github";
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // 嘗試使用 token 獲取用戶信息
         try {
           const userData = await getAuthenticatedUser(token);
-          console.log(userData);
+
           if (userData) {
             setUser({
               login: userData.login,
@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log("處理 OAuth 回調，獲取 token...");
       // 交換授權碼獲取 access token
-      const token = await getTokenWithCorsFriendlyApproach(code);
+      const token = await getTokenWithSecureApproach(code);
 
       if (!token) {
         throw new Error("Failed to obtain access token");

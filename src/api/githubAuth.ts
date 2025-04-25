@@ -7,7 +7,6 @@ const GITHUB_REDIRECT_URI = `${import.meta.env.VITE_HOST}/auth/callback`;
 
 // GitHub API URLs
 const GITHUB_OAUTH_URL = "https://github.com/login/oauth/authorize";
-const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 
 /**
  * 重定向到 GitHub 授權頁面
@@ -28,23 +27,13 @@ export const redirectToGitHubLogin = () => {
 };
 
 /**
- * 使用Axios以CORS友好的方式獲取GitHub token
+ * 使用 serverless 函數安全地獲取 GitHub token
  */
-export const getTokenWithCorsFriendlyApproach = async (
+export const getTokenWithSecureApproach = async (
   code: string
 ): Promise<string> => {
   try {
-    const response = await axios.post(GITHUB_TOKEN_URL, null, {
-      params: {
-        client_id: GITHUB_CLIENT_ID,
-        client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET,
-        code: code,
-        redirect_uri: GITHUB_REDIRECT_URI,
-      },
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    const response = await axios.post("/api/github-auth", { code });
 
     if (response.data && response.data.access_token) {
       return response.data.access_token;
@@ -52,7 +41,7 @@ export const getTokenWithCorsFriendlyApproach = async (
       throw new Error("No access token in response");
     }
   } catch (error) {
-    console.error("CORS friendly approach failed:", error);
+    console.error("Secure token exchange failed:", error);
     throw error;
   }
 };

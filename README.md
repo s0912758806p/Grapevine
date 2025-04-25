@@ -10,6 +10,8 @@ A minimalist forum application that uses GitHub Issues for data storage and Gisc
 - GitHub Issues integration for data storage
 - Giscus integration for comments
 - Fully responsive design for mobile devices
+- Secure GitHub OAuth authentication using Serverless API
+- Deployable to Vercel with Serverless Functions
 
 ## Setup
 
@@ -43,7 +45,7 @@ The project uses environment variables to configure GitHub API connections:
 
 ### GitHub Issues API
 
-Set the following environment variables in the `.env` file:
+Set the following environment variables in the `.env` file for local development:
 
 ```
 VITE_GITHUB_REPO_OWNER=your-github-username
@@ -51,11 +53,16 @@ VITE_GITHUB_REPO_NAME=your-repository-name
 VITE_GITHUB_TOKEN=your-personal-access-token
 ```
 
-To get a personal access token:
+For deployment on Vercel, configure these in the Vercel project settings:
 
-1. Visit https://github.com/settings/tokens
-2. Generate a new token (make sure it has at least `repo` scope permissions)
-3. Copy the token to your `.env` file
+```
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_REPO_OWNER=your-github-username
+GITHUB_REPO_NAME=your-repository-name
+GITHUB_TOKEN=your-personal-access-token
+HOST=your-deployed-app-url
+```
 
 ### Giscus Comments
 
@@ -88,12 +95,14 @@ Visit [Giscus](https://giscus.app) to get your repository configuration values.
 
 ## Deployment
 
-This application can be deployed to Vercel with one click:
+This application can be deployed to Vercel with Serverless Functions support:
 
 ```
 npm run build
 vercel
 ```
+
+See [DEPLOY.md](./DEPLOY.md) for detailed deployment instructions and environment variable configuration.
 
 ## License
 
