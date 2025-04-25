@@ -3,9 +3,10 @@ import App from "../App";
 import IssueDetail from "../components/IssueDetail";
 import IssueList from "../components/IssueList";
 import NewIssue from "../components/NewIssue";
-import GiscusExample from "../pages/GiscusExample";
+import CommentsExample from "../pages/CommentsExample";
 import AuthCallback from "../components/AuthCallback";
 
+// 創建路由
 const router = createBrowserRouter([
   {
     path: "/",
@@ -25,7 +26,7 @@ const router = createBrowserRouter([
       },
       {
         path: "comments",
-        element: <GiscusExample />,
+        element: <CommentsExample />,
       },
       {
         path: "auth/callback",

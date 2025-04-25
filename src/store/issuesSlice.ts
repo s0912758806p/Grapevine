@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchIssues, fetchIssue, createIssue } from "../api/github";
+import {
+  fetchIssues,
+  fetchIssue,
+  createIssue,
+  createIssueAsUser,
+} from "../api/github";
 import { IssueType } from "../types";
 
 interface IssuesState {
@@ -31,10 +36,36 @@ export const fetchIssueThunk = createAsyncThunk(
   }
 );
 
+// 使用應用默認 token 創建 Issue
 export const createIssueThunk = createAsyncThunk(
   "issues/createIssue",
   async ({ title, body }: { title: string; body: string }) => {
     return await createIssue(title, body);
+  }
+);
+
+// 使用用戶 token 創建 Issue
+export const createIssueAsUserThunk = createAsyncThunk(
+  "issues/createIssueAsUser",
+  async ({
+    title,
+    body,
+    token,
+    owner,
+    repo,
+  }: {
+    title: string;
+    body: string;
+    token: string;
+    owner?: string;
+    repo?: string;
+  }) => {
+    if (!token) {
+      throw new Error(
+        "Authentication required: Please log in to create an issue"
+      );
+    }
+    return await createIssueAsUser(title, body, token, owner, repo);
   }
 );
 
@@ -47,7 +78,7 @@ export const issuesSlice = createSlice({
     },
     clearCurrentIssue: (state) => {
       state.currentIssue = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -97,6 +128,25 @@ export const issuesSlice = createSlice({
       .addCase(createIssueThunk.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message || "Failed to create issue";
+      })
+      // Create issue as User
+      .addCase(createIssueAsUserThunk.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(
+        createIssueAsUserThunk.fulfilled,
+        (state, action: PayloadAction<IssueType | null>) => {
+          state.status = "succeeded";
+          if (action.payload) {
+            state.issues = [action.payload, ...state.issues];
+          }
+        }
+      )
+      .addCase(createIssueAsUserThunk.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.error.message ||
+          "Failed to create issue. Make sure you are logged in.";
       });
   },
 });

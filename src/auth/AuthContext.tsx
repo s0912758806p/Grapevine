@@ -6,13 +6,20 @@ import React, {
   ReactNode,
 } from "react";
 import { message } from "antd";
+import {
+  redirectToGitHubLogin,
+  exchangeCodeForToken,
+  fetchGitHubUserProfile,
+} from "../api/githubAuth";
+import { getAuthenticatedUser } from "../api/github";
+import { notifyGiscusAboutLogin } from "../utils/authBridge";
 
 interface GithubUser {
   login: string;
   id: number;
   avatar_url: string;
   name?: string;
-  email?: string;
+  email?: string | null;
 }
 
 interface AuthContextType {
@@ -20,9 +27,11 @@ interface AuthContextType {
   user: GithubUser | null;
   loading: boolean;
   error: string | null;
+  githubToken: string | null;
   login: () => void;
   logout: () => void;
   handleAuthCallback: (code: string) => Promise<void>;
+  getUserToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,173 +41,85 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<GithubUser | null>(null);
+  const [githubToken, setGithubToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 使用 useApp 钩子获取 message 实例
   const [messageApi, contextHolder] = message.useMessage();
 
-  // 檢查用戶是否已登錄
+  // 檢查用戶是否已登錄（初始化時）
   useEffect(() => {
     const checkSession = async () => {
-      // 檢查 Giscus session token
-      const token = localStorage.getItem("giscus-session");
+      // 檢查 GitHub token
+      const token = localStorage.getItem("github_access_token");
 
       if (token) {
+        setGithubToken(token);
         setIsAuthenticated(true);
 
-        // 嘗試獲取用戶數據
+        // 嘗試使用 token 獲取用戶信息
         try {
-          await fetchUserData(token);
+          const userData = await getAuthenticatedUser(token);
+          if (userData) {
+            setUser({
+              login: userData.login,
+              id: userData.id,
+              avatar_url: userData.avatar_url,
+              name: userData.name || userData.login,
+              email: userData.email,
+            });
+
+            // 初始化時，如果有可用 token，告知 Giscus 用戶已登錄
+            console.log("初始檢查：已有 token，通知 Giscus");
+            notifyGiscusAboutLogin(token);
+          }
         } catch (err) {
-          console.error("Failed to fetch user data:", err);
+          console.error("Failed to fetch user data with token:", err);
+          // Token 可能已失效，清除
+          localStorage.removeItem("github_access_token");
+          setGithubToken(null);
+          setIsAuthenticated(false);
+          setUser(null);
         }
       } else {
         setIsAuthenticated(false);
+        setGithubToken(null);
       }
     };
 
     checkSession();
   }, []);
 
-  // 監聽 Giscus 認證變化
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.origin !== "https://giscus.app") return;
-
-      if (event.data?.giscus?.discussion?.authenticated === true) {
-        setIsAuthenticated(true);
-        messageApi.success("Successfully logged in with GitHub");
-
-        // 當 Giscus 確認認證後，嘗試獲取用戶數據
-        const token = localStorage.getItem("giscus-session");
-        if (token) {
-          try {
-            await fetchUserData(token);
-          } catch (err) {
-            console.error(
-              "Failed to fetch user data after authentication:",
-              err
-            );
-          }
-        }
-      } else if (event.data?.giscus?.discussion?.authenticated === false) {
-        setIsAuthenticated(false);
-        setUser(null);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [messageApi]);
-
-  // 通過 Giscus 獲取 GitHub 用戶數據
-  const fetchUserData = async (token: string) => {
-    try {
-      // 登錄令牌信息
-      console.log(
-        "Using Giscus session token:",
-        token.substring(0, 10) + "..."
-      );
-
-      // 通過 Giscus iframe 獲取用戶數據
-      const iframe = document.querySelector<HTMLIFrameElement>(
-        "iframe.giscus-frame"
-      );
-      
-      if (iframe?.contentWindow) {
-        // 請求用戶數據
-        iframe.contentWindow.postMessage(
-          { giscus: { setConfig: { getUserData: true } } },
-          "https://giscus.app"
-        );
-        
-        // 添加一個事件監聽器來獲取用戶數據
-        const getUserData = (event: MessageEvent) => {
-          if (event.origin !== "https://giscus.app") return;
-          
-          if (event.data?.giscus?.userData) {
-            const userData = event.data.giscus.userData;
-            
-            const user: GithubUser = {
-              login: userData.login || "github-user",
-              id: userData.id || 12345,
-              avatar_url: userData.avatar_url || "https://avatars.githubusercontent.com/u/583231?v=4",
-              name: userData.name || userData.login || "GitHub User",
-              email: userData.email,
-            };
-            
-            setUser(user);
-            // 移除事件監聽器，因為我們已經獲取了用戶數據
-            window.removeEventListener("message", getUserData);
-          }
-        };
-        
-        window.addEventListener("message", getUserData);
-        
-        // 如果一定時間內沒有收到用戶數據，回退到使用模擬用戶
-        setTimeout(() => {
-          if (!user) {
-            const mockUser: GithubUser = {
-              login: "github-user",
-              id: 12345,
-              avatar_url: "https://avatars.githubusercontent.com/u/583231?v=4",
-              name: "GitHub User",
-            };
-            
-            setUser(mockUser);
-            window.removeEventListener("message", getUserData);
-          }
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      throw err;
-    }
+  // 獲取用戶 token
+  const getUserToken = (): string | null => {
+    return githubToken || localStorage.getItem("github_access_token");
   };
 
-  // 使用 Giscus 提供的登錄功能
+  // 使用 GitHub OAuth 登录
   const login = () => {
     setLoading(true);
-    
-    // 尋找 Giscus iframe 並觸發登錄
-    const iframe = document.querySelector<HTMLIFrameElement>(
-      "iframe.giscus-frame"
-    );
-    
-    if (iframe?.contentWindow) {
-      // 發送消息到 Giscus 以觸發 GitHub 登錄
-      iframe.contentWindow.postMessage(
-        { giscus: { setConfig: { authentication: "github" } } },
-        "https://giscus.app"
-      );
+    try {
+      // 重定向到 GitHub 授權頁面
+      redirectToGitHubLogin();
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Failed to initiate login. Please try again.");
       setLoading(false);
-    } else {
-      // 如果找不到 iframe，引導用戶到評論區
-      messageApi.info(
-        "Please navigate to the comments section to sign in with GitHub"
-      );
-      setLoading(false);
+      messageApi.error("Failed to login. Please try again.");
     }
   };
 
   // 登出
   const logout = () => {
-    // 移除 Giscus session
-    localStorage.removeItem("giscus-session");
+    // 移除 GitHub token
+    localStorage.removeItem("github_access_token");
+    localStorage.removeItem("github_oauth_state");
+
+    // 更新状态
     setIsAuthenticated(false);
     setUser(null);
-
-    // 通知 Giscus iframe 登出
-    const iframe = document.querySelector<HTMLIFrameElement>(
-      "iframe.giscus-frame"
-    );
-    if (iframe?.contentWindow) {
-      iframe.contentWindow.postMessage(
-        { giscus: { setConfig: { authentication: "none" } } },
-        "https://giscus.app"
-      );
-    }
+    setGithubToken(null);
 
     messageApi.success("Logged out successfully");
   };
@@ -206,28 +127,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   // 處理 OAuth 回調
   const handleAuthCallback = async (code: string) => {
     setLoading(true);
+    setError(null);
+
     try {
-      // 為 Giscus 存儲授權碼
-      localStorage.setItem("giscus-code", code);
-      
-      // 通知 Giscus 使用該授權碼
-      const iframe = document.querySelector<HTMLIFrameElement>(
-        "iframe.giscus-frame"
-      );
-      if (iframe?.contentWindow) {
-        iframe.contentWindow.postMessage(
-          { giscus: { setConfig: { code } } },
-          "https://giscus.app"
-        );
+      console.log("處理 OAuth 回調，獲取 token...");
+      // 交換授權碼獲取 access token
+      const token = await exchangeCodeForToken(code);
+
+      if (!token) {
+        throw new Error("Failed to obtain access token");
       }
-      
+
+      console.log("成功獲取 access token");
+
+      // 存儲 token
+      localStorage.setItem("github_access_token", token);
+      setGithubToken(token);
       setIsAuthenticated(true);
+
+      // 獲取用戶資料
+      const userData = await fetchGitHubUserProfile(token);
+
+      if (userData) {
+        setUser({
+          login: userData.login,
+          id: userData.id,
+          avatar_url: userData.avatar_url,
+          name: userData.name || userData.login,
+          email: userData.email,
+        });
+      }
+
+      // 登錄成功後，多次通知 Giscus，確保能夠接收到
+      console.log("OAuth 認證成功，立即通知 Giscus");
+      notifyGiscusAboutLogin(token);
+
+      // 延遲再次通知，確保 Giscus iframe 已加載
+      setTimeout(() => {
+        console.log("延遲通知 Giscus (1秒後)");
+        notifyGiscusAboutLogin(token);
+      }, 1000);
+
+      // 再次延遲通知，以防萬一
+      setTimeout(() => {
+        console.log("再次延遲通知 Giscus (3秒後)");
+        notifyGiscusAboutLogin(token);
+      }, 3000);
+
       setLoading(false);
       messageApi.success("Successfully authenticated with GitHub");
     } catch (err) {
       console.error("Authentication error:", err);
       setError("Failed to authenticate with GitHub");
       setLoading(false);
+      setIsAuthenticated(false);
       throw err;
     }
   };
@@ -237,9 +190,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     user,
     loading,
     error,
+    githubToken,
     login,
     logout,
     handleAuthCallback,
+    getUserToken,
   };
 
   return (
