@@ -8,10 +8,23 @@ import F2EIssueList from "./F2EIssueList";
 import { RootState } from "../store";
 
 const { Title } = Typography;
-const { TabPane } = Tabs;
 
 const HomePage: React.FC = () => {
   const { isAuthor } = useSelector((state: RootState) => state.user);
+
+  // Define Tabs items
+  const tabItems = [
+    {
+      key: "f2e-jobs",
+      label: "F2E Jobs",
+      children: <F2EIssueList />
+    },
+    {
+      key: "grapevine",
+      label: "Grapevine Community",
+      children: <IssueList />
+    }
+  ];
 
   return (
     <div className="home-container">
@@ -37,14 +50,7 @@ const HomePage: React.FC = () => {
         </Col>
 
         <Col span={24}>
-          <Tabs defaultActiveKey="f2e-jobs" style={{ padding: "0 16px" }}>
-            <TabPane tab="F2E Jobs" key="f2e-jobs">
-              <F2EIssueList />
-            </TabPane>
-            <TabPane tab="Grapevine Community" key="grapevine">
-              <IssueList />
-            </TabPane>
-          </Tabs>
+          <Tabs defaultActiveKey="f2e-jobs" style={{ padding: "0 16px" }} items={tabItems} />
         </Col>
       </Row>
     </div>

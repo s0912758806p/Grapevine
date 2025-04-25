@@ -30,6 +30,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleMenuClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   const userMenuItems: MenuItem[] = [
     {
       key: "profile",
@@ -66,9 +70,64 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
   ];
 
-  const handleMenuClick = () => {
-    setMobileMenuOpen(false);
-  };
+  // Create menu items for main navigation
+  const mainNavItems: MenuItem[] = [
+    {
+      key: "/issues",
+      label: <Link to="/">Issues</Link>,
+    },
+    {
+      key: "/pull-requests",
+      label: <Link to="/">Pull requests</Link>,
+    },
+    {
+      key: "/discussions",
+      label: <Link to="/">Discussions</Link>,
+    },
+    {
+      key: "/projects",
+      label: <Link to="/">Projects</Link>,
+    },
+  ];
+
+  // Create menu items for mobile navigation
+  const mobileNavItems: MenuItem[] = [
+    {
+      key: "/issues",
+      label: <Link to="/">Issues</Link>,
+      onClick: handleMenuClick,
+    },
+    {
+      key: "/pull-requests",
+      label: <Link to="/">Pull requests</Link>,
+      onClick: handleMenuClick,
+    },
+    {
+      key: "/discussions",
+      label: <Link to="/">Discussions</Link>,
+      onClick: handleMenuClick,
+    },
+    {
+      key: "/projects",
+      label: <Link to="/">Projects</Link>,
+      onClick: handleMenuClick,
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "new-issue",
+      label: "New issue",
+      icon: <PlusOutlined />,
+      onClick: handleMenuClick,
+    },
+    {
+      key: "notifications",
+      label: "Notifications",
+      icon: <BellOutlined />,
+      onClick: handleMenuClick,
+    },
+  ];
 
   return (
     <Layout
@@ -106,20 +165,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 fontWeight: 600,
                 fontSize: "14px",
               }}
-            >
-              <Menu.Item key="/issues">
-                <Link to="/">Issues</Link>
-              </Menu.Item>
-              <Menu.Item key="/pull-requests">
-                <Link to="/">Pull requests</Link>
-              </Menu.Item>
-              <Menu.Item key="/discussions">
-                <Link to="/">Discussions</Link>
-              </Menu.Item>
-              <Menu.Item key="/projects">
-                <Link to="/">Projects</Link>
-              </Menu.Item>
-            </Menu>
+              items={mainNavItems}
+            />
           </div>
 
           <div
@@ -221,27 +268,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             style={{ marginBottom: "16px" }}
           />
           
-          <Menu mode="vertical" selectedKeys={[location.pathname]}>
-            <Menu.Item key="/issues" onClick={handleMenuClick}>
-              <Link to="/">Issues</Link>
-            </Menu.Item>
-            <Menu.Item key="/pull-requests" onClick={handleMenuClick}>
-              <Link to="/">Pull requests</Link>
-            </Menu.Item>
-            <Menu.Item key="/discussions" onClick={handleMenuClick}>
-              <Link to="/">Discussions</Link>
-            </Menu.Item>
-            <Menu.Item key="/projects" onClick={handleMenuClick}>
-              <Link to="/">Projects</Link>
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item key="new-issue" onClick={handleMenuClick}>
-              <PlusOutlined /> New issue
-            </Menu.Item>
-            <Menu.Item key="notifications" onClick={handleMenuClick}>
-              <BellOutlined /> Notifications
-            </Menu.Item>
-          </Menu>
+          <Menu 
+            mode="vertical" 
+            selectedKeys={[location.pathname]}
+            items={mobileNavItems}
+          />
         </div>
       </Drawer>
 

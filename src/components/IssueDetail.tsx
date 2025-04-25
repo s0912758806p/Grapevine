@@ -63,7 +63,9 @@ const IssueDetail: React.FC = () => {
   if (status === "loading") {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
-        <Spin tip="Loading..." />
+        <Spin tip="Loading...">
+          <div style={{ padding: "30px", background: "rgba(0,0,0,0.05)" }} />
+        </Spin>
       </div>
     );
   }

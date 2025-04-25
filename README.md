@@ -1,15 +1,17 @@
-# Grapevine Forum
 
-Grapevine is a lightweight forum application with a Reddit-style interface, using local mock data to implement posts and comments functionality.
+# Grapevine
+
+Grapevine is a modern forum application that integrates with GitHub issues to create a clean, collaborative discussion platform.
 
 ## Features
 
-- Reddit-style user interface
-- Post voting system (upvote/downvote)
-- Complete post and comment system using local mock data
-- Custom username support for posts and comments
-- Tag categorization system for better content organization
-- Fully responsive design for both mobile and desktop devices
+- GitHub integration - leverages GitHub issues as content source
+- Dual content sources - displays both community discussions and F2E jobs
+- Interactive comments via Utterances
+- Clean, modern UI built with Ant Design
+- Responsive design for all devices
+- Post sharing capabilities
+- Tag categorization system
 
 ## Quick Start
 
@@ -18,8 +20,8 @@ Grapevine is a lightweight forum application with a Reddit-style interface, usin
 1. Clone this repository
 
    ```
-   git clone https://github.com/yourusername/grapevine.git
-   cd grapevine
+   git clone https://github.com/yourusername/Grapevine.git
+   cd Grapevine
    ```
 
 2. Install dependencies
@@ -28,13 +30,21 @@ Grapevine is a lightweight forum application with a Reddit-style interface, usin
    npm install
    ```
 
-3. Start the development server
+3. Set up environment variables
+
+   Create a `.env` file with:
+   ```
+   VITE_GITHUB_REPO_OWNER=your-github-username
+   VITE_GITHUB_REPO_NAME=your-repo-name
+   ```
+
+4. Start the development server
 
    ```
    npm run dev
    ```
 
-4. Open your browser and visit `http://localhost:5173`
+5. Open your browser and visit `http://localhost:5173`
 
 ### Build for Production
 
@@ -42,80 +52,73 @@ Grapevine is a lightweight forum application with a Reddit-style interface, usin
 npm run build
 ```
 
-The generated files will be in the `dist` folder.
+Generated files will be in the `dist` folder.
 
 ## Usage Guide
 
-### Browse Posts
+### Browse Issues and Discussions
 
-The homepage displays a list of all posts. Click on any post to view its details and comments.
+The homepage displays tabs for F2E Jobs and Grapevine Community discussions. Click any item to view details and comments.
 
-### Create a New Post
+### Comments
 
-1. Click the "+" button in the navigation bar
-2. Fill in your username (optional), title, and content
-3. Optionally add custom tags
-4. Click the "Post" button to publish
-
-### Add Comments
-
-1. Find the comment section at the bottom of the post detail page
-2. Enter your username (optional)
-3. Type your comment
-4. Click the "Post Comment" button
+The application uses Utterances for comments, allowing GitHub-based authentication and interactions directly in the interface.
 
 ## Project Structure
 
 ```
 src/
 ├── api/
-│   └── mockData.ts    # Mock data and API functions
+│   └── githubApi.ts     # GitHub API integration
 ├── components/
-│   ├── AppLayout.tsx  # Application layout
-│   ├── CommentSection.tsx # Comments component
-│   ├── IssueDetail.tsx # Post detail
-│   ├── IssueList.tsx  # Post listing
-│   └── NewIssue.tsx   # New post creation
+│   ├── AppLayout.tsx    # Main application layout
+│   ├── AntConfigProvider.tsx # Ant Design theme configuration
+│   ├── CommentSection.tsx    # Comments component
+│   ├── IssueDetail.tsx       # Regular issue details
+│   ├── F2EIssueDetail.tsx    # F2E job issue details
+│   ├── HomePage.tsx          # Main page with tabs
+│   ├── UtterancesComments.tsx # GitHub comments integration
 ├── pages/
-│   └── CommentsExample.tsx # Comment example page
+│   └── CommentsExample.tsx   # Comment example page
 ├── store/
-│   ├── commentsSlice.ts # Comment state management
-│   ├── index.ts        # Redux store configuration
-│   └── issuesSlice.ts  # Post state management
-├── types/
-│   └── index.ts        # TypeScript interfaces
-├── App.tsx             # Main application component
-└── main.tsx           # Application entry point
+│   ├── commentsSlice.ts      # Comments state management
+│   ├── githubIssuesSlice.ts  # GitHub issues state
+│   ├── f2eIssuesSlice.ts     # F2E issues state
+│   └── index.ts              # Redux store configuration
+├── styles/
+│   ├── markdown.scss         # Markdown styling
+│   └── index.scss            # Global styles
+└── types/
+    └── index.ts              # TypeScript interfaces
 ```
 
 ## Technology Stack
 
-- **Frontend Framework**: React 18
+- **Frontend Framework**: React
 - **Language**: TypeScript
 - **State Management**: Redux Toolkit
-- **UI Framework**: Ant Design 5
-- **Routing**: React Router 6
-- **Date Handling**: Dayjs
-- **Build Tool**: Vite 6
-- **Styling**: SASS
+- **UI Framework**: Ant Design
+- **Routing**: React Router
+- **Data Fetching**: GitHub API
+- **Comments**: Utterances
+- **Build Tool**: Vite
+- **Styling**: SCSS
 
-## Customization
+## Configuration
 
-### Adding More Mock Data
+### GitHub Integration
 
-You can add, modify, or delete mock data in the `src/api/mockData.ts` file.
+The application connects to GitHub repositories for:
+1. Community discussions - Set via environment variables
+2. F2E Jobs - Connects to f2etw/jobs repository
 
-### Adjusting Interface Style
+### Theme Customization
 
-The main style settings are in the individual components, using Ant Design's styling system.
-
-## Deployment
-
-For deployment instructions, see the [DEPLOY.md](./DEPLOY.md) file.
+The Ant Design theme is configured in `src/components/AntConfigProvider.tsx`.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Author
 

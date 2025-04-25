@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface UtterancesCommentsProps {
   repo: string;
@@ -18,59 +18,96 @@ const UtterancesComments: React.FC<UtterancesCommentsProps> = ({
   theme = "github-light",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [utterancesLoaded, setUtterancesLoaded] = useState(false);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    const attributes = {
-      src: "https://utteranc.es/client.js",
-      repo,
-      "issue-term": issueTerm,
-      label: label || "",
-      theme,
-      crossOrigin: "anonymous",
-      async: "true",
+    setUtterancesLoaded(false);
+    
+    const timer = setTimeout(() => {
+      if (!containerRef.current) return;
+
+      if (!document.body.contains(containerRef.current)) return;
+      
+      const previousUtterances = containerRef.current.querySelector('.utterances');
+      if (previousUtterances) {
+        containerRef.current.removeChild(previousUtterances);
+      }
+
+      const script = document.createElement("script");
+      const attributes = {
+        src: "https://utteranc.es/client.js",
+        repo,
+        "issue-term": issueTerm,
+        label: label || "",
+        theme,
+        crossOrigin: "anonymous",
+        async: "true",
+      };
+
+      Object.entries(attributes).forEach(([key, value]) => {
+        script.setAttribute(key, value);
+      });
+
+      script.onload = () => {
+        setUtterancesLoaded(true);
+      };
+
+      try {
+        containerRef.current.appendChild(script);
+      } catch (error) {
+        console.error("Error loading Utterances comments:", error);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      
+      if (utterancesLoaded) {
+        setUtterancesLoaded(false);
+      }
     };
+  }, [repo, issueTerm, label, theme]);
 
-    Object.entries(attributes).forEach(([key, value]) => {
-      script.setAttribute(key, value);
-    });
+  useEffect(() => {
+    if (!utterancesLoaded) return;
 
-    // 清空容器并添加新的评论
-    if (containerRef.current) {
-      containerRef.current.innerHTML = "";
-      containerRef.current.appendChild(script);
-    }
-
-    // Add responsive styling to the Utterances iframe when it loads
-    const handleUtterancesLoad = () => {
+    const styleUtterancesFrame = () => {
       const utterancesFrame = document.querySelector('.utterances-frame') as HTMLIFrameElement;
       if (utterancesFrame) {
         utterancesFrame.style.maxWidth = '100%';
       }
     };
 
-    // Use MutationObserver to detect when Utterances adds iframe to the DOM
+    styleUtterancesFrame();
+    
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
         if (mutation.addedNodes.length) {
-          handleUtterancesLoad();
+          styleUtterancesFrame();
         }
-      });
+      }
     });
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current, { childList: true, subtree: true });
+    const utterancesContainer = document.querySelector('.utterances');
+    if (utterancesContainer) {
+      observer.observe(utterancesContainer, { 
+        childList: true, 
+        subtree: true 
+      });
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
       observer.disconnect();
     };
-  }, [repo, issueTerm, label, theme]);
+  }, [utterancesLoaded]);
 
-  return <div ref={containerRef} className="utterances-container" style={{ width: '100%', overflow: 'hidden' }} />;
+  return (
+    <div 
+      ref={containerRef} 
+      className="utterances-container" 
+      style={{ width: '100%', overflow: 'hidden' }} 
+    />
+  );
 };
 
 export default UtterancesComments;

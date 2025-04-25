@@ -11,7 +11,6 @@ import {
   Statistic,
   Row,
   Col,
-  Alert,
   Button,
   Tabs,
   Badge,
@@ -37,7 +36,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
-const { TabPane } = Tabs;
 interface CommentWithIssue extends CommentType {
   issueTitle?: string;
   issueNumber: number;
@@ -224,6 +222,51 @@ const CommentsExample: React.FC = () => {
       )}
     />
   );
+  // Define Tabs items
+  const tabItems = [
+    {
+      key: "1",
+      label: (
+        <span>
+          <CommentOutlined /> Comment Thread
+        </span>
+      ),
+      children: (
+        <Card>
+          <Select
+            style={{ width: "100%", marginBottom: 16 }}
+            placeholder="Select an issue to view comments"
+            onChange={handleIssueChange}
+            value={selectedIssueNumber}
+          >
+            {issues.map((issue) => (
+              <Option key={issue.number} value={issue.number}>
+                #{issue.number} - {issue.title}
+              </Option>
+            ))}
+          </Select>
+          {selectedIssueNumber && commentsById[selectedIssueNumber] ? (
+            <CommentSection
+              issueNumber={selectedIssueNumber}
+            />
+          ) : (
+            <Empty description="No comments found. Select an issue to view its comments." />
+          )}
+        </Card>
+      )
+    },
+    {
+      key: "2",
+      label: (
+        <span>
+          <FireOutlined /> Recent Activity
+        </span>
+      ),
+      children: (
+        <Card>{recentComments.length > 0 ? renderRecentComments() : <Empty />}</Card>
+      )
+    }
+  ];
   return (
     <div className="comments-page">
       <Typography>
@@ -239,59 +282,7 @@ const CommentsExample: React.FC = () => {
       <Divider />
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
-          <Tabs defaultActiveKey="1">
-            <TabPane
-              tab={
-                <span>
-                  <CommentOutlined /> Comment Thread
-                </span>
-              }
-              key="1"
-            >
-              <Card>
-                <div className="comment-options" style={{ marginBottom: 20 }}>
-                  <div style={{ marginBottom: 12 }}>
-                    <Space align="center">
-                      <Text strong>Select a Topic:</Text>
-                      <Select
-                        placeholder="Select an issue"
-                        style={{ width: 240 }}
-                        onChange={handleIssueChange}
-                        value={selectedIssueNumber}
-                      >
-                        {issues.map((issue) => (
-                          <Option key={issue.number} value={issue.number}>
-                            {issue.title}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Space>
-                  </div>
-                </div>
-                {selectedIssueNumber ? (
-                  <CommentSection issueNumber={selectedIssueNumber} />
-                ) : (
-                  <Alert message="Please select a topic" type="info" showIcon />
-                )}
-              </Card>
-            </TabPane>
-            <TabPane
-              tab={
-                <span>
-                  <FireOutlined /> Recent Comments
-                </span>
-              }
-              key="2"
-            >
-              <Card>
-                {recentComments.length > 0 ? (
-                  renderRecentComments()
-                ) : (
-                  <Empty description="No recent comments found" />
-                )}
-              </Card>
-            </TabPane>
-          </Tabs>
+          <Tabs defaultActiveKey="1" items={tabItems} />
         </Col>
         <Col xs={24} lg={8}>
           <Card title="Forum Statistics" style={{ marginBottom: 24 }}>
