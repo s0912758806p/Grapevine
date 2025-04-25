@@ -1,12 +1,29 @@
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  color-scheme: light;
+  /* GitHub theme colors */
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-border-default: #d0d7de;
+  --color-border-muted: #d8dee4;
+  --color-fg-default: #24292f;
+  --color-fg-muted: #57606a;
+  --color-fg-subtle: #6e7781;
+  --color-accent-fg: #0969da;
+  --color-accent-emphasis: #0969da;
+  --color-success-fg: #1a7f37;
+  --color-attention-fg: #9a6700;
+  --color-danger-fg: #cf222e;
+  --color-primer-shadow-focus: 0 0 0 3px rgba(9, 105, 218, 0.3);
+  --color-primer-shadow-inset: inset 0 1px 0 rgba(208, 215, 222, 0.2);
+  --color-scale-gray-1: #eaeef2;
+
+  /* Typography */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
 }
 
 * {
@@ -16,55 +33,69 @@
 }
 
 body {
-  background-color: #dae0e6; /* Reddit background color */
+  background-color: var(--color-canvas-default);
+  color: var(--color-fg-default);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 a {
-  color: #0079d3; /* Reddit link color */
+  color: var(--color-accent-fg);
   text-decoration: none;
 }
 
 a:hover {
-  color: #0060a8;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
-/* Reddit Card Hover Effects */
-.ant-card:hover {
-  border-color: #898989;
-  transition: border-color 0.2s ease;
+/* GitHub-style button classes */
+.btn {
+  position: relative;
+  display: inline-block;
+  padding: 5px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid;
+  border-radius: 6px;
+  appearance: none;
 }
 
-/* Vote buttons hover effects */
-.ant-btn-text:hover .anticon-arrow-up {
-  color: #ff4500 !important;
+.btn-primary {
+  color: #ffffff;
+  background-color: var(--color-accent-emphasis);
+  border-color: var(--color-accent-emphasis);
 }
 
-.ant-btn-text:hover .anticon-arrow-down {
-  color: #7193ff !important;
+.btn-primary:hover {
+  background-color: #0860c7;
+  border-color: #0860c7;
 }
 
-/* Container styles */
-.post-detail,
-.posts-container,
-.new-post {
-  max-width: 1000px;
+.btn-outline {
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-default);
+  border-color: var(--color-border-default);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
+/* GitHub-style container */
+.container {
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 0 16px;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .post-detail,
-  .posts-container,
-  .new-post {
+  .container {
     padding: 0 16px;
-  }
-
-  .ant-layout-header {
-    padding: 0 8px !important;
-  }
-
-  .ant-input-search {
-    width: 150px !important;
   }
 }

@@ -1,25 +1,30 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchComments, addComment } from "../api/mockData";
 import { CommentType } from "../types";
+
 interface CommentsState {
   comments: Record<number, CommentType[]>;
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
+
 const initialState: CommentsState = {
   comments: {},
   status: "idle",
   error: null,
 };
+
+// 直接返回空評論數組
 export const fetchCommentsThunk = createAsyncThunk(
   "comments/fetchComments",
   async (issueNumber: number) => {
     return {
       issueNumber,
-      comments: await fetchComments(issueNumber),
+      comments: [],
     };
   }
 );
+
+// 直接創建新評論
 export const addCommentThunk = createAsyncThunk(
   "comments/addComment",
   async ({
@@ -31,13 +36,23 @@ export const addCommentThunk = createAsyncThunk(
     body: string;
     userName?: string;
   }) => {
-    const comment = await addComment(issueNumber, body, userName);
+    const comment: CommentType = {
+      id: Date.now(),
+      body,
+      user: {
+        login: userName || "anonymous",
+        avatar_url: "https://avatars.githubusercontent.com/u/0",
+      },
+      created_at: new Date().toISOString(),
+    };
+
     return {
       issueNumber,
       comment,
     };
   }
 );
+
 export const commentsSlice = createSlice({
   name: "comments",
   initialState,
@@ -91,5 +106,6 @@ export const commentsSlice = createSlice({
       });
   },
 });
+
 export const { clearComments } = commentsSlice.actions;
 export default commentsSlice.reducer;

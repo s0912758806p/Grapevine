@@ -28,13 +28,19 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { fetchCommentsThunk, addCommentThunk } from "../store/commentsSlice";
 import { RootState, AppDispatch } from "../store";
 import { createSelector } from "@reduxjs/toolkit";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import "./markdown.scss";
+
 dayjs.extend(relativeTime);
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
+
 interface CommentSectionProps {
   issueNumber: number;
   className?: string;
 }
+
 const makeSelectCommentsData = () =>
   createSelector(
     [
@@ -49,6 +55,7 @@ const makeSelectCommentsData = () =>
       error,
     })
   );
+
 const CommentSection: React.FC<CommentSectionProps> = ({
   issueNumber,
   className = "",
@@ -66,6 +73,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const { comments, status, error } = useSelector((state: RootState) =>
     selectCommentsData(state, issueNumber)
   );
+
   useEffect(() => {
     const savedUsername = localStorage.getItem("grapevine_username");
     if (savedUsername) {
@@ -73,11 +81,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       form.setFieldsValue({ userName: savedUsername });
     }
   }, [form]);
+
   useEffect(() => {
     if (issueNumber) {
       dispatch(fetchCommentsThunk(issueNumber));
     }
   }, [dispatch, issueNumber]);
+
   useEffect(() => {
     if (comments.length > 0 && Object.keys(baseCommentLikes).length === 0) {
       const initialBaseLikes: Record<number, number> = {};
@@ -256,15 +266,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                     </div>
                   }
                   description={
-                    <Paragraph
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        margin: 0,
-                      }}
-                      ellipsis={{ rows: 3, expandable: true, symbol: "more" }}
-                    >
-                      {comment.body}
-                    </Paragraph>
+                    <div className="markdown-body" style={{ fontSize: "14px" }}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {comment.body}
+                      </ReactMarkdown>
+                    </div>
                   }
                 />
               </List.Item>

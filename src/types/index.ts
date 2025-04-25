@@ -2,7 +2,7 @@ export interface IssueType {
   id: number;
   number: number;
   title: string;
-  body: string;
+  body: string | null;
   user: {
     login: string;
     avatar_url: string;
@@ -15,6 +15,8 @@ export interface IssueType {
     color: string;
   }[];
   state: string;
+  html_url?: string;
+  comments_url?: string;
 }
 export interface CommentType {
   id: number;

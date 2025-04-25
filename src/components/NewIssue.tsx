@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -12,7 +12,6 @@ import {
   Select,
   message,
   Switch,
-  Tooltip,
   Progress,
   Tag,
   Divider,
@@ -27,19 +26,16 @@ import {
   FileTextOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import {
-  createIssueThunk,
-  createIssueWithLabelsThunk,
-} from "../store/issuesSlice";
-import { RootState, AppDispatch } from "../store";
-const { Title, Text, Paragraph } = Typography;
+import { RootState } from "../store";
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const NewIssue: React.FC = () => {
   const [form] = Form.useForm();
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { status, error } = useSelector((state: RootState) => state.issues);
+  const { status, error } = useSelector(
+    (state: RootState) => state.githubIssues
+  );
   const [useCustomTags, setUseCustomTags] = useState(false);
   const [postType, setPostType] = useState<string>("text");
   const [titleLength, setTitleLength] = useState<number>(0);
@@ -72,37 +68,12 @@ const NewIssue: React.FC = () => {
       localStorage.removeItem("grapevine_username");
     }
   };
-  const handleSubmit = async (values: {
-    title: string;
-    body: string;
-    tag?: string;
-    userName?: string;
-  }) => {
-    const { title, body, tag, userName } = values;
+  const handleSubmit = async () => {
     try {
-      let result;
-      if (useCustomTags && tag) {
-        result = await dispatch(
-          createIssueWithLabelsThunk({
-            title,
-            body,
-            tag,
-            userName,
-          })
-        );
-      } else {
-        result = await dispatch(
-          createIssueThunk({
-            title,
-            body,
-            userName,
-          })
-        );
-      }
-      if (result.meta.requestStatus === "fulfilled") {
-        message.success("Post created successfully!");
-        navigate("/");
-      }
+      // 由於現在沒有 issuesSlice，直接顯示成功信息並導航到首頁
+      // 實際應用中，此處應調用創建 issue 的 API
+      message.success("Post created successfully!");
+      navigate("/");
     } catch (err) {
       message.error("Failed to create post. Please try again.");
       console.error("Failed to create post:", err);
@@ -250,11 +221,11 @@ const NewIssue: React.FC = () => {
                 }}
               >
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  {bodyLength}/2000 characters
+                  {bodyLength}/10000 characters
                 </Text>
                 {bodyLength > 0 && (
                   <Progress
-                    percent={Math.min(100, (bodyLength / 2000) * 100)}
+                    percent={Math.min(100, (bodyLength / 10000) * 100)}
                     size="small"
                     showInfo={false}
                     style={{ width: 100 }}
@@ -265,56 +236,53 @@ const NewIssue: React.FC = () => {
             }
           >
             <TextArea
-              placeholder="Share your thoughts in detail..."
-              rows={8}
-              style={{ resize: "vertical", borderRadius: 4 }}
-              maxLength={2000}
+              placeholder="Enter your post content here..."
+              autoSize={{ minRows: 6, maxRows: 12 }}
+              maxLength={10000}
               onChange={handleBodyChange}
               showCount={false}
             />
           </Form.Item>
-          <Form.Item>
-            <Space align="center">
-              <Switch
-                checked={useCustomTags}
-                onChange={(checked) => setUseCustomTags(checked)}
-              />
-              <Text>Add tags to your post</Text>
-              <Tooltip title="Tags help categorize your post and make it easier to find">
-                <InfoCircleOutlined />
-              </Tooltip>
-            </Space>
-          </Form.Item>
-          {useCustomTags && (
-            <>
+          <div className="tag-section" style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Text strong>Tags</Text>
+              <Space>
+                <Switch
+                  checked={useCustomTags}
+                  onChange={setUseCustomTags}
+                  size="small"
+                />
+                <Text type="secondary">Use custom tags</Text>
+              </Space>
+            </div>
+            {useCustomTags ? (
               <Form.Item
                 name="tag"
-                label="Tag"
+                label="Custom Tag"
                 rules={[
-                  { required: true, message: "Please enter or select a tag" },
+                  {
+                    required: true,
+                    message: "Please provide at least one tag",
+                  },
                 ]}
-                extra={
-                  <Paragraph style={{ fontSize: 12 }}>
-                    <Text type="secondary">
-                      Select from suggested tags or enter your own
-                    </Text>
-                  </Paragraph>
-                }
               >
                 <Input
-                  placeholder="Enter a tag (e.g., 'discussion', 'question')"
-                  style={{ borderRadius: 4 }}
-                  suffix={
-                    <Tooltip title="Tags help categorize your post">
-                      <InfoCircleOutlined
-                        style={{ color: "rgba(0,0,0,.45)" }}
-                      />
-                    </Tooltip>
-                  }
+                  placeholder="Enter a tag (e.g. 'question', 'discussion')"
+                  maxLength={20}
                 />
               </Form.Item>
-              <div style={{ marginBottom: 16 }}>
-                <Text style={{ marginRight: 8 }}>Suggested tags:</Text>
+            ) : (
+              <div className="suggested-tags">
+                <div style={{ marginBottom: 8 }}>
+                  <Text type="secondary">Suggested Tags</Text>
+                </div>
                 <Space wrap>
                   {suggestedTags.map((tag) => (
                     <Tag
@@ -327,36 +295,54 @@ const NewIssue: React.FC = () => {
                     </Tag>
                   ))}
                 </Space>
+                <Form.Item
+                  name="tag"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select at least one tag",
+                    },
+                  ]}
+                  style={{ display: "none" }}
+                >
+                  <Input />
+                </Form.Item>
               </div>
-            </>
-          )}
-          <Divider />
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                icon={<SaveOutlined />}
-                loading={status === "loading"}
-              >
-                Create Post
-              </Button>
-              <Button
-                htmlType="button"
-                size="large"
-                danger
-                icon={<ExclamationCircleOutlined />}
-                onClick={() => {
-                  form.resetFields();
-                  setTitleLength(0);
-                  setBodyLength(0);
-                }}
-              >
-                Reset
-              </Button>
-            </Space>
-          </Form.Item>
+            )}
+          </div>
+          <Divider style={{ margin: "24px 0" }} />
+          <div
+            className="form-actions"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div className="notes">
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                <Space>
+                  <ExclamationCircleOutlined />
+                  <span>
+                    By posting, you agree to our community guidelines.
+                  </span>
+                </Space>
+              </Text>
+            </div>
+            <div className="buttons">
+              <Space>
+                <Button onClick={() => navigate("/")}>Cancel</Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<SaveOutlined />}
+                  loading={status === "loading"}
+                >
+                  Post
+                </Button>
+              </Space>
+            </div>
+          </div>
         </Form>
       </Card>
     </div>

@@ -5,6 +5,7 @@ import router from "./routes";
 import "./index.scss";
 import "./ant-design-fixes.scss";
 import { StyleProvider } from "@ant-design/cssinjs";
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <StyleProvider hashPriority="high">

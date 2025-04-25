@@ -23,15 +23,14 @@ import {
   EyeOutlined,
   FireOutlined,
   TeamOutlined,
-  ClockCircleOutlined,
   LikeOutlined,
   DislikeOutlined,
 } from "@ant-design/icons";
 import CommentSection from "../components/CommentSection";
-import { fetchIssuesThunk } from "../store/issuesSlice";
 import { fetchCommentsThunk } from "../store/commentsSlice";
+import { fetchGithubIssuesThunk } from "../store/githubIssuesSlice";
 import { RootState, AppDispatch } from "../store";
-import { IssueType, CommentType } from "../types";
+import { CommentType } from "../types";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -51,13 +50,12 @@ const CommentsExample: React.FC = () => {
   const [baseCommentLikes, setBaseCommentLikes] = useState<
     Record<number, number>
   >({});
-  const issues = useSelector((state: RootState) => state.issues.issues);
-  const issuesStatus = useSelector((state: RootState) => state.issues.status);
+  const issues = useSelector((state: RootState) => state.githubIssues.issues);
   const commentsById = useSelector(
     (state: RootState) => state.comments.comments
   );
   useEffect(() => {
-    dispatch(fetchIssuesThunk());
+    dispatch(fetchGithubIssuesThunk({ page: 1, perPage: 20 }));
   }, [dispatch]);
   useEffect(() => {
     if (selectedIssueNumber) {
@@ -250,114 +248,82 @@ const CommentsExample: React.FC = () => {
               }
               key="1"
             >
-              <Card
-                title="Post Comments"
-                extra={
-                  <Select
-                    style={{ width: 250 }}
-                    placeholder="Select a post"
-                    value={selectedIssueNumber}
-                    onChange={handleIssueChange}
-                    loading={issuesStatus === "loading"}
-                  >
-                    {issues.map((issue: IssueType) => (
-                      <Option key={issue.number} value={issue.number}>
-                        {issue.title}
-                      </Option>
-                    ))}
-                  </Select>
-                }
-              >
-                {issuesStatus === "loading" && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Alert message="Loading posts..." type="info" showIcon />
+              <Card>
+                <div className="comment-options" style={{ marginBottom: 20 }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <Space align="center">
+                      <Text strong>Select a Topic:</Text>
+                      <Select
+                        placeholder="Select an issue"
+                        style={{ width: 240 }}
+                        onChange={handleIssueChange}
+                        value={selectedIssueNumber}
+                      >
+                        {issues.map((issue) => (
+                          <Option key={issue.number} value={issue.number}>
+                            {issue.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Space>
                   </div>
+                </div>
+                {selectedIssueNumber ? (
+                  <CommentSection issueNumber={selectedIssueNumber} />
+                ) : (
+                  <Alert message="Please select a topic" type="info" showIcon />
                 )}
-                {issuesStatus === "failed" && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Alert
-                      message="Failed to load posts"
-                      type="error"
-                      showIcon
-                    />
-                  </div>
-                )}
-                {issuesStatus === "succeeded" && issues.length === 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Alert message="No posts found" type="warning" showIcon />
-                  </div>
-                )}
-                {issues.find(
-                  (issue) => issue.number === selectedIssueNumber
-                ) && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Link to={`/issue/${selectedIssueNumber}`}>
-                      <Button type="link" icon={<EyeOutlined />}>
-                        View Full Post
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-                <CommentSection issueNumber={selectedIssueNumber} />
               </Card>
             </TabPane>
             <TabPane
               tab={
                 <span>
-                  <ClockCircleOutlined /> Recent Comments
+                  <FireOutlined /> Recent Comments
                 </span>
               }
               key="2"
             >
-              <Card title="Recent Activity">
+              <Card>
                 {recentComments.length > 0 ? (
                   renderRecentComments()
                 ) : (
-                  <Empty description="No recent comments" />
+                  <Empty description="No recent comments found" />
                 )}
               </Card>
             </TabPane>
           </Tabs>
         </Col>
         <Col xs={24} lg={8}>
-          <Space direction="vertical" style={{ width: "100%" }} size="large">
-            <Card title="Community Stats">
-              <Row gutter={[16, 16]}>
-                <Col span={12}>
-                  <Statistic
-                    title="Posts"
-                    value={issues.length}
-                    prefix={<FireOutlined />}
+          <Card title="Forum Statistics" style={{ marginBottom: 24 }}>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Statistic
+                  title="Topics"
+                  value={issues.length}
+                  prefix={<EyeOutlined />}
+                />
+              </Col>
+              <Col span={12}>
+                <Statistic
+                  title="Comments"
+                  value={totalComments}
+                  prefix={<CommentOutlined />}
+                />
+              </Col>
+              <Col span={24}>
+                <Divider style={{ margin: "12px 0" }} />
+                <Title level={5}>Most Active Users</Title>
+                {activeUsers.length > 0 ? (
+                  renderActiveUsers()
+                ) : (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="No active users yet"
                   />
-                </Col>
-                <Col span={12}>
-                  <Statistic
-                    title="Comments"
-                    value={totalComments}
-                    prefix={<CommentOutlined />}
-                  />
-                </Col>
-              </Row>
-            </Card>
-            <Card title="Most Active Users">
-              {activeUsers.length > 0 ? (
-                renderActiveUsers()
-              ) : (
-                <Empty description="No active users yet" />
-              )}
-            </Card>
-            <Card title="Latest Posts">
-              <List
-                size="small"
-                dataSource={issues.slice(0, 5)}
-                renderItem={(issue: IssueType) => (
-                  <List.Item>
-                    <Link to={`/issue/${issue.number}`}>{issue.title}</Link>
-                  </List.Item>
                 )}
-              />
-            </Card>
-          </Space>
+              </Col>
+            </Row>
+          </Card>
         </Col>
       </Row>
     </div>

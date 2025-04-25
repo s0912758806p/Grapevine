@@ -1,23 +1,73 @@
-import React from "react";
-import { Layout, Typography, Input, Button, Space } from "antd";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider } from "antd";
+import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { MenuProps } from "antd";
 import {
   SmileOutlined,
   SearchOutlined,
   BellOutlined,
   PlusOutlined,
-  MessageOutlined,
-  CommentOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
+import { RootState } from "../store";
+
 const { Header, Content, Footer } = Layout;
-const { Title } = Typography;
-const { Search } = Input;
+
+type MenuItem = Required<MenuProps>["items"][number];
+
 interface AppLayoutProps {
   children: React.ReactNode;
 }
+
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  // Get user role information
+  const { isAuthor } = useSelector((state: RootState) => state.user);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  const userMenuItems: MenuItem[] = [
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "Your profile",
+    },
+    {
+      key: "settings",
+      icon: <SettingOutlined />,
+      label: "Settings",
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Sign out",
+    },
+  ];
+
+  const plusMenuItems: MenuItem[] = [
+    {
+      key: "new-repository",
+      label: "New repository",
+    },
+    {
+      key: "new-issue",
+      label: "New issue",
+    },
+    {
+      key: "new-pr",
+      label: "New pull request",
+    },
+  ];
+
   return (
-    <Layout style={{ minHeight: "100vh", background: "#DAE0E6" }}>
+    <Layout
+      style={{ minHeight: "100vh", background: "var(--color-canvas-default)" }}
+    >
       <Header
         style={{
           position: "sticky",
@@ -26,94 +76,199 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           width: "100%",
           display: "flex",
           alignItems: "center",
-          padding: "0 20px",
-          height: "48px",
-          background: "white",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          padding: "0 16px",
+          height: "62px",
+          background: "var(--color-canvas-default)",
+          borderBottom: "1px solid var(--color-border-muted)",
         }}
       >
-        <Link
-          to="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            textDecoration: "none",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+            <SmileOutlined style={{ fontSize: "32px", color: "#000000" }} />
+          </Link>
+
+          <div
+            className="header-nav-links"
+            style={{ display: "flex", marginLeft: "24px" }}
+          >
+            <Menu
+              mode="horizontal"
+              selectedKeys={[location.pathname]}
+              style={{
+                border: "none",
+                background: "transparent",
+                fontWeight: 600,
+                fontSize: "14px",
+              }}
+            >
+              <Menu.Item key="/issues">
+                <Link to="/">Issues</Link>
+              </Menu.Item>
+              <Menu.Item key="/pull-requests">
+                <Link to="/">Pull requests</Link>
+              </Menu.Item>
+              <Menu.Item key="/discussions">
+                <Link to="/">Discussions</Link>
+              </Menu.Item>
+              <Menu.Item key="/projects">
+                <Link to="/">Projects</Link>
+              </Menu.Item>
+            </Menu>
+          </div>
+
           <div
             style={{
+              flex: 1,
               display: "flex",
+              justifyContent: "flex-end",
               alignItems: "center",
-              marginRight: "20px",
+              gap: "16px",
             }}
           >
-            <SmileOutlined
-              style={{ fontSize: "28px", color: "#FF4500", marginRight: "8px" }}
-            />
-            <Title level={4} style={{ color: "black", margin: 0 }}>
-              Grapevine
-            </Title>
-          </div>
-        </Link>
-        <Search
-          placeholder="Search posts"
-          allowClear
-          style={{
-            width: "400px",
-            margin: "0 20px",
-          }}
-          prefix={<SearchOutlined style={{ color: "#818384" }} />}
-        />
-        <div
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}
-        >
-          <Space size="large">
-            <Button
-              type="text"
-              icon={<PlusOutlined />}
-              href="/new-issue"
-              style={{ color: "#0079D3" }}
-            />
-            <Button
-              type="text"
-              icon={<MessageOutlined />}
-              style={{ color: "#0079D3" }}
-            />
-            <Button
-              type="text"
-              icon={<CommentOutlined />}
-              href="/comments"
-              style={{ color: "#0079D3" }}
-            />
+            <div
+              style={{ position: "relative", maxWidth: "272px", width: "100%" }}
+            >
+              <Input
+                placeholder="Search or jump to..."
+                prefix={
+                  <SearchOutlined style={{ color: "var(--color-fg-subtle)" }} />
+                }
+                style={{
+                  backgroundColor: "var(--color-canvas-subtle)",
+                  border: searchFocused
+                    ? "1px solid var(--color-accent-fg)"
+                    : "1px solid var(--color-border-default)",
+                  borderRadius: "6px",
+                }}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+              />
+              {searchFocused && (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "8px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--color-fg-subtle)",
+                    fontSize: "12px",
+                    backgroundColor: "var(--color-scale-gray-1)",
+                    padding: "1px 6px",
+                    borderRadius: "3px",
+                  }}
+                >
+                  /
+                </div>
+              )}
+            </div>
+
+            <Dropdown menu={{ items: plusMenuItems }} placement="bottomRight">
+              <Button
+                type="text"
+                icon={<PlusOutlined />}
+                style={{ color: "var(--color-fg-default)" }}
+              />
+            </Dropdown>
+
             <Button
               type="text"
               icon={<BellOutlined />}
-              style={{ color: "#0079D3" }}
+              style={{ color: "var(--color-fg-default)" }}
             />
-          </Space>
-        </div>
-      </Header>
-      <Content style={{ padding: "24px 0" }}>
-        <div
-          className="container"
-          style={{ maxWidth: "1000px", margin: "0 auto" }}
-        >
-          <div
-            style={{
-              background: "#DAE0E6",
-              minHeight: 280,
-            }}
-          >
-            {children}
+
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Avatar
+                style={{
+                  backgroundColor: isAuthor ? "#4F46E5" : "#9CA3AF",
+                  cursor: "pointer",
+                }}
+                icon={<UserOutlined />}
+              />
+            </Dropdown>
           </div>
         </div>
+      </Header>
+
+      <Content>
+        <div
+          className="container"
+          style={{
+            padding: "24px 16px",
+          }}
+        >
+          {children}
+        </div>
       </Content>
+
       <Footer
-        style={{ textAlign: "center", background: "white", padding: "12px 0" }}
+        style={{
+          background: "var(--color-canvas-subtle)",
+          borderTop: "1px solid var(--color-border-muted)",
+          padding: "40px 16px 24px",
+        }}
       >
-        Grapevine Forum by Gorman ©{new Date().getFullYear()} - Reddit Style
+        <div className="container">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "24px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <SmileOutlined style={{ fontSize: "24px" }} />
+              <span style={{ fontSize: "16px", fontWeight: 600 }}>
+                Grapevine
+              </span>
+            </div>
+            <div>
+              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+                Terms
+              </a>
+              <Divider
+                type="vertical"
+                style={{ borderColor: "var(--color-border-muted)" }}
+              />
+              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+                Privacy
+              </a>
+              <Divider
+                type="vertical"
+                style={{ borderColor: "var(--color-border-muted)" }}
+              />
+              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+                Security
+              </a>
+              <Divider
+                type="vertical"
+                style={{ borderColor: "var(--color-border-muted)" }}
+              />
+              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+                Status
+              </a>
+              <Divider
+                type="vertical"
+                style={{ borderColor: "var(--color-border-muted)" }}
+              />
+              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+                Help
+              </a>
+            </div>
+          </div>
+          <div
+            style={{
+              color: "var(--color-fg-muted)",
+              fontSize: "12px",
+              textAlign: "center",
+            }}
+          >
+            © {new Date().getFullYear()} Grapevine. All rights reserved.
+          </div>
+        </div>
       </Footer>
     </Layout>
   );
 };
+
 export default AppLayout;

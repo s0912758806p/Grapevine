@@ -36,3 +36,211 @@
 .ant-form-item-control-input {
   min-height: 32px;
 }
+
+/* GitHub-style fixes for Ant Design components */
+
+/* GitHub-style buttons */
+.ant-btn {
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+  border: 1px solid var(--color-border-default);
+}
+
+.ant-btn-primary {
+  background-color: var(--color-accent-emphasis);
+  border-color: var(--color-accent-emphasis);
+  &:hover {
+    background-color: #0860c7;
+    border-color: #0860c7;
+  }
+  &:active {
+    background-color: #0854b4;
+    border-color: #0854b4;
+  }
+}
+
+.ant-btn-default {
+  &:hover {
+    background-color: var(--color-canvas-subtle);
+    border-color: var(--color-border-default);
+  }
+}
+
+/* GitHub-style inputs */
+.ant-input-affix-wrapper,
+.ant-input {
+  border-radius: 6px;
+  &:hover,
+  &:focus,
+  &:focus-within {
+    border-color: var(--color-accent-fg);
+  }
+}
+
+.ant-input-search-button {
+  height: 100%;
+  border-radius: 0 6px 6px 0 !important;
+}
+
+/* GitHub-style cards */
+.ant-card {
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default);
+  box-shadow: 0 1px 0 rgba(27, 31, 36, 0.04);
+
+  .ant-card-head {
+    border-bottom: 1px solid var(--color-border-muted);
+    background-color: var(--color-canvas-subtle);
+    border-radius: 6px 6px 0 0;
+    padding: 16px 24px;
+
+    .ant-card-head-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+  }
+
+  .ant-card-body {
+    padding: 16px 24px;
+  }
+}
+
+/* GitHub-style tables */
+.ant-table {
+  .ant-table-thead > tr > th {
+    background-color: var(--color-canvas-subtle);
+    border-bottom: 1px solid var(--color-border-default);
+    color: var(--color-fg-default);
+    font-weight: 600;
+  }
+
+  .ant-table-tbody > tr > td {
+    border-bottom: 1px solid var(--color-border-muted);
+  }
+
+  .ant-table-tbody > tr:hover > td {
+    background-color: rgba(234, 238, 242, 0.5);
+  }
+}
+
+/* GitHub-style menu */
+.ant-menu-horizontal {
+  border-bottom: none;
+
+  .ant-menu-item {
+    margin: 0 8px;
+    padding: 0 8px;
+    &::after {
+      display: none !important;
+    }
+
+    &.ant-menu-item-selected {
+      font-weight: 600;
+      background-color: transparent;
+      border-bottom: 2px solid var(--color-accent-emphasis);
+      margin-bottom: -1px;
+    }
+
+    &:hover {
+      color: var(--color-fg-default);
+    }
+  }
+}
+
+/* GitHub-style tabs */
+.ant-tabs {
+  .ant-tabs-nav {
+    margin-bottom: 0;
+
+    &::before {
+      border-bottom: 1px solid var(--color-border-muted);
+    }
+
+    .ant-tabs-tab {
+      padding: 8px 16px;
+      margin: 0;
+      font-size: 14px;
+      transition: border-color 0.3s;
+
+      &.ant-tabs-tab-active {
+        border-bottom: 2px solid var(--color-accent-emphasis);
+        .ant-tabs-tab-btn {
+          color: var(--color-fg-default);
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .ant-tabs-content {
+    border: 1px solid var(--color-border-muted);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 16px;
+  }
+}
+
+/* GitHub-style pagination */
+.ant-pagination {
+  .ant-pagination-item {
+    border-radius: 6px;
+    border: 1px solid var(--color-border-default);
+
+    &.ant-pagination-item-active {
+      border-color: var(--color-accent-emphasis);
+      a {
+        color: var(--color-accent-emphasis);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    .ant-pagination-item-link {
+      border-radius: 6px;
+    }
+  }
+}
+
+/* GitHub-style dropdown */
+.ant-dropdown-menu {
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+
+  .ant-dropdown-menu-item {
+    padding: 6px 16px;
+    font-size: 14px;
+
+    &:hover {
+      background-color: var(--color-canvas-subtle);
+    }
+  }
+}
+
+/* GitHub-style modal */
+.ant-modal {
+  .ant-modal-content {
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+
+    .ant-modal-header {
+      border-bottom: 1px solid var(--color-border-muted);
+      border-radius: 6px 6px 0 0;
+      padding: 16px 24px;
+
+      .ant-modal-title {
+        font-weight: 600;
+        font-size: 16px;
+      }
+    }
+
+    .ant-modal-footer {
+      border-top: 1px solid var(--color-border-muted);
+      border-radius: 0 0 6px 6px;
+      padding: 16px 24px;
+    }
+  }
+}

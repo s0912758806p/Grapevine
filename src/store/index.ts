@@ -1,11 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
-import issuesReducer from "./issuesSlice";
 import commentsReducer from "./commentsSlice";
+import f2eIssuesReducer from "./f2eIssuesSlice";
+import userReducer from "./userSlice";
+import githubIssuesReducer from "./githubIssuesSlice";
+
 export const store = configureStore({
   reducer: {
-    issues: issuesReducer,
     comments: commentsReducer,
+    f2eIssues: f2eIssuesReducer,
+    user: userReducer,
+    githubIssues: githubIssuesReducer,
   },
 });
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

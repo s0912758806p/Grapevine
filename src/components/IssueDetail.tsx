@@ -1,94 +1,55 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { Typography, Space, Tag, Button, Card, message } from "antd";
-import {
-  ArrowLeftOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  CommentOutlined,
-  BookOutlined,
-  ShareAltOutlined,
-} from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { Typography, Space, Tag, Button, Card, message, Spin } from "antd";
+import { ArrowLeftOutlined, LinkOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import {
-  fetchIssueThunk,
-  clearCurrentIssue,
-  resetIssuesStatus,
-  upvoteIssue,
-  downvoteIssue,
-} from "../store/issuesSlice";
-import { RootState, AppDispatch } from "../store";
 import CommentSection from "./CommentSection";
-import { createSelector } from "@reduxjs/toolkit";
+import UtterancesComments from "./UtterancesComments";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import "./markdown.scss";
+import { RootState, AppDispatch } from "../store";
+import { fetchGithubIssueThunk } from "../store/githubIssuesSlice";
+
 dayjs.extend(relativeTime);
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
+
 interface IssueParams {
   issueNumber: string;
 }
-const selectCommentsForCurrentIssue = createSelector(
-  [
-    (state: RootState) => state.comments.comments,
-    (state: RootState) => state.issues.currentIssue,
-  ],
-  (comments, currentIssue) => {
-    if (!currentIssue) return [];
-    return comments[currentIssue.number] || [];
-  }
-);
-const CommentsWrapper = () => {
-  const { currentIssue } = useSelector((state: RootState) => state.issues);
-  if (!currentIssue) return null;
-  return (
-    <div
-      className="comments-wrapper"
-      style={{
-        background: "white",
-        padding: "16px",
-        borderRadius: "4px",
-        marginTop: "16px",
-      }}
-    >
-      <CommentSection issueNumber={currentIssue.number} />
-    </div>
-  );
-};
+
+interface Label {
+  name: string;
+  color: string;
+}
+
 const IssueDetail: React.FC = () => {
   const { issueNumber } = useParams<keyof IssueParams>();
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { currentIssue, status, error, votes } = useSelector(
-    (state: RootState) => state.issues
-  );
-  const comments = useSelector(selectCommentsForCurrentIssue);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const {
+    currentIssue: issue,
+    status,
+    error,
+  } = useSelector((state: RootState) => state.githubIssues);
+
   useEffect(() => {
     if (issueNumber) {
-      dispatch(fetchIssueThunk(parseInt(issueNumber, 10)));
+      dispatch(fetchGithubIssueThunk(parseInt(issueNumber, 10)));
     }
-    return () => {
-      dispatch(clearCurrentIssue());
-    };
-  }, [issueNumber, dispatch]);
-  const handleBackToHome = () => {
-    dispatch(clearCurrentIssue());
-    dispatch(resetIssuesStatus());
+  }, [dispatch, issueNumber]);
+
+  const handleBackToIssues = () => {
     navigate("/");
   };
-  const handleUpvote = (issueId: number) => {
-    dispatch(upvoteIssue(issueId));
-  };
-  const handleDownvote = (issueId: number) => {
-    dispatch(downvoteIssue(issueId));
-  };
-  const getVoteCount = (issueId: number, labelsCount: number) => {
-    const baseCount = labelsCount + 1;
-    const userVote = votes[issueId] || 0;
-    return baseCount + userVote;
-  };
+
   const handleShare = () => {
-    if (!currentIssue) return;
-    const url = `${window.location.origin}/issue/${currentIssue.number}`;
+    if (!issue) return;
+
+    const url = `${window.location.origin}/issue/${issue.number}`;
     navigator.clipboard
       .writeText(url)
       .then(() => {
@@ -98,141 +59,185 @@ const IssueDetail: React.FC = () => {
         message.error("Failed to copy link");
       });
   };
+
   if (status === "loading") {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
-        Loading post...
+        <Spin tip="Loading..." />
       </div>
     );
   }
-  if (status === "failed") {
+
+  if (status === "failed" || !issue) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "red" }}>
-        Error: {error}
+      <div style={{ textAlign: "center", padding: "40px 0" }}>
+        <div
+          style={{
+            fontSize: 48,
+            color: "var(--color-danger-fg)",
+            marginBottom: 16,
+          }}
+        >
+          ⚠️
+        </div>
+        <Title level={3}>Issue not found</Title>
+        <Text style={{ display: "block", marginBottom: 24 }}>
+          {error ||
+            "The requested issue could not be found or may have been deleted."}
+        </Text>
+        <Button type="primary" onClick={handleBackToIssues}>
+          Back to Issues
+        </Button>
       </div>
     );
   }
-  if (!currentIssue) {
-    return (
-      <div style={{ padding: "20px", textAlign: "center" }}>Post not found</div>
-    );
-  }
+
   return (
-    <div className="post-detail">
+    <div className="issue-detail">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         style={{ marginBottom: 16 }}
-        onClick={handleBackToHome}
+        onClick={handleBackToIssues}
       >
-        Back to Posts
+        Back to issues
       </Button>
-      <Card
-        style={{ marginBottom: 16, borderRadius: 4 }}
-        styles={{ body: { padding: 0 } }}
-      >
-        <div style={{ display: "flex" }}>
-          {}
+
+      <Card style={{ marginBottom: 16, borderRadius: 4 }}>
+        <div>
+          <div style={{ marginBottom: 12 }}>
+            {issue.labels.length > 0 && (
+              <Space style={{ marginBottom: 8 }} wrap>
+                {issue.labels.map((label: Label) => (
+                  <Tag
+                    key={label.name}
+                    color={`#${label.color}`}
+                    style={{ borderRadius: 20 }}
+                  >
+                    {label.name}
+                  </Tag>
+                ))}
+              </Space>
+            )}
+            <div>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                <span style={{ marginRight: 8 }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor:
+                        issue.state === "open"
+                          ? "var(--color-success-fg)"
+                          : "var(--color-danger-fg)",
+                      color: "white",
+                      padding: "2px 8px",
+                      borderRadius: "16px",
+                      fontWeight: 600,
+                      textTransform: "capitalize",
+                      fontSize: "12px",
+                    }}
+                  >
+                    {issue.state}
+                  </span>
+                </span>
+                Posted by {issue.user.login} {dayjs(issue.created_at).fromNow()}
+              </Text>
+            </div>
+          </div>
+
+          <Title level={4} style={{ margin: "0 0 16px" }}>
+            {issue.title}
+          </Title>
+
           <div
+            className="post-content markdown-body"
             style={{
-              background: "#F8F9FA",
-              padding: "12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              minWidth: "45px",
+              padding: "8px 0 20px",
+              borderBottom: "1px solid var(--color-border-muted)",
             }}
           >
-            <Button
-              type="text"
-              size="small"
-              icon={<ArrowUpOutlined />}
-              style={{
-                color: votes[currentIssue.id] === 1 ? "#FF4500" : "#878A8C",
-              }}
-              onClick={() => handleUpvote(currentIssue.id)}
-              aria-label="Upvote"
-            />
-            <Text strong style={{ margin: "8px 0", color: "#1A1A1B" }}>
-              {getVoteCount(currentIssue.id, currentIssue.labels.length)}
-            </Text>
-            <Button
-              type="text"
-              size="small"
-              icon={<ArrowDownOutlined />}
-              style={{
-                color: votes[currentIssue.id] === -1 ? "#7193FF" : "#878A8C",
-              }}
-              onClick={() => handleDownvote(currentIssue.id)}
-              aria-label="Downvote"
-            />
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {issue.body}
+            </ReactMarkdown>
           </div>
-          {}
-          <div style={{ flex: 1, padding: "16px 20px" }}>
-            <div style={{ marginBottom: 12 }}>
-              {currentIssue.labels.length > 0 && (
-                <Space style={{ marginBottom: 8 }}>
-                  {currentIssue.labels.map((label) => (
-                    <Tag
-                      key={label.name}
-                      color={`#${label.color}`}
-                      style={{ borderRadius: 20 }}
-                    >
-                      r/{label.name}
-                    </Tag>
-                  ))}
-                </Space>
-              )}
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Posted by u/{currentIssue.user.login}{" "}
-                  {dayjs(currentIssue.created_at).fromNow()}
-                </Text>
-              </div>
-            </div>
-            <Title level={4} style={{ margin: "0 0 16px" }}>
-              {currentIssue.title}
-            </Title>
-            <div
-              className="post-content"
-              style={{
-                padding: "8px 0 20px",
-                borderBottom: "1px solid #EDEFF1",
-                marginBottom: "12px",
-              }}
-            >
-              <Paragraph style={{ marginBottom: 0, fontSize: "15px" }}>
-                {currentIssue.body}
-              </Paragraph>
-            </div>
-            <div style={{ display: "flex", padding: "4px 0" }}>
-              <Space size="middle">
-                <Button type="text" icon={<CommentOutlined />} size="middle">
-                  {comments.length} Comments
-                </Button>
-                <Button
-                  type="text"
-                  icon={<ShareAltOutlined />}
-                  size="middle"
-                  onClick={handleShare}
-                >
-                  Share
-                </Button>
-                <Button type="text" icon={<BookOutlined />} size="middle">
-                  Save
-                </Button>
-              </Space>
-            </div>
+
+          <div
+            style={{
+              display: "flex",
+              padding: "12px 0 0",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button type="text" icon={<LinkOutlined />} onClick={handleShare}>
+              Share
+            </Button>
+
+            <a href={issue.html_url} target="_blank" rel="noopener noreferrer">
+              <Button type="primary">View on GitHub</Button>
+            </a>
           </div>
         </div>
       </Card>
-      <div style={{ marginTop: 20, marginBottom: 10 }}>
-        <Text strong style={{ fontSize: 16 }}>
-          Comments
-        </Text>
+
+      {/* Comments Section */}
+      <div
+        className="comments-wrapper"
+        style={{
+          background: "white",
+          padding: "16px",
+          borderRadius: "4px",
+          marginTop: "16px",
+        }}
+      >
+        <Title level={4} style={{ marginTop: 0 }}>
+          Comments ({issue.comments})
+        </Title>
+
+        {issue.comments > 0 ? (
+          <CommentSection issueNumber={issue.number} />
+        ) : (
+          <Card
+            style={{
+              textAlign: "center",
+              padding: "32px",
+              backgroundColor: "var(--color-canvas-subtle)",
+              border: "1px solid var(--color-border-default)",
+              borderRadius: 6,
+              marginBottom: "16px",
+            }}
+          >
+            <Text style={{ color: "var(--color-fg-muted)" }}>
+              No comments yet
+            </Text>
+          </Card>
+        )}
       </div>
-      <CommentsWrapper />
+
+      {/* GitHub Comments Section */}
+      <div
+        className="comments-wrapper"
+        style={{
+          background: "white",
+          padding: "16px",
+          borderRadius: "4px",
+          marginTop: "16px",
+        }}
+      >
+        <Title level={4} style={{ marginTop: 0 }}>
+          GitHub Comments
+        </Title>
+        <UtterancesComments
+          repo={`${import.meta.env.VITE_GITHUB_OWNER}/${
+            import.meta.env.VITE_GITHUB_REPO
+          }`}
+          issueTerm={`issue-${issue.number}`}
+          theme="github-light"
+        />
+      </div>
     </div>
   );
 };
+
 export default IssueDetail;
