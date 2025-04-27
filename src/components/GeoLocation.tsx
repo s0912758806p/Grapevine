@@ -11,6 +11,7 @@ import {
   updateLocationAddress,
   LocationData
 } from "../store/locationSlice";
+import dayjs from "dayjs";
 
 const GeoLocation = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,7 +23,7 @@ const GeoLocation = () => {
 
   const getLocation = () => {
     if (!navigator.geolocation) {
-      dispatch(setLocationError("瀏覽器不支持地理位置功能"));
+      dispatch(setLocationError("Browser does not support geolocation"));
       return;
     }
 
@@ -41,17 +42,17 @@ const GeoLocation = () => {
         fetchLocationAddress(locationData.latitude, locationData.longitude);
       },
       (error) => {
-        let errorMessage = "獲取位置時發生未知錯誤";
+        let errorMessage = "Unknown error occurred while getting location";
         
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "用戶拒絕了地理位置請求";
+            errorMessage = "User denied geolocation request";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "位置信息不可用";
+            errorMessage = "Location information is unavailable";
             break;
           case error.TIMEOUT:
-            errorMessage = "獲取用戶位置超時";
+            errorMessage = "Timeout while getting user location";
             break;
         }
         
@@ -73,14 +74,14 @@ const GeoLocation = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
         {
           headers: {
-            'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
             'User-Agent': 'Grapevine App Location Service'
           }
         }
       );
       
       if (!response.ok) {
-        throw new Error('地址獲取失敗');
+        throw new Error('Failed to get address');
       }
       
       const data = await response.json();
@@ -99,10 +100,10 @@ const GeoLocation = () => {
         country
       }));
     } catch (error) {
-      console.error('獲取地址時發生錯誤:', error);
+      console.error('Error occurred while getting address:', error);
       notification.error({
-        message: '地址獲取失敗',
-        description: '無法將座標轉換為地址',
+        message: 'Failed to get address',
+        description: 'Cannot convert coordinates to address',
         placement: 'topRight'
       });
     } finally {
@@ -113,8 +114,8 @@ const GeoLocation = () => {
   useEffect(() => {
     if (currentLocation) {
       notification.success({
-        message: "成功獲取位置",
-        description: `緯度: ${currentLocation.latitude}, 經度: ${currentLocation.longitude}`,
+        message: "Successfully got location",
+        description: `Latitude: ${currentLocation.latitude}, Longitude: ${currentLocation.longitude}`,
         placement: "topRight",
       });
     }
@@ -138,7 +139,7 @@ const GeoLocation = () => {
   };
 
   return (
-    <Card title="位置服務" size="small">
+    <Card title="Location Service" size="small">
       <Space direction="vertical" style={{ width: "100%" }}>
         <Button 
           type="primary" 
@@ -146,7 +147,7 @@ const GeoLocation = () => {
           onClick={getLocation} 
           loading={isLoading}
         >
-          獲取當前位置
+          Get current location
         </Button>
         
         {error && (
@@ -155,28 +156,28 @@ const GeoLocation = () => {
           </Typography.Text>
         )}
         
-        {isLoading && <Spin tip="獲取位置中..." />}
-        {addressLoading && <Spin tip="獲取地址中..." />}
+        {isLoading && <Spin tip="Getting location..." />}
+        {addressLoading && <Spin tip="Getting address..." />}
         
         {currentLocation && (
           <div>
-            <Typography.Title level={5}>位置信息</Typography.Title>
+            <Typography.Title level={5}>Location information</Typography.Title>
             {getFormattedAddress()}
             <br />
-            <Typography.Text>緯度: {currentLocation.latitude}</Typography.Text>
+            <Typography.Text>Latitude: {currentLocation.latitude}</Typography.Text>
             <br />
-            <Typography.Text>經度: {currentLocation.longitude}</Typography.Text>
+            <Typography.Text>Longitude: {currentLocation.longitude}</Typography.Text>
             <br />
-            <Typography.Text>精確度: {currentLocation.accuracy} 米</Typography.Text>
+            <Typography.Text>Accuracy: {currentLocation.accuracy} meters</Typography.Text>
             <br />
             {currentLocation.address && (
               <>
-                <Typography.Text>詳細地址: {currentLocation.address}</Typography.Text>
+                <Typography.Text>Detailed address: {currentLocation.address}</Typography.Text>
                 <br />
               </>
             )}
             <Typography.Text>
-              時間: {new Date(currentLocation.timestamp).toLocaleString()}
+              Time: {dayjs(currentLocation.timestamp).format('YYYY-MM-DD HH:mm:ss')}
             </Typography.Text>
             
             {showMap && (

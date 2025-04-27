@@ -132,7 +132,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
     {
       key: "location-modal",
-      label: "快速獲取位置",
+      label: "Quickly capture location",
       icon: <EnvironmentOutlined />,
       onClick: () => {
         handleMenuClick();
@@ -141,7 +141,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
     {
       key: "location-page",
-      label: <Link to="/location">位置服務頁面</Link>,
+      label: <Link to="/location">Localization</Link>,
       icon: <EnvironmentOutlined />,
       onClick: handleMenuClick,
     },
@@ -151,13 +151,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const locationMenuItems: MenuItem[] = [
     {
       key: "show-location-modal",
-      label: "快速獲取位置",
+      label: "Quickly capture location",
       icon: <EnvironmentOutlined />,
       onClick: () => setLocationModalVisible(true),
     },
     {
       key: "go-to-location-page",
-      label: <Link to="/location">位置服務頁面</Link>,
+      label: <Link to="/location">Localization</Link>,
       icon: <EnvironmentOutlined />,
     },
   ];
@@ -320,7 +320,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* 位置服務彈窗 */}
       <Modal
-        title="位置服務"
+        title="Location Service"
         open={locationModalVisible}
         onCancel={() => setLocationModalVisible(false)}
         footer={null}

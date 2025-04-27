@@ -1,4 +1,3 @@
-
 # Grapevine
 
 Grapevine is a modern forum application that integrates with GitHub issues to create a clean, collaborative discussion platform.
@@ -12,6 +11,8 @@ Grapevine is a modern forum application that integrates with GitHub issues to cr
 - Responsive design for all devices
 - Post sharing capabilities
 - Tag categorization system
+- Location services - GPS-based positioning with map display
+- Reverse geocoding - converts coordinates to human-readable addresses
 
 ## Quick Start
 
@@ -36,6 +37,7 @@ Grapevine is a modern forum application that integrates with GitHub issues to cr
    ```
    VITE_GITHUB_REPO_OWNER=your-github-username
    VITE_GITHUB_REPO_NAME=your-repo-name
+   VITE_HOST_AUTHOR=your-host-for-author-features
    ```
 
 4. Start the development server
@@ -64,32 +66,45 @@ The homepage displays tabs for F2E Jobs and Grapevine Community discussions. Cli
 
 The application uses Utterances for comments, allowing GitHub-based authentication and interactions directly in the interface.
 
+### Location Services
+
+The application provides location-based features:
+
+- Access location services from the navigation bar by clicking the location icon
+- View your current coordinates on a map
+- Get detailed address information via reverse geocoding
+- Access a dedicated location services page with expanded functionality
+
 ## Project Structure
 
 ```
 src/
 ├── api/
-│   └── githubApi.ts     # GitHub API integration
+│   └── githubApi.ts            # GitHub API integration
 ├── components/
-│   ├── AppLayout.tsx    # Main application layout
-│   ├── AntConfigProvider.tsx # Ant Design theme configuration
-│   ├── CommentSection.tsx    # Comments component
-│   ├── IssueDetail.tsx       # Regular issue details
-│   ├── F2EIssueDetail.tsx    # F2E job issue details
-│   ├── HomePage.tsx          # Main page with tabs
-│   ├── UtterancesComments.tsx # GitHub comments integration
+│   ├── AppLayout.tsx           # Main application layout
+│   ├── AntConfigProvider.tsx   # Ant Design theme configuration
+│   ├── CommentSection.tsx      # Comments component
+│   ├── IssueDetail.tsx         # Regular issue details
+│   ├── F2EIssueDetail.tsx      # F2E job issue details
+│   ├── HomePage.tsx            # Main page with tabs
+│   ├── UtterancesComments.tsx  # GitHub comments integration
+│   ├── GeoLocation.tsx         # Location service component
+│   └── LocationMap.tsx         # Interactive map component
 ├── pages/
-│   └── CommentsExample.tsx   # Comment example page
+│   ├── CommentsExample.tsx     # Comment example page
+│   └── LocationPage.tsx        # Dedicated location services page
 ├── store/
-│   ├── commentsSlice.ts      # Comments state management
-│   ├── githubIssuesSlice.ts  # GitHub issues state
-│   ├── f2eIssuesSlice.ts     # F2E issues state
-│   └── index.ts              # Redux store configuration
+│   ├── commentsSlice.ts        # Comments state management
+│   ├── githubIssuesSlice.ts    # GitHub issues state
+│   ├── f2eIssuesSlice.ts       # F2E issues state
+│   ├── locationSlice.ts        # Location services state
+│   └── index.ts                # Redux store configuration
 ├── styles/
-│   ├── markdown.scss         # Markdown styling
-│   └── index.scss            # Global styles
+│   ├── markdown.scss           # Markdown styling
+│   └── index.scss              # Global styles
 └── types/
-    └── index.ts              # TypeScript interfaces
+    └── index.ts                # TypeScript interfaces
 ```
 
 ## Technology Stack
@@ -99,8 +114,9 @@ src/
 - **State Management**: Redux Toolkit
 - **UI Framework**: Ant Design
 - **Routing**: React Router
-- **Data Fetching**: GitHub API
+- **Data Fetching**: GitHub API, OpenStreetMap Nominatim API
 - **Comments**: Utterances
+- **Maps**: Leaflet with React-Leaflet
 - **Build Tool**: Vite
 - **Styling**: SCSS
 
@@ -115,6 +131,13 @@ The application connects to GitHub repositories for:
 ### Theme Customization
 
 The Ant Design theme is configured in `src/components/AntConfigProvider.tsx`.
+
+### Location Services
+
+Location services use:
+- Browser's Geolocation API to get user coordinates
+- OpenStreetMap's Nominatim API for reverse geocoding
+- Leaflet for interactive maps
 
 ## License
 

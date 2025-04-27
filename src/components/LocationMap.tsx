@@ -52,7 +52,7 @@ const LocationMap = ({
     } else if (country) {
       return country;
     } else {
-      return "您的位置";
+      return "Your location";
     }
   };
 
@@ -71,7 +71,7 @@ const LocationMap = ({
         <Marker position={[latitude, longitude]} icon={icon}>
           <Popup>
             <strong>{getLocationDescription()}</strong> <br />
-            精確度: {accuracy} 米
+            Accuracy: {accuracy} meters
             {address && (
               <>
                 <br />

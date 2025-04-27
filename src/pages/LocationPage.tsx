@@ -10,9 +10,9 @@ const LocationPage: React.FC = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <div style={{ marginBottom: 24 }}>
-            <Title level={2}>位置服務</Title>
+            <Title level={2}>Location Service</Title>
             <Typography.Paragraph>
-              在此頁面您可以獲取當前位置、查看地圖並獲取詳細地址信息。
+              On this page, you can get your current location, view the map, and get detailed address information.
             </Typography.Paragraph>
           </div>
         </Col>
@@ -22,21 +22,21 @@ const LocationPage: React.FC = () => {
         </Col>
 
         <Col xs={24} md={8}>
-          <Card title="位置服務說明" size="small">
+          <Card title="Location Service Description" size="small">
             <Typography.Paragraph>
-              <strong>如何使用：</strong>
+              <strong>How to use:</strong>
               <ul>
-                <li>點擊"獲取當前位置"按鈕來獲取您的地理位置</li>
-                <li>您需要允許瀏覽器訪問您的位置</li>
-                <li>獲取成功後，您可以查看詳細的位置信息和地圖</li>
+                <li>Click the "Get current location" button to get your geolocation</li>
+                <li>You need to allow the browser to access your location</li>
+                <li>After successful retrieval, you can view detailed location information and a map</li>
               </ul>
             </Typography.Paragraph>
             <Typography.Paragraph>
-              <strong>隱私說明：</strong>
+              <strong>Privacy Statement:</strong>
               <ul>
-                <li>您的位置信息只會存儲在您的瀏覽器中</li>
-                <li>我們不會將您的位置信息發送給第三方</li>
-                <li>您可以隨時清除您的位置數據</li>
+                <li>Your location information will only be stored in your browser</li>
+                <li>We will not send your location information to third parties</li>
+                <li>You can clear your location data at any time</li>
               </ul>
             </Typography.Paragraph>
           </Card>
