@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider, Drawer } from "antd";
+import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider, Drawer, Modal } from "antd";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { MenuProps } from "antd";
@@ -12,8 +12,10 @@ import {
   SettingOutlined,
   LogoutOutlined,
   MenuOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
+import GeoLocation from "./GeoLocation";
 
 const { Header, Content, Footer } = Layout;
 
@@ -29,6 +31,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { isAuthor } = useSelector((state: RootState) => state.user);
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
 
   const handleMenuClick = () => {
     setMobileMenuOpen(false);
@@ -126,6 +129,36 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: "Notifications",
       icon: <BellOutlined />,
       onClick: handleMenuClick,
+    },
+    {
+      key: "location-modal",
+      label: "快速獲取位置",
+      icon: <EnvironmentOutlined />,
+      onClick: () => {
+        handleMenuClick();
+        setLocationModalVisible(true);
+      },
+    },
+    {
+      key: "location-page",
+      label: <Link to="/location">位置服務頁面</Link>,
+      icon: <EnvironmentOutlined />,
+      onClick: handleMenuClick,
+    },
+  ];
+
+  // 添加位置服務下拉菜單
+  const locationMenuItems: MenuItem[] = [
+    {
+      key: "show-location-modal",
+      label: "快速獲取位置",
+      icon: <EnvironmentOutlined />,
+      onClick: () => setLocationModalVisible(true),
+    },
+    {
+      key: "go-to-location-page",
+      label: <Link to="/location">位置服務頁面</Link>,
+      icon: <EnvironmentOutlined />,
     },
   ];
 
@@ -230,6 +263,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 icon={<BellOutlined />}
                 style={{ color: "var(--color-fg-default)" }}
               />
+              
+              {/* 更新位置服務按鈕為下拉選單 */}
+              <Dropdown menu={{ items: locationMenuItems }} placement="bottomRight">
+                <Button
+                  type="text"
+                  icon={<EnvironmentOutlined />}
+                  style={{ color: "var(--color-fg-default)" }}
+                />
+              </Dropdown>
             </div>
 
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
@@ -275,6 +317,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           />
         </div>
       </Drawer>
+
+      {/* 位置服務彈窗 */}
+      <Modal
+        title="位置服務"
+        open={locationModalVisible}
+        onCancel={() => setLocationModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <GeoLocation />
+      </Modal>
 
       <Content>
         <div

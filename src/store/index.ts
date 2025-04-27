@@ -5,6 +5,7 @@ import userReducer from "./userSlice";
 import githubIssuesReducer from "./githubIssuesSlice";
 import repositoriesReducer from "./repositoriesSlice";
 import searchReducer from "./searchSlice";
+import locationReducer from "./locationSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     githubIssues: githubIssuesReducer,
     repositories: repositoriesReducer,
     search: searchReducer,
+    location: locationReducer,
   },
 });
 

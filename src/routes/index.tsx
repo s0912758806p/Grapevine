@@ -7,6 +7,7 @@ import CommentsExample from "../pages/CommentsExample";
 import F2EIssueDetail from "../components/F2EIssueDetail";
 import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
 import RepositoryManagementPage from "../components/RepositoryManagementPage";
+import LocationPage from "../pages/LocationPage";
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
       {
         path: "manage-repositories",
         element: <RepositoryManagementPage />,
+      },
+      {
+        path: "location",
+        element: <LocationPage />,
       }
     ],
   },
