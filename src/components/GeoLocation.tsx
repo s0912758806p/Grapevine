@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button, Space, Spin, Typography, notification, Card, Tag } from "antd";
-import { AimOutlined, WarningOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  AimOutlined,
+  WarningOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons";
 import LocationMap from "./LocationMap";
 import { RootState, AppDispatch } from "../store";
-import { 
-  setLocationLoading, 
-  setLocationSuccess, 
+import {
+  setLocationLoading,
+  setLocationSuccess,
   setLocationError,
   updateLocationAddress,
-  LocationData
+  LocationData,
 } from "../store/locationSlice";
 import dayjs from "dayjs";
 
@@ -21,6 +25,31 @@ const GeoLocation = () => {
   const [showMap, setShowMap] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
 
+  const MIN_DISTANCE_METERS = 10;
+  let lastFetchedLocation: LocationData | null = null;
+
+  const getDistanceMeters = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ) => {
+    const R = 6371; // Radius of the earth in km
+    const toRadians = (value: number) => {
+      return (value * Math.PI) / 180;
+    };
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c * 1000;
+  };
+
   const getLocation = () => {
     if (!navigator.geolocation) {
       dispatch(setLocationError("Browser does not support geolocation"));
@@ -29,21 +58,38 @@ const GeoLocation = () => {
 
     dispatch(setLocationLoading());
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    navigator.geolocation.watchPosition(
+      async (position) => {
         const locationData: LocationData = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          timestamp: position.timestamp
+          timestamp: position.timestamp,
         };
+
+        if (lastFetchedLocation) {
+          const distance = getDistanceMeters(
+            lastFetchedLocation.latitude,
+            lastFetchedLocation.longitude,
+            locationData.latitude,
+            locationData.longitude
+          );
+
+          if (distance < MIN_DISTANCE_METERS) {
+            return;
+          }
+        }
         dispatch(setLocationSuccess(locationData));
         setShowMap(true);
-        fetchLocationAddress(locationData.latitude, locationData.longitude);
+        await fetchLocationAddress(
+          locationData.latitude,
+          locationData.longitude
+        );
+        lastFetchedLocation = locationData;
       },
       (error) => {
         let errorMessage = "Unknown error occurred while getting location";
-        
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
             errorMessage = "User denied geolocation request";
@@ -55,13 +101,13 @@ const GeoLocation = () => {
             errorMessage = "Timeout while getting user location";
             break;
         }
-        
+
         dispatch(setLocationError(errorMessage));
       },
       {
         enableHighAccuracy: true,
         timeout: 5000,
-        maximumAge: 0
+        maximumAge: 0,
       }
     );
   };
@@ -74,114 +120,122 @@ const GeoLocation = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
         {
           headers: {
-            'Accept-Language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-            'User-Agent': 'Grapevine App Location Service'
-          }
+            "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7",
+            "User-Agent": "Grapevine App Location Service",
+          },
         }
       );
-      
+
       if (!response.ok) {
-        throw new Error('Failed to get address');
+        throw new Error("Failed to get address");
       }
-      
+
       const data = await response.json();
-      
+
       // 提取地址信息
       const address = data.display_name;
-      const city = data.address.city || data.address.town || data.address.village || data.address.hamlet;
+      const city =
+        data.address.city ||
+        data.address.town ||
+        data.address.village ||
+        data.address.hamlet;
       const region = data.address.state || data.address.county;
       const country = data.address.country;
-      
+
       // 更新Redux中的地址信息
-      dispatch(updateLocationAddress({
-        address,
-        city,
-        region,
-        country
-      }));
+      dispatch(
+        updateLocationAddress({
+          address,
+          city,
+          region,
+          country,
+        })
+      );
     } catch (error) {
-      console.error('Error occurred while getting address:', error);
+      console.error("Error occurred while getting address:", error);
       notification.error({
-        message: 'Failed to get address',
-        description: 'Cannot convert coordinates to address',
-        placement: 'topRight'
+        message: "Failed to get address",
+        description: "Cannot convert coordinates to address",
+        placement: "topRight",
       });
     } finally {
       setAddressLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (currentLocation) {
-      notification.success({
-        message: "Successfully got location",
-        description: `Latitude: ${currentLocation.latitude}, Longitude: ${currentLocation.longitude}`,
-        placement: "topRight",
-      });
-    }
-  }, [currentLocation]);
-
   // 格式化顯示地址
   const getFormattedAddress = () => {
     if (!currentLocation) return null;
-    
+
     const { country, region, city } = currentLocation;
-    
+
     if (country && (region || city)) {
       return (
         <Tag color="blue" icon={<EnvironmentOutlined />}>
-          {country} {region && `- ${region}`} {city && region !== city && `- ${city}`}
+          {country} {region && `- ${region}`}{" "}
+          {city && region !== city && `- ${city}`}
         </Tag>
       );
     }
-    
+
     return null;
   };
 
   return (
     <Card title="Location Service" size="small">
       <Space direction="vertical" style={{ width: "100%" }}>
-        <Button 
-          type="primary" 
-          icon={<AimOutlined />} 
-          onClick={getLocation} 
-          loading={isLoading}
-        >
-          Get current location
-        </Button>
-        
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            type="primary"
+            icon={<AimOutlined />}
+            onClick={getLocation}
+            loading={isLoading}
+          >
+            Get current location
+          </Button>
+        </div>
+
         {error && (
           <Typography.Text type="danger">
             <WarningOutlined /> {error}
           </Typography.Text>
         )}
-        
+
         {isLoading && <Spin tip="Getting location..." />}
         {addressLoading && <Spin tip="Getting address..." />}
-        
+
         {currentLocation && (
           <div>
             <Typography.Title level={5}>Location information</Typography.Title>
             {getFormattedAddress()}
             <br />
-            <Typography.Text>Latitude: {currentLocation.latitude}</Typography.Text>
+            <Typography.Text>
+              Latitude: {currentLocation.latitude}
+            </Typography.Text>
             <br />
-            <Typography.Text>Longitude: {currentLocation.longitude}</Typography.Text>
+            <Typography.Text>
+              Longitude: {currentLocation.longitude}
+            </Typography.Text>
             <br />
-            <Typography.Text>Accuracy: {currentLocation.accuracy} meters</Typography.Text>
+            <Typography.Text>
+              Accuracy: {currentLocation.accuracy} meters
+            </Typography.Text>
             <br />
             {currentLocation.address && (
               <>
-                <Typography.Text>Detailed address: {currentLocation.address}</Typography.Text>
+                <Typography.Text>
+                  Detailed address: {currentLocation.address}
+                </Typography.Text>
                 <br />
               </>
             )}
             <Typography.Text>
-              Time: {dayjs(currentLocation.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+              Time:{" "}
+              {dayjs(currentLocation.timestamp).format("YYYY-MM-DD HH:mm:ss")}
             </Typography.Text>
-            
+
             {showMap && (
-              <LocationMap 
+              <LocationMap
                 latitude={currentLocation.latitude}
                 longitude={currentLocation.longitude}
                 accuracy={currentLocation.accuracy}
@@ -198,4 +252,4 @@ const GeoLocation = () => {
   );
 };
 
-export default GeoLocation; 
+export default GeoLocation;
