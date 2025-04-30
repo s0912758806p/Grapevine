@@ -25,8 +25,24 @@ const GeoLocation = () => {
   const [showMap, setShowMap] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
 
-  const MIN_DISTANCE_METERS = 10;
+  const THROTTLE_INTERVAL: number = 3000;
+  let lastProcessTime: number = 0;
+
+  const MIN_DISTANCE_METERS: number = 10;
   let lastFetchedLocation: LocationData | null = null;
+
+  const throttle = <T extends (position: GeolocationPosition) => void>(
+    func: T,
+    delay: number
+  ): ((position: GeolocationPosition) => void) => {
+    return (position: GeolocationPosition) => {
+      const now = Date.now();
+      if (now - lastProcessTime >= delay) {
+        lastProcessTime = now;
+        func(position);
+      }
+    };
+  };
 
   const getDistanceMeters = (
     lat1: number,
@@ -50,6 +66,32 @@ const GeoLocation = () => {
     return R * c * 1000;
   };
 
+  const handlePositionUpdate = async (position: GeolocationPosition) => {
+    const locationData: LocationData = {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy,
+      timestamp: position.timestamp,
+    };
+
+    if (lastFetchedLocation) {
+      const distance = getDistanceMeters(
+        lastFetchedLocation.latitude,
+        lastFetchedLocation.longitude,
+        locationData.latitude,
+        locationData.longitude
+      );
+
+      if (distance < MIN_DISTANCE_METERS) {
+        return;
+      }
+    }
+    dispatch(setLocationSuccess(locationData));
+    setShowMap(true);
+    await fetchLocationAddress(locationData.latitude, locationData.longitude);
+    lastFetchedLocation = locationData;
+  };
+
   const getLocation = () => {
     if (!navigator.geolocation) {
       dispatch(setLocationError("Browser does not support geolocation"));
@@ -58,35 +100,13 @@ const GeoLocation = () => {
 
     dispatch(setLocationLoading());
 
+    const throttledPositionUpdate = throttle(
+      handlePositionUpdate,
+      THROTTLE_INTERVAL
+    );
+
     navigator.geolocation.watchPosition(
-      async (position) => {
-        const locationData: LocationData = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: position.timestamp,
-        };
-
-        if (lastFetchedLocation) {
-          const distance = getDistanceMeters(
-            lastFetchedLocation.latitude,
-            lastFetchedLocation.longitude,
-            locationData.latitude,
-            locationData.longitude
-          );
-
-          if (distance < MIN_DISTANCE_METERS) {
-            return;
-          }
-        }
-        dispatch(setLocationSuccess(locationData));
-        setShowMap(true);
-        await fetchLocationAddress(
-          locationData.latitude,
-          locationData.longitude
-        );
-        lastFetchedLocation = locationData;
-      },
+      throttledPositionUpdate,
       (error) => {
         let errorMessage = "Unknown error occurred while getting location";
 
@@ -107,7 +127,7 @@ const GeoLocation = () => {
       {
         enableHighAccuracy: true,
         timeout: 5000,
-        maximumAge: 0,
+        maximumAge: 1000,
       }
     );
   };
@@ -201,8 +221,20 @@ const GeoLocation = () => {
           </Typography.Text>
         )}
 
-        {isLoading && <Spin tip="Getting location..." />}
-        {addressLoading && <Spin tip="Getting address..." />}
+        {isLoading && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <Spin tip="Getting location...">
+              <div style={{ height: 30 }} />
+            </Spin>
+          </div>
+        )}
+        {addressLoading && (
+          <div style={{ textAlign: "center", padding: "10px 0" }}>
+            <Spin tip="Getting address...">
+              <div style={{ height: 30 }} />
+            </Spin>
+          </div>
+        )}
 
         {currentLocation && (
           <div>
