@@ -12,6 +12,7 @@ import rehypeRaw from "rehype-raw";
 import "../styles/markdown.scss";
 import { RootState, AppDispatch } from "../store";
 import { fetchGithubIssueThunk } from "../store/githubIssuesSlice";
+import { recordView } from "../services/analyticsService";
 
 dayjs.extend(relativeTime);
 const { Title, Text } = Typography;
@@ -38,7 +39,16 @@ const IssueDetail: React.FC = () => {
 
   useEffect(() => {
     if (issueNumber) {
-      dispatch(fetchGithubIssueThunk(parseInt(issueNumber, 10)));
+      dispatch(fetchGithubIssueThunk(parseInt(issueNumber, 10)))
+        .unwrap()
+        .then((issue) => {
+          // Record view in analytics when issue is loaded
+          recordView(issue);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch issue:", error);
+          message.error("Failed to load issue details.");
+        });
     }
   }, [dispatch, issueNumber]);
 
@@ -106,7 +116,7 @@ const IssueDetail: React.FC = () => {
         Back to issues
       </Button>
 
-      <Card 
+      <Card
         style={{ marginBottom: 16, borderRadius: 4 }}
         className="responsive-card responsive-spacing"
       >
@@ -153,7 +163,11 @@ const IssueDetail: React.FC = () => {
             </div>
           </div>
 
-          <Title level={4} style={{ margin: "0 0 16px" }} className="responsive-text">
+          <Title
+            level={4}
+            style={{ margin: "0 0 16px" }}
+            className="responsive-text"
+          >
             {issue.title}
           </Title>
 
@@ -164,7 +178,10 @@ const IssueDetail: React.FC = () => {
               borderBottom: "1px solid var(--color-border-muted)",
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            >
               {issue.body}
             </ReactMarkdown>
           </div>

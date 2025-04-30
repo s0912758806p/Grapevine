@@ -8,6 +8,7 @@ import F2EIssueDetail from "../components/F2EIssueDetail";
 import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
 import RepositoryManagementPage from "../components/RepositoryManagementPage";
 import LocationPage from "../pages/LocationPage";
+import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 
 const router = createBrowserRouter([
   {
@@ -45,7 +46,11 @@ const router = createBrowserRouter([
       {
         path: "location",
         element: <LocationPage />,
-      }
+      },
+      {
+        path: "analytics",
+        element: <AnalyticsDashboard />,
+      },
     ],
   },
 ]);

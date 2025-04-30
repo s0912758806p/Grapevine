@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Layout, Input, Button, Menu, Dropdown, Avatar, Divider, Drawer, Modal } from "antd";
+import {
+  Layout,
+  Input,
+  Button,
+  Menu,
+  Dropdown,
+  Avatar,
+  Divider,
+  Drawer,
+  Modal,
+} from "antd";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { MenuProps } from "antd";
@@ -13,6 +23,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   EnvironmentOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
 import GeoLocation from "./GeoLocation";
@@ -29,7 +40,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   // Get user role information
   const { isAuthor } = useSelector((state: RootState) => state.user);
-  const [searchFocused, setSearchFocused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
 
@@ -145,6 +155,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <EnvironmentOutlined />,
       onClick: handleMenuClick,
     },
+    {
+      key: "analytics-dashboard",
+      label: <Link to="/analytics">Analytics Dashboard</Link>,
+      icon: <LineChartOutlined />,
+      onClick: handleMenuClick,
+    },
   ];
 
   // 添加位置服務下拉菜單
@@ -159,6 +175,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       key: "go-to-location-page",
       label: <Link to="/location">Localization</Link>,
       icon: <EnvironmentOutlined />,
+    },
+  ];
+
+  // Add analytics dropdown menu
+  const analyticsMenuItems: MenuItem[] = [
+    {
+      key: "analytics-dashboard",
+      label: <Link to="/analytics">View Analytics Dashboard</Link>,
+      icon: <LineChartOutlined />,
     },
   ];
 
@@ -211,44 +236,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               gap: "16px",
             }}
           >
-            <div
-              className="search-container hide-on-mobile"
-              style={{ position: "relative", maxWidth: "272px", width: "100%" }}
-            >
-              <Input
-                placeholder="Search or jump to..."
-                prefix={
-                  <SearchOutlined style={{ color: "var(--color-fg-subtle)" }} />
-                }
-                style={{
-                  backgroundColor: "var(--color-canvas-subtle)",
-                  border: searchFocused
-                    ? "1px solid var(--color-accent-fg)"
-                    : "1px solid var(--color-border-default)",
-                  borderRadius: "6px",
-                }}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-              />
-              {searchFocused && (
-                <div
-                  style={{
-                    position: "absolute",
-                    right: "8px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--color-fg-subtle)",
-                    fontSize: "12px",
-                    backgroundColor: "var(--color-scale-gray-1)",
-                    padding: "1px 6px",
-                    borderRadius: "3px",
-                  }}
-                >
-                  /
-                </div>
-              )}
-            </div>
-
             <div className="hide-on-mobile">
               <Dropdown menu={{ items: plusMenuItems }} placement="bottomRight">
                 <Button
@@ -263,13 +250,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 icon={<BellOutlined />}
                 style={{ color: "var(--color-fg-default)" }}
               />
-              
+
               {/* 更新位置服務按鈕為下拉選單 */}
-              <Dropdown menu={{ items: locationMenuItems }} placement="bottomRight">
+              <Dropdown
+                menu={{ items: locationMenuItems }}
+                placement="bottomRight"
+                className="hide-on-mobile"
+              >
                 <Button
                   type="text"
                   icon={<EnvironmentOutlined />}
-                  style={{ color: "var(--color-fg-default)" }}
+                  style={{ marginLeft: 8 }}
+                />
+              </Dropdown>
+
+              <Dropdown
+                menu={{ items: analyticsMenuItems }}
+                placement="bottomRight"
+                className="hide-on-mobile"
+              >
+                <Button
+                  type="text"
+                  icon={<LineChartOutlined />}
+                  style={{ marginLeft: 8 }}
                 />
               </Dropdown>
             </div>
@@ -303,15 +306,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         open={mobileMenuOpen}
         width={250}
       >
-        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
           <Input
             placeholder="Search..."
             prefix={<SearchOutlined />}
             style={{ marginBottom: "16px" }}
           />
-          
-          <Menu 
-            mode="vertical" 
+
+          <Menu
+            mode="vertical"
             selectedKeys={[location.pathname]}
             items={mobileNavItems}
           />
@@ -357,7 +362,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               marginBottom: "24px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "16px",
+              }}
+            >
               <SmileOutlined style={{ fontSize: "24px" }} />
               <span style={{ fontSize: "16px", fontWeight: 600 }}>
                 Grapevine
@@ -390,7 +402,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </a>
             </div>
           </div>
-          
+
           {/* Additional footer content */}
         </div>
       </Footer>
@@ -399,4 +411,3 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 };
 
 export default AppLayout;
-

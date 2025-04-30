@@ -1,12 +1,41 @@
 /* Import all styles in the correct order */
 
 /* Base styles and variables */
-@use './index.scss';
+@use "./index.scss";
 
 /* Component styles */
-@use './app.scss';
-@use './ant-design-fixes.scss';
-@use './markdown.scss';
+@use "./app.scss";
+@use "./ant-design-fixes.scss";
+@use "./markdown.scss";
 
 /* Responsive styles should be last */
-@use './responsive.scss'; 
+@use "./responsive.scss";
+
+/* Add styles for the analytics dashboard */
+.analytics-dashboard {
+  padding: 24px;
+
+  .analytics-card {
+    height: 100%;
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .ant-statistic-title {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.65);
+  }
+
+  .ant-statistic-content {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1677ff;
+  }
+
+  .ant-divider-with-text-left {
+    margin: 24px 0 16px;
+  }
+}

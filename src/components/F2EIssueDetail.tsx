@@ -15,6 +15,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import "../styles/markdown.scss";
+import { recordView } from "../services/analyticsService";
 
 dayjs.extend(relativeTime);
 const { Title, Text } = Typography;
@@ -34,13 +35,22 @@ const F2EIssueDetail: React.FC = () => {
 
   useEffect(() => {
     if (issueNumber) {
-      dispatch(fetchF2EIssueThunk(parseInt(issueNumber, 10)));
+      dispatch(fetchF2EIssueThunk(parseInt(issueNumber, 10)))
+        .unwrap()
+        .then((issue) => {
+          // Record view in analytics when F2E issue is loaded
+          recordView({ ...issue, state: "f2e" });
+        })
+        .catch((error) => {
+          console.error("Failed to fetch F2E issue:", error);
+          message.error("Failed to load issue details.");
+        });
     }
 
     return () => {
       dispatch(clearCurrentF2EIssue());
     };
-  }, [issueNumber, dispatch]);
+  }, [dispatch, issueNumber, message]);
 
   const handleBackToHome = () => {
     dispatch(clearCurrentF2EIssue());
@@ -98,7 +108,7 @@ const F2EIssueDetail: React.FC = () => {
         Back to Jobs
       </Button>
 
-      <Card 
+      <Card
         style={{ marginBottom: 16, borderRadius: 4 }}
         className="responsive-card responsive-spacing"
       >
@@ -125,7 +135,11 @@ const F2EIssueDetail: React.FC = () => {
             </div>
           </div>
 
-          <Title level={4} style={{ margin: "0 0 16px" }} className="responsive-text">
+          <Title
+            level={4}
+            style={{ margin: "0 0 16px" }}
+            className="responsive-text"
+          >
             {currentIssue.title}
           </Title>
 
@@ -136,7 +150,10 @@ const F2EIssueDetail: React.FC = () => {
               borderBottom: "1px solid var(--color-border-muted)",
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            >
               {currentIssue.body}
             </ReactMarkdown>
           </div>
