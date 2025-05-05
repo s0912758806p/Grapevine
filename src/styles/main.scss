@@ -1,5 +1,14 @@
 /* Base styles and variables */
 
+/* Import component styles */
+@use "./index.scss";
+@use "./app.scss";
+@use "./ant-design-fixes.scss";
+@use "./markdown.scss";
+@use "./responsive.scss";
+@use "./variables";
+@use "./LandingPage.scss";
+
 /* Variables */
 $grape-purple: #5e2a69;
 $grape-purple-light: #8a4a95;
@@ -10,16 +19,6 @@ $vine-green-lighter: #a6c7af;
 $cream: #f7f5f0;
 $soft-gray: #f0f0f0;
 $text-dark: #333333;
-
-/* Import component styles */
-@use "./index.scss";
-@use "./app.scss";
-@use "./ant-design-fixes.scss";
-@use "./markdown.scss";
-@use "./responsive.scss";
-
-/* Import specific page styles */
-@use "./LandingPage.scss";
 
 /* Base styles */
 body {
@@ -215,6 +214,3 @@ body {
 .vine-background {
   z-index: -1;
 }
-
-@use "./variables";
-@use "./LandingPage.scss";
