@@ -9,6 +9,10 @@ import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
 import RepositoryManagementPage from "../components/RepositoryManagementPage";
 import LocationPage from "../pages/LocationPage";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
+import LandingPage from "../pages/LandingPage";
+import GitHubIssuesPage from "../pages/GitHubIssuesPage";
+import IssueSubmissionPage from "../pages/IssueSubmissionPage";
+import AuthorIssuesPage from "../pages/CreatedIssuesPage";
 
 const router = createBrowserRouter([
   {
@@ -17,7 +21,23 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
+        element: <LandingPage />,
+      },
+      {
+        path: "home",
         element: <HomePage />,
+      },
+      {
+        path: "github-issues",
+        element: <GitHubIssuesPage />,
+      },
+      {
+        path: "created-issues",
+        element: <AuthorIssuesPage />,
+      },
+      {
+        path: "issue-submitted",
+        element: <IssueSubmissionPage />,
       },
       {
         path: "issue/:issueNumber",

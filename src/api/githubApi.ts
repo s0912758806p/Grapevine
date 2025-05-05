@@ -55,49 +55,88 @@ export const isAuthor = (currentUser: string | null): boolean => {
 
 export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
   try {
-    const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
-      owner: import.meta.env.VITE_GITHUB_REPO_OWNER,
-      repo: import.meta.env.VITE_GITHUB_REPO_NAME,
-      state: "open",
-      per_page: perPage,
-      page: page,
-      headers: {
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+    // 從當前環境變量中獲取默認倉庫
+    const defaultOwner = import.meta.env.VITE_GITHUB_REPO_OWNER;
+    const defaultRepo = import.meta.env.VITE_GITHUB_REPO_NAME;
+
+    // 定義要獲取issues的倉庫列表
+    const repositories = [
+      { owner: defaultOwner, repo: defaultRepo },
+      { owner: "f2etw", repo: "jobs" },
+    ];
+
+    // 從所有倉庫獲取issues
+    const issuesPromises = repositories.map(async (repo) => {
+      try {
+        console.log(`正在獲取 ${repo.owner}/${repo.repo} 的issues...`);
+        const response = await octokit.request(
+          "GET /repos/{owner}/{repo}/issues",
+          {
+            owner: repo.owner,
+            repo: repo.repo,
+            state: "all", // 獲取所有狀態的issues，包括open和closed
+            per_page: perPage,
+            page: page,
+            headers: {
+              "X-GitHub-Api-Version": "2022-11-28",
+            },
+          }
+        );
+
+        // 添加repository信息
+        const repoIssues = response.data.map(
+          (issue: Record<string, unknown>) => {
+            // 如果没有repository_url，則添加
+            if (!issue.repository_url) {
+              issue.repository_url = `https://api.github.com/repos/${repo.owner}/${repo.repo}`;
+            }
+
+            // 添加repository屬性
+            issue.repository = `${repo.owner}/${repo.repo}`;
+
+            return issue;
+          }
+        );
+
+        console.log(
+          `成功獲取 ${repo.owner}/${repo.repo} 的issues: ${repoIssues.length}個`
+        );
+        return {
+          issues: repoIssues,
+          totalCount: repoIssues.length,
+          name: `${repo.owner}/${repo.repo}`,
+        };
+      } catch (error) {
+        console.error(`獲取 ${repo.owner}/${repo.repo} 的issues失敗:`, error);
+        return {
+          issues: [],
+          totalCount: 0,
+          name: `${repo.owner}/${repo.repo}`,
+        };
+      }
     });
 
-    // Get the link header to extract total count information
-    // GitHub includes pagination info in the Link header
-    const linkHeader = response.headers.link;
+    // 等待所有請求完成
+    const results = await Promise.all(issuesPromises);
+
+    // 合併所有issues
+    let allIssues: Record<string, unknown>[] = [];
     let totalCount = 0;
 
-    // Try to extract total count from response headers if available
-    if (response.headers["x-total-count"]) {
-      totalCount = parseInt(response.headers["x-total-count"] as string, 10);
-    } else if (linkHeader) {
-      // Try to extract from the last page in the Link header
-      // Example: <https://api.github.com/repositories/1300192/issues?page=2>; rel="next", <https://api.github.com/repositories/1300192/issues?page=4>; rel="last"
-      const lastPageMatch = linkHeader.match(/page=(\d+)>;\s*rel="last"/);
-      if (lastPageMatch && lastPageMatch[1]) {
-        const lastPage = parseInt(lastPageMatch[1], 10);
-        totalCount = lastPage * perPage;
-      }
-    }
+    results.forEach((result) => {
+      console.log(`合併 ${result.name} 的 ${result.issues.length} 個issues`);
+      allIssues = [...allIssues, ...result.issues];
+      totalCount += result.totalCount;
+    });
 
-    // If we couldn't extract total count from headers, estimate based on current page
-    if (!totalCount) {
-      totalCount =
-        response.data.length < perPage
-          ? page * perPage - (perPage - response.data.length)
-          : page * perPage + perPage;
-    }
+    console.log(`總共獲取了 ${allIssues.length} 個issues`);
 
     return {
-      issues: response.data,
+      issues: allIssues,
       totalCount,
     };
   } catch (error) {
-    console.error("Error fetching Grapevine issues:", error);
+    console.error("獲取issues時發生錯誤:", error);
     throw error;
   }
 };

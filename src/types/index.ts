@@ -20,6 +20,7 @@ export interface IssueType {
   source?: string;
   repoOwner?: string;
   repoName?: string;
+  repository?: string;
 }
 
 export interface RepositorySource {
@@ -50,8 +51,8 @@ export interface SearchFilter {
   labels?: string[];
   authors?: string[];
   dateRange?: [string | null, string | null] | null;
-  sortBy?: 'created' | 'updated';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "created" | "updated";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CommentType {

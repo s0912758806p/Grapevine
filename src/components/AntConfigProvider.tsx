@@ -1,67 +1,72 @@
 import React from "react";
-import { ConfigProvider } from "antd";
+import { ConfigProvider, theme } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
+
+// Define grape and vine theme colors
+const grapeTheme = {
+  primaryColor: "#5e2a69",
+  primaryColorHover: "#8a4a95",
+  infoColor: "#1e5631",
+  successColor: "#3d7a4f",
+};
 
 interface AntConfigProviderProps {
   children: React.ReactNode;
 }
 
 const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
-  const githubTheme = {
-    token: {
-      colorPrimary: "#0969da",
-      colorSuccess: "#1a7f37",
-      colorWarning: "#9a6700",
-      colorError: "#cf222e",
-      colorText: "#24292f",
-      colorTextSecondary: "#57606a",
-      colorBgContainer: "#ffffff",
-      colorBgElevated: "#ffffff",
-      colorBgLayout: "#f6f8fa",
-      colorBgSpotlight: "#f6f8fa",
-      colorBorder: "#d0d7de",
-      borderRadius: 6,
-      fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
-    },
-    components: {
-      Button: {
-        colorPrimaryHover: "#0860c7",
-        borderRadius: 6,
-        controlHeight: 32,
-        paddingContentHorizontal: 16,
-      },
-      Input: {
-        borderRadius: 6,
-        controlHeight: 32,
-      },
-      Menu: {
-        itemSelectedBg: "#f6f8fa",
-        itemSelectedColor: "#24292f",
-        itemHoverBg: "#f6f8fa",
-        itemHoverColor: "#24292f",
-        colorActiveBarWidth: 0,
-        colorActiveBarHeight: 0,
-        borderRadius: 0,
-      },
-      Select: {
-        borderRadius: 6,
-        controlHeight: 32,
-      },
-      Card: {
-        colorBorder: "#d0d7de",
-        borderRadius: 6,
-      },
-      Table: {
-        borderRadius: 6,
-        colorBgContainer: "#ffffff",
-        colorBorderSecondary: "#d0d7de",
-      },
-    },
-  };
-
   return (
     <StyleProvider hashPriority="high">
-      <ConfigProvider theme={githubTheme}>{children}</ConfigProvider>
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: grapeTheme.primaryColor,
+            colorLink: grapeTheme.primaryColor,
+            colorInfo: grapeTheme.infoColor,
+            colorSuccess: grapeTheme.successColor,
+            borderRadius: 8,
+            fontFamily:
+              'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            colorBgContainer: "#ffffff",
+            colorText: "#333333",
+            colorTextSecondary: "#666666",
+          },
+          components: {
+            Button: {
+              colorPrimary: grapeTheme.primaryColor,
+              colorPrimaryHover: grapeTheme.primaryColorHover,
+              borderRadius: 8,
+              controlHeightLG: 44,
+            },
+            Card: {
+              borderRadiusLG: 16,
+              boxShadowTertiary: "0 8px 24px rgba(94, 42, 105, 0.1)",
+            },
+            Menu: {
+              colorItemBgSelected: "#f5eef7",
+              colorItemTextSelected: grapeTheme.primaryColor,
+              colorItemTextHover: grapeTheme.primaryColor,
+            },
+            Input: {
+              borderRadius: 8,
+              colorBorder: "#e0e0e0",
+            },
+            Select: {
+              borderRadius: 8,
+            },
+            Tabs: {
+              colorPrimary: grapeTheme.primaryColor,
+            },
+            Table: {
+              borderRadius: 8,
+              colorBgContainer: "#ffffff",
+            },
+          },
+          algorithm: theme.defaultAlgorithm,
+        }}
+      >
+        {children}
+      </ConfigProvider>
     </StyleProvider>
   );
 };

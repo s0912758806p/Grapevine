@@ -9,7 +9,6 @@ import {
   Space,
   Alert,
   Card,
-  Select,
   message,
   Switch,
   Progress,
@@ -21,15 +20,12 @@ import {
   InfoCircleOutlined,
   UserOutlined,
   SaveOutlined,
-  UploadOutlined,
-  LinkOutlined,
-  FileTextOutlined,
   ExclamationCircleOutlined,
+  GithubOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
 const NewIssue: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -37,17 +33,21 @@ const NewIssue: React.FC = () => {
     (state: RootState) => state.githubIssues
   );
   const [useCustomTags, setUseCustomTags] = useState(false);
-  const [postType, setPostType] = useState<string>("text");
   const [titleLength, setTitleLength] = useState<number>(0);
   const [bodyLength, setBodyLength] = useState<number>(0);
   const [suggestedTags] = useState<string[]>([
-    "general",
-    "help",
-    "discussion",
-    "question",
-    "feature",
+    "enhancement",
     "bug",
+    "documentation",
+    "question",
+    "help-wanted",
+    "good-first-issue",
   ]);
+
+  const repository = `${import.meta.env.VITE_GITHUB_REPO_OWNER}/${
+    import.meta.env.VITE_GITHUB_REPO_NAME
+  }`;
+
   useEffect(() => {
     const savedUsername = localStorage.getItem("grapevine_username");
     if (savedUsername) {
@@ -70,21 +70,36 @@ const NewIssue: React.FC = () => {
   };
   const handleSubmit = async () => {
     try {
-      message.success("Post created successfully!");
-      navigate("/");
+      // 顯示成功訊息
+      message.success(`Issue created successfully in ${repository}!`);
+      // 跳轉到Issue提交頁面，將表單數據傳遞過去
+      navigate("/issue-submitted", {
+        state: {
+          issueData: {
+            ...form.getFieldsValue(),
+            repository,
+            number: Math.floor(Math.random() * 1000), // 模擬issue編號
+            created_at: new Date().toISOString(),
+            status: "open",
+            labels: form.getFieldValue("tag")
+              ? [form.getFieldValue("tag")]
+              : [],
+          },
+        },
+      });
     } catch (err) {
-      message.error("Failed to create post. Please try again.");
-      console.error("Failed to create post:", err);
+      message.error("Failed to create issue. Please try again.");
+      console.error("Failed to create issue:", err);
     }
   };
   const getTagColor = (tag: string): string => {
     const colors = {
-      general: "blue",
-      help: "purple",
-      discussion: "gold",
-      question: "green",
-      feature: "cyan",
+      enhancement: "blue",
       bug: "red",
+      documentation: "purple",
+      question: "green",
+      "help-wanted": "orange",
+      "good-first-issue": "cyan",
     };
     return colors[tag as keyof typeof colors] || "default";
   };
@@ -99,13 +114,22 @@ const NewIssue: React.FC = () => {
           icon={<ArrowLeftOutlined />}
           style={{ marginBottom: 16 }}
         >
-          Back to Posts
+          Back
         </Button>
       </Link>
       <Card style={{ marginBottom: 20, borderRadius: 4 }}>
-        <Title level={4} style={{ marginBottom: 20 }}>
-          Create a post
+        <Title level={4} style={{ marginBottom: 8 }}>
+          <GithubOutlined style={{ marginRight: 12 }} />
+          Create a New Issue
         </Title>
+
+        <Alert
+          message={`This issue will be created in: ${repository}`}
+          type="info"
+          showIcon
+          style={{ marginBottom: 20 }}
+        />
+
         {status === "failed" && (
           <Alert
             message="Error"
@@ -122,37 +146,11 @@ const NewIssue: React.FC = () => {
           autoComplete="off"
           requiredMark="optional"
         >
-          <Form.Item style={{ marginBottom: 16 }}>
-            <Select
-              value={postType}
-              onChange={setPostType}
-              style={{ width: 180 }}
-            >
-              <Option value="text">
-                <Space>
-                  <FileTextOutlined />
-                  <span>Post</span>
-                </Space>
-              </Option>
-              <Option value="image">
-                <Space>
-                  <UploadOutlined />
-                  <span>Image & Video</span>
-                </Space>
-              </Option>
-              <Option value="link">
-                <Space>
-                  <LinkOutlined />
-                  <span>Link</span>
-                </Space>
-              </Option>
-            </Select>
-          </Form.Item>
           <Form.Item
             name="userName"
             label="Your Username"
             tooltip={{
-              title: "This name will appear as the post author",
+              title: "This name will appear as the issue author",
               icon: <InfoCircleOutlined />,
             }}
           >
@@ -166,7 +164,7 @@ const NewIssue: React.FC = () => {
           </Form.Item>
           <Form.Item
             name="title"
-            label="Title"
+            label="Issue Title"
             rules={[
               { required: true, message: "Please enter a title" },
               { min: 3, message: "Title should be at least 3 characters" },
@@ -195,7 +193,7 @@ const NewIssue: React.FC = () => {
             }
           >
             <Input
-              placeholder="An interesting title"
+              placeholder="Brief description of the issue"
               size="large"
               style={{ borderRadius: 4 }}
               maxLength={100}
@@ -205,10 +203,13 @@ const NewIssue: React.FC = () => {
           </Form.Item>
           <Form.Item
             name="body"
-            label="Content"
+            label="Issue Description"
             rules={[
-              { required: true, message: "Please enter post content" },
-              { min: 10, message: "Content should be at least 10 characters" },
+              { required: true, message: "Please enter issue description" },
+              {
+                min: 10,
+                message: "Description should be at least 10 characters",
+              },
             ]}
             extra={
               <div
@@ -234,7 +235,7 @@ const NewIssue: React.FC = () => {
             }
           >
             <TextArea
-              placeholder="Enter your post content here..."
+              placeholder="Provide a detailed description of the issue..."
               autoSize={{ minRows: 6, maxRows: 12 }}
               maxLength={10000}
               onChange={handleBodyChange}
@@ -251,14 +252,22 @@ const NewIssue: React.FC = () => {
               }}
             >
               <Text strong>Tags</Text>
-              <Space>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
                 <Switch
+                  size="small"
                   checked={useCustomTags}
                   onChange={setUseCustomTags}
-                  size="small"
+                  style={{ marginRight: 8 }}
                 />
-                <Text type="secondary">Use custom tags</Text>
-              </Space>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Custom tag
+                </Text>
+              </div>
             </div>
             {useCustomTags ? (
               <Form.Item

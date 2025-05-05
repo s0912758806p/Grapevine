@@ -8,25 +8,19 @@ import {
   Avatar,
   Divider,
   Drawer,
-  Modal,
 } from "antd";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { MenuProps } from "antd";
 import {
-  SmileOutlined,
   SearchOutlined,
-  BellOutlined,
-  PlusOutlined,
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
   MenuOutlined,
-  EnvironmentOutlined,
-  LineChartOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
-import GeoLocation from "./GeoLocation";
+import VineIcon from "./VineIcon";
 
 const { Header, Content, Footer } = Layout;
 
@@ -41,7 +35,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Get user role information
   const { isAuthor } = useSelector((state: RootState) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [locationModalVisible, setLocationModalVisible] = useState(false);
 
   const handleMenuClick = () => {
     setMobileMenuOpen(false);
@@ -68,61 +61,72 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
   ];
 
-  const plusMenuItems: MenuItem[] = [
-    {
-      key: "new-repository",
-      label: "New repository",
-    },
-    {
-      key: "new-issue",
-      label: "New issue",
-    },
-    {
-      key: "new-pr",
-      label: "New pull request",
-    },
-  ];
-
   // Create menu items for main navigation
   const mainNavItems: MenuItem[] = [
     {
-      key: "/issues",
-      label: <Link to="/">Issues</Link>,
+      key: "/",
+      label: <Link to="/">Home</Link>,
     },
     {
-      key: "/pull-requests",
-      label: <Link to="/">Pull requests</Link>,
+      key: "/github-issues",
+      label: <Link to="/github-issues">F2E Jobs</Link>,
     },
     {
-      key: "/discussions",
-      label: <Link to="/">Discussions</Link>,
+      key: "/created-issues",
+      label: <Link to="/created-issues">Author Issues</Link>,
+    },
+    ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
+      ? [
+          {
+            key: "/manage-repositories",
+            label: <Link to="/manage-repositories">Repositories</Link>,
+          },
+        ]
+      : []),
+    {
+      key: "/location",
+      label: <Link to="/location">Location</Link>,
     },
     {
-      key: "/projects",
-      label: <Link to="/">Projects</Link>,
+      key: "/analytics",
+      label: <Link to="/analytics">Analytics</Link>,
     },
   ];
 
   // Create menu items for mobile navigation
   const mobileNavItems: MenuItem[] = [
     {
-      key: "/issues",
-      label: <Link to="/">Issues</Link>,
+      key: "/",
+      label: <Link to="/">Home</Link>,
       onClick: handleMenuClick,
     },
     {
-      key: "/pull-requests",
-      label: <Link to="/">Pull requests</Link>,
+      key: "/github-issues",
+      label: <Link to="/github-issues">F2E Jobs</Link>,
       onClick: handleMenuClick,
     },
     {
-      key: "/discussions",
-      label: <Link to="/">Discussions</Link>,
+      key: "/created-issues",
+      label: <Link to="/created-issues">Author Issues</Link>,
+      onClick: handleMenuClick,
+    },
+    ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
+      ? [
+          {
+            key: "/manage-repositories",
+            label: <Link to="/manage-repositories">Repositories</Link>,
+            onClick: handleMenuClick,
+          },
+        ]
+      : []),
+    {
+      key: "/location",
+      label: <Link to="/location">Location</Link>,
       onClick: handleMenuClick,
     },
     {
-      key: "/projects",
-      label: <Link to="/">Projects</Link>,
+      key: "/analytics",
+      label: <Link to="/analytics">Analytics</Link>,
       onClick: handleMenuClick,
     },
     {
@@ -130,171 +134,98 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
     {
       key: "new-issue",
-      label: "New issue",
-      icon: <PlusOutlined />,
+      label: <Link to="/new-issue">New Issue</Link>,
       onClick: handleMenuClick,
-    },
-    {
-      key: "notifications",
-      label: "Notifications",
-      icon: <BellOutlined />,
-      onClick: handleMenuClick,
-    },
-    {
-      key: "location-modal",
-      label: "Quickly capture location",
-      icon: <EnvironmentOutlined />,
-      onClick: () => {
-        handleMenuClick();
-        setLocationModalVisible(true);
-      },
-    },
-    {
-      key: "location-page",
-      label: <Link to="/location">Localization</Link>,
-      icon: <EnvironmentOutlined />,
-      onClick: handleMenuClick,
-    },
-    {
-      key: "analytics-dashboard",
-      label: <Link to="/analytics">Analytics Dashboard</Link>,
-      icon: <LineChartOutlined />,
-      onClick: handleMenuClick,
-    },
-  ];
-
-  // 添加位置服務下拉菜單
-  const locationMenuItems: MenuItem[] = [
-    {
-      key: "show-location-modal",
-      label: "Quickly capture location",
-      icon: <EnvironmentOutlined />,
-      onClick: () => setLocationModalVisible(true),
-    },
-    {
-      key: "go-to-location-page",
-      label: <Link to="/location">Localization</Link>,
-      icon: <EnvironmentOutlined />,
-    },
-  ];
-
-  // Add analytics dropdown menu
-  const analyticsMenuItems: MenuItem[] = [
-    {
-      key: "analytics-dashboard",
-      label: <Link to="/analytics">View Analytics Dashboard</Link>,
-      icon: <LineChartOutlined />,
     },
   ];
 
   return (
-    <Layout
-      style={{ minHeight: "100vh", background: "var(--color-canvas-default)" }}
-    >
+    <Layout style={{ minHeight: "100vh", background: "#f7f5f0" }}>
       <Header
         style={{
           position: "sticky",
           top: 0,
-          zIndex: 1,
+          zIndex: 100,
           width: "100%",
           display: "flex",
           alignItems: "center",
           padding: "0 16px",
-          height: "62px",
-          background: "var(--color-canvas-default)",
-          borderBottom: "1px solid var(--color-border-muted)",
+          background: "white",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+        {/* Logo and title */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <Link to="/" style={{ display: "flex", alignItems: "center" }}>
-            <SmileOutlined style={{ fontSize: "32px", color: "#000000" }} />
+            <VineIcon width={32} height={32} color="#5e2a69" />
+            <span
+              style={{
+                marginLeft: "8px",
+                fontSize: "18px",
+                fontWeight: 600,
+                background: "linear-gradient(135deg, #5e2a69 0%, #1e5631 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Grapevine
+            </span>
+          </Link>
+        </div>
+
+        <div
+          className="header-nav-links hide-on-mobile"
+          style={{ display: "flex", marginLeft: "24px" }}
+        >
+          <Menu
+            mode="horizontal"
+            selectedKeys={[location.pathname]}
+            style={{
+              border: "none",
+              background: "transparent",
+              fontWeight: 600,
+              fontSize: "14px",
+            }}
+            items={mainNavItems}
+          />
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <Link to="/new-issue" className="hide-on-mobile">
+            <Button type="primary">New Issue</Button>
           </Link>
 
-          <div
-            className="header-nav-links hide-on-mobile"
-            style={{ display: "flex", marginLeft: "24px" }}
-          >
-            <Menu
-              mode="horizontal"
-              selectedKeys={[location.pathname]}
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Avatar
               style={{
-                border: "none",
-                background: "transparent",
-                fontWeight: 600,
-                fontSize: "14px",
+                backgroundColor: isAuthor ? "#5e2a69" : "#1e5631",
+                cursor: "pointer",
               }}
-              items={mainNavItems}
+              icon={<UserOutlined />}
             />
-          </div>
+          </Dropdown>
 
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: "16px",
-            }}
-          >
-            <div className="hide-on-mobile">
-              <Dropdown menu={{ items: plusMenuItems }} placement="bottomRight">
-                <Button
-                  type="text"
-                  icon={<PlusOutlined />}
-                  style={{ color: "var(--color-fg-default)" }}
-                />
-              </Dropdown>
-
-              <Button
-                type="text"
-                icon={<BellOutlined />}
-                style={{ color: "var(--color-fg-default)" }}
-              />
-
-              {/* 更新位置服務按鈕為下拉選單 */}
-              <Dropdown
-                menu={{ items: locationMenuItems }}
-                placement="bottomRight"
-                className="hide-on-mobile"
-              >
-                <Button
-                  type="text"
-                  icon={<EnvironmentOutlined />}
-                  style={{ marginLeft: 8 }}
-                />
-              </Dropdown>
-
-              <Dropdown
-                menu={{ items: analyticsMenuItems }}
-                placement="bottomRight"
-                className="hide-on-mobile"
-              >
-                <Button
-                  type="text"
-                  icon={<LineChartOutlined />}
-                  style={{ marginLeft: 8 }}
-                />
-              </Dropdown>
-            </div>
-
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-              <Avatar
-                style={{
-                  backgroundColor: isAuthor ? "#4F46E5" : "#9CA3AF",
-                  cursor: "pointer",
-                }}
-                icon={<UserOutlined />}
-              />
-            </Dropdown>
-
-            <Button
-              type="text"
-              icon={<MenuOutlined />}
-              onClick={() => setMobileMenuOpen(true)}
-              className="hide-on-desktop"
-              style={{ color: "var(--color-fg-default)" }}
-            />
-          </div>
+          {/* Mobile menu button */}
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={() => setMobileMenuOpen(true)}
+            className="hide-on-desktop"
+            style={{ color: "#5e2a69" }}
+          />
         </div>
       </Header>
 
@@ -323,17 +254,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
       </Drawer>
 
-      {/* 位置服務彈窗 */}
-      <Modal
-        title="Location Service"
-        open={locationModalVisible}
-        onCancel={() => setLocationModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <GeoLocation />
-      </Modal>
-
       <Content>
         <div
           className="responsive-container"
@@ -347,8 +267,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       <Footer
         style={{
-          background: "var(--color-canvas-subtle)",
-          borderTop: "1px solid var(--color-border-muted)",
+          background: "#f7f5f0",
+          borderTop: "1px solid #e9e0ed",
           padding: "40px 16px 24px",
         }}
       >
@@ -370,40 +290,38 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 marginBottom: "16px",
               }}
             >
-              <SmileOutlined style={{ fontSize: "24px" }} />
-              <span style={{ fontSize: "16px", fontWeight: 600 }}>
+              <VineIcon width={24} height={24} color="#5e2a69" />
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  background:
+                    "linear-gradient(135deg, #5e2a69 0%, #1e5631 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
                 Grapevine
               </span>
             </div>
             <div className="footer-links">
-              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+              <a href="#" style={{ color: "#5e2a69" }}>
                 Terms
               </a>
-              <Divider
-                type="vertical"
-                style={{ borderColor: "var(--color-border-muted)" }}
-              />
-              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+              <Divider type="vertical" style={{ borderColor: "#e9e0ed" }} />
+              <a href="#" style={{ color: "#5e2a69" }}>
                 Privacy
               </a>
-              <Divider
-                type="vertical"
-                style={{ borderColor: "var(--color-border-muted)" }}
-              />
-              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+              <Divider type="vertical" style={{ borderColor: "#e9e0ed" }} />
+              <a href="#" style={{ color: "#5e2a69" }}>
                 Security
               </a>
-              <Divider
-                type="vertical"
-                style={{ borderColor: "var(--color-border-muted)" }}
-              />
-              <a href="#" style={{ color: "var(--color-fg-muted)" }}>
+              <Divider type="vertical" style={{ borderColor: "#e9e0ed" }} />
+              <a href="#" style={{ color: "#5e2a69" }}>
                 Status
               </a>
             </div>
           </div>
-
-          {/* Additional footer content */}
         </div>
       </Footer>
     </Layout>

@@ -1,0 +1,48 @@
+// 主題顏色變量
+$grape-purple: #5e2a69;
+$grape-purple-light: #8a4a95;
+$grape-purple-lighter: #c9a7d2;
+$vine-green: #1e5631;
+$vine-green-light: #3d7a4f;
+$vine-green-lighter: #a6c7af;
+$cream: #f7f5f0;
+$soft-gray: #f0f0f0;
+$text-dark: #333333;
+
+// 間距變量
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+
+// 陰影變量
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(94, 42, 105, 0.15);
+
+// 邊框半徑
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 16px;
+
+// 過渡時間
+$transition-fast: 0.2s;
+$transition-normal: 0.3s;
+$transition-slow: 0.5s;
+
+// 字體大小
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 24px;
+$font-size-xxl: 32px;
+
+// 斷點
+$breakpoint-xs: 480px;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
