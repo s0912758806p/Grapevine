@@ -137,13 +137,11 @@ export const fetchGithubIssuesThunk = createAsyncThunk(
       // Filter by repository if provided
       let filteredIssues = response.issues;
       if (repository) {
-        console.log("過濾倉庫:", repository);
         filteredIssues = filteredIssues.filter(
           (issue: Record<string, unknown>) => {
             // 直接檢查issue.repository屬性
             const repoName = issue.repository as string | undefined;
             if (repoName && repoName === repository) {
-              console.log("匹配到issue:", issue.id, issue.title);
               return true;
             }
 
@@ -161,11 +159,6 @@ export const fetchGithubIssuesThunk = createAsyncThunk(
               const extractedRepo = urlParts[1]; // 例如: "owner/repo/issues/123" 或 "owner/repo"
               const repoPath = extractedRepo.split("/").slice(0, 2).join("/"); // 獲取 "owner/repo" 部分
 
-              console.log("解析 repo URL:", repoUrl);
-              console.log("提取的repo路徑:", repoPath);
-              console.log("需要匹配的repo:", repository);
-              console.log("是否匹配:", repoPath === repository);
-
               // 精確匹配 owner/repo
               return repoPath === repository;
             } catch (e) {
@@ -174,7 +167,6 @@ export const fetchGithubIssuesThunk = createAsyncThunk(
             }
           }
         );
-        console.log(`過濾後找到 ${filteredIssues.length} 個issues`);
       }
 
       return {

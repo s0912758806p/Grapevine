@@ -27,18 +27,14 @@ import {
 import VineAnimation from "../components/VineAnimation";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Octokit } from "octokit";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-
+import { fetchGithubSingleIssue, fetchGithubIssues } from "../api/githubApi";
 dayjs.extend(relativeTime);
 
 const { Title, Paragraph, Text } = Typography;
 const { TabPane } = Tabs;
-
-// 初始化Octokit
-const octokit = new Octokit();
 
 // 定義Issue類型
 interface Issue {
@@ -85,45 +81,30 @@ const CreatedIssuesPage: React.FC = () => {
       try {
         setLoading(true);
 
-        // 獲取倉庫信息
-        const repoResponse = await octokit.request(
-          "GET /repos/{owner}/{repo}",
-          {
-            owner: import.meta.env.VITE_GITHUB_REPO_OWNER,
-            repo: import.meta.env.VITE_GITHUB_REPO_NAME,
-            headers: {
-              "X-GitHub-Api-Version": "2022-11-28",
-            },
-          }
+        const repoResponse = await fetchGithubSingleIssue(
+          import.meta.env.VITE_GITHUB_REPO_OWNER,
+          import.meta.env.VITE_GITHUB_REPO_NAME
         );
 
         const repoData: Repository = {
-          name: repoResponse.data.name,
-          full_name: repoResponse.data.full_name,
-          description: repoResponse.data.description,
-          stargazers_count: repoResponse.data.stargazers_count,
-          forks_count: repoResponse.data.forks_count,
-          open_issues_count: repoResponse.data.open_issues_count,
+          name: repoResponse.name,
+          full_name: repoResponse.full_name,
+          description: repoResponse.description,
+          stargazers_count: repoResponse.stargazers_count,
+          forks_count: repoResponse.forks_count,
+          open_issues_count: repoResponse.open_issues_count,
         };
 
         setRepository(repoData);
 
         // 獲取issues
-        const issuesResponse = await octokit.request(
-          "GET /repos/{owner}/{repo}/issues",
-          {
-            owner: import.meta.env.VITE_GITHUB_REPO_OWNER,
-            repo: import.meta.env.VITE_GITHUB_REPO_NAME,
-            state: "all", // 獲取所有狀態的issues
-            per_page: 50,
-            headers: {
-              "X-GitHub-Api-Version": "2022-11-28",
-            },
-          }
+        const issuesResponse = await fetchGithubIssues(
+          import.meta.env.VITE_GITHUB_REPO_OWNER,
+          import.meta.env.VITE_GITHUB_REPO_NAME
         );
 
         // 格式化issues數據
-        const formattedIssues = issuesResponse.data.map(
+        const formattedIssues = issuesResponse.map(
           (issue: Record<string, unknown>) => ({
             id: Number(issue.id),
             number: Number(issue.number),

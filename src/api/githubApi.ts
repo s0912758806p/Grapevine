@@ -68,7 +68,6 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
     // 從所有倉庫獲取issues
     const issuesPromises = repositories.map(async (repo) => {
       try {
-        console.log(`正在獲取 ${repo.owner}/${repo.repo} 的issues...`);
         const response = await octokit.request(
           "GET /repos/{owner}/{repo}/issues",
           {
@@ -98,9 +97,6 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
           }
         );
 
-        console.log(
-          `成功獲取 ${repo.owner}/${repo.repo} 的issues: ${repoIssues.length}個`
-        );
         return {
           issues: repoIssues,
           totalCount: repoIssues.length,
@@ -124,12 +120,9 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
     let totalCount = 0;
 
     results.forEach((result) => {
-      console.log(`合併 ${result.name} 的 ${result.issues.length} 個issues`);
       allIssues = [...allIssues, ...result.issues];
       totalCount += result.totalCount;
     });
-
-    console.log(`總共獲取了 ${allIssues.length} 個issues`);
 
     return {
       issues: allIssues,
@@ -158,6 +151,48 @@ export const fetchGrapevineIssue = async (issueNumber: number) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching Grapevine issue #${issueNumber}:`, error);
+    throw error;
+  }
+};
+
+export const fetchGithubSingleIssue = async (owner: string, repo: string) => {
+  try {
+    const repoResponse = await octokit.request("GET /repos/{owner}/{repo}", {
+      owner: owner,
+      repo: repo,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+
+    return repoResponse.data;
+  } catch (error) {
+    console.error("Error fetching Grapevine repository:", error);
+    throw error;
+  }
+};
+
+export const fetchGithubIssues = async (
+  owner: string,
+  repo: string,
+  page = 1,
+  perPage = 10
+) => {
+  try {
+    const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
+      owner: owner,
+      repo: repo,
+      state: "all", // 獲取所有狀態的issues，包括open和closed
+      per_page: perPage,
+      page: page,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching GitHub issues:", error);
     throw error;
   }
 };
