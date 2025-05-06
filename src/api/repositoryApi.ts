@@ -1,5 +1,6 @@
 import { Octokit } from "octokit";
 import { RepositorySource, IssueType } from "../types";
+import { recordRepoActivity } from "../services/analyticsService";
 
 // 定義 GitHub API 回應中的 issue 標籤結構
 interface GitHubLabel {
@@ -17,7 +18,12 @@ interface GitHubUser {
 const octokit = new Octokit();
 
 // 將 GitHub API 回應處理為我們的 IssueType
-function formatIssue(apiIssue: Record<string, unknown>, repoOwner: string, repoName: string, source: string): IssueType {
+function formatIssue(
+  apiIssue: Record<string, unknown>,
+  repoOwner: string,
+  repoName: string,
+  source: string
+): IssueType {
   return {
     id: Number(apiIssue.id),
     number: Number(apiIssue.number),
@@ -43,7 +49,7 @@ function formatIssue(apiIssue: Record<string, unknown>, repoOwner: string, repoN
     state: String(apiIssue.state),
     source,
     repoOwner,
-    repoName
+    repoName,
   };
 }
 
@@ -54,6 +60,11 @@ export const fetchRepositoryIssues = async (
   perPage = 10
 ) => {
   try {
+    // Get the current date and time
+    const now = new Date();
+    // Set a time 24 hours ago for tracking new and updated issues
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
     const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
       owner: repoSource.owner,
       repo: repoSource.repo,
@@ -87,21 +98,56 @@ export const fetchRepositoryIssues = async (
           : page * perPage + perPage;
     }
 
-    const issues = response.data.map((issue: Record<string, unknown>) => 
-      formatIssue(issue, repoSource.owner, repoSource.repo, repoSource.id));
-    
+    const issues = response.data.map((issue: Record<string, unknown>) =>
+      formatIssue(issue, repoSource.owner, repoSource.repo, repoSource.id)
+    );
+
+    // Count new issues (created in the last 24 hours)
+    const newIssuesCount = response.data.filter(
+      (issue: Record<string, unknown>) => {
+        const createdAt = new Date(String(issue.created_at));
+        return createdAt > twentyFourHoursAgo;
+      }
+    ).length;
+
+    // Count updated issues (updated in the last 24 hours but created before that)
+    const updatedIssuesCount = response.data.filter(
+      (issue: Record<string, unknown>) => {
+        const createdAt = new Date(String(issue.created_at));
+        const updatedAt = new Date(String(issue.updated_at));
+        return (
+          createdAt <= twentyFourHoursAgo && updatedAt > twentyFourHoursAgo
+        );
+      }
+    ).length;
+
+    // Record the analytics data
+    recordRepoActivity(
+      repoSource.id,
+      repoSource.owner,
+      repoSource.repo,
+      newIssuesCount,
+      updatedIssuesCount
+    );
+
     return {
       issues,
       totalCount,
     };
   } catch (error) {
-    console.error(`Error fetching issues for ${repoSource.owner}/${repoSource.repo}:`, error);
+    console.error(
+      `Error fetching issues for ${repoSource.owner}/${repoSource.repo}:`,
+      error
+    );
     throw error;
   }
 };
 
 // 獲取單個issue的詳細資訊
-export const fetchRepositoryIssue = async (repoSource: RepositorySource, issueNumber: number) => {
+export const fetchRepositoryIssue = async (
+  repoSource: RepositorySource,
+  issueNumber: number
+) => {
   try {
     const response = await octokit.request(
       "GET /repos/{owner}/{repo}/issues/{issue_number}",
@@ -115,9 +161,17 @@ export const fetchRepositoryIssue = async (repoSource: RepositorySource, issueNu
       }
     );
 
-    return formatIssue(response.data, repoSource.owner, repoSource.repo, repoSource.id);
+    return formatIssue(
+      response.data,
+      repoSource.owner,
+      repoSource.repo,
+      repoSource.id
+    );
   } catch (error) {
-    console.error(`Error fetching issue #${issueNumber} from ${repoSource.owner}/${repoSource.repo}:`, error);
+    console.error(
+      `Error fetching issue #${issueNumber} from ${repoSource.owner}/${repoSource.repo}:`,
+      error
+    );
     throw error;
   }
-}; 
+};

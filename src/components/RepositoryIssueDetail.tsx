@@ -165,7 +165,7 @@ const RepositoryIssueDetail: React.FC = () => {
             <Divider />
 
             {/* 內容 */}
-            <Card bordered={false} style={{ width: "100%" }}>
+            <Card variant="borderless" style={{ width: "100%" }}>
               <div className="markdown-body">
                 <SimpleMarkdownContent content={currentIssue.body || ""} />
               </div>

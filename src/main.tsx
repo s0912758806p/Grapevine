@@ -8,7 +8,12 @@ import { StyleProvider } from "@ant-design/cssinjs";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <StyleProvider hashPriority="high">
-      <RouterProvider router={router} />
+      <RouterProvider
+        router={router}
+        future={{
+          v7_startTransition: true,
+        }}
+      />
     </StyleProvider>
   </React.StrictMode>
 );

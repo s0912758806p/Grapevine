@@ -5,11 +5,15 @@ import {
   Card,
   Statistic,
   Typography,
-  Divider,
   Button,
   Alert,
   Tabs,
   Empty,
+  List,
+  Tag,
+  Table,
+  Badge,
+  Tooltip,
 } from "antd";
 import {
   ReadOutlined,
@@ -17,6 +21,9 @@ import {
   ClockCircleOutlined,
   TagOutlined,
   DeleteOutlined,
+  GithubOutlined,
+  PlusOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import {
@@ -29,7 +36,16 @@ import {
   clearAnalyticsData,
   getDaysSinceFirstView,
   getRecentSearches,
+  getRepoActivity,
+  getTotalIssuesCreated,
+  getTotalIssuesUpdated,
+  getTotalReposTracked,
+  getMostActiveRepos,
 } from "../services/analyticsService";
+import { Link } from "react-router-dom";
+import BarChart from "../components/charts/BarChart";
+import PieChart from "../components/charts/PieChart";
+import VineIcon from "../components/VineIcon";
 
 const { Title, Text } = Typography;
 
@@ -41,6 +57,15 @@ interface ViewRecord {
   timestamp: number;
   readingTime: number;
   source: string;
+}
+
+interface RepoActivity {
+  repoId: string;
+  repoOwner: string;
+  repoName: string;
+  created: number;
+  updated: number;
+  lastFetched: number;
 }
 
 // Helper function to format date for display
@@ -62,7 +87,13 @@ const AnalyticsDashboard: React.FC = () => {
     {}
   );
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [repoActivity, setRepoActivity] = useState<RepoActivity[]>([]);
+  const [totalIssuesCreated, setTotalIssuesCreated] = useState<number>(0);
+  const [totalIssuesUpdated, setTotalIssuesUpdated] = useState<number>(0);
+  const [totalReposTracked, setTotalReposTracked] = useState<number>(0);
+  const [mostActiveRepos, setMostActiveRepos] = useState<RepoActivity[]>([]);
   const [showNoDataAlert, setShowNoDataAlert] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Load data on component mount
   useEffect(() => {
@@ -70,18 +101,33 @@ const AnalyticsDashboard: React.FC = () => {
   }, []);
 
   const loadAnalyticsData = () => {
-    const history = getViewHistory();
-    setViewHistory(history);
-    setTopViewed(getTopViewed(10));
-    setReadingTime(getFormattedReadingTime());
-    setTopTags(getMostInteractedTags(10));
-    setDaysSinceFirstView(getDaysSinceFirstView());
-    setActivityByDay(getActivityByDayOfWeek());
-    setViewsBySource(getViewsBySource());
-    setRecentSearches(getRecentSearches());
+    setLoading(true);
 
-    // Show alert if no data is available
-    setShowNoDataAlert(history.length === 0);
+    try {
+      const history = getViewHistory();
+      setViewHistory(history);
+      setTopViewed(getTopViewed(10));
+      setReadingTime(getFormattedReadingTime());
+      setTopTags(getMostInteractedTags(10));
+      setDaysSinceFirstView(getDaysSinceFirstView());
+      setActivityByDay(getActivityByDayOfWeek());
+      setViewsBySource(getViewsBySource());
+      setRecentSearches(getRecentSearches());
+
+      // Load repository activity data
+      setRepoActivity(getRepoActivity());
+      setTotalIssuesCreated(getTotalIssuesCreated());
+      setTotalIssuesUpdated(getTotalIssuesUpdated());
+      setTotalReposTracked(getTotalReposTracked());
+      setMostActiveRepos(getMostActiveRepos(5));
+
+      // Show alert if no data is available
+      setShowNoDataAlert(history.length === 0);
+    } catch (error) {
+      console.error("Error loading analytics data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearData = () => {
@@ -114,11 +160,60 @@ const AnalyticsDashboard: React.FC = () => {
     })
   );
 
-  // Format top tags data for visualization
-  //   const topTagsData = topTags.map((tag) => ({
-  //     category: tag.tag,
-  //     value: tag.count,
-  //   }));
+  // Repository activity table columns
+  const repoColumns = [
+    {
+      title: "Repository",
+      dataIndex: "repoName",
+      key: "repoName",
+      render: (text: string, record: RepoActivity) => (
+        <span>
+          <GithubOutlined style={{ marginRight: 8 }} />
+          {record.repoOwner}/{text}
+        </span>
+      ),
+    },
+    {
+      title: "New Issues (24h)",
+      dataIndex: "created",
+      key: "created",
+      render: (created: number) => (
+        <Badge
+          count={created}
+          showZero
+          style={{
+            backgroundColor: created > 0 ? "#52c41a" : "#f5f5f5",
+            color: created > 0 ? "white" : "#999",
+          }}
+        />
+      ),
+    },
+    {
+      title: "Updated Issues (24h)",
+      dataIndex: "updated",
+      key: "updated",
+      render: (updated: number) => (
+        <Badge
+          count={updated}
+          showZero
+          style={{
+            backgroundColor: updated > 0 ? "#1890ff" : "#f5f5f5",
+            color: updated > 0 ? "white" : "#999",
+          }}
+        />
+      ),
+    },
+    {
+      title: "Last Fetched",
+      dataIndex: "lastFetched",
+      key: "lastFetched",
+      render: (lastFetched: number) => (
+        <Tooltip title={formatDate(lastFetched)}>
+          {new Date(lastFetched).toLocaleDateString()}
+        </Tooltip>
+      ),
+    },
+  ];
 
   // Define tabs for the dashboard
   const tabItems: TabsProps["items"] = [
@@ -129,140 +224,93 @@ const AnalyticsDashboard: React.FC = () => {
         <>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
-              <Card variant="borderless">
+              <Card variant="borderless" className="analytics-card">
                 <Statistic
                   title="Total Posts Viewed"
                   value={Object.keys(viewsBySource).length}
-                  prefix={<EyeOutlined />}
+                  prefix={<EyeOutlined style={{ color: "#5e2a69" }} />}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card variant="borderless">
+              <Card variant="borderless" className="analytics-card">
                 <Statistic
                   title="Total Reading Time"
                   value={readingTime}
-                  prefix={<ClockCircleOutlined />}
+                  prefix={<ClockCircleOutlined style={{ color: "#1e5631" }} />}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card bordered={false}>
+              <Card variant="borderless" className="analytics-card">
                 <Statistic
                   title="Active Days"
                   value={daysSinceFirstView}
-                  prefix={<ReadOutlined />}
+                  prefix={<ReadOutlined style={{ color: "#5e2a69" }} />}
                   suffix="days"
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card bordered={false}>
+              <Card variant="borderless" className="analytics-card">
                 <Statistic
                   title="Tags Interacted"
                   value={Object.keys(topTags).length}
-                  prefix={<TagOutlined />}
+                  prefix={<TagOutlined style={{ color: "#1e5631" }} />}
                 />
               </Card>
             </Col>
           </Row>
 
-          <Divider orientation="left">Activity by Day</Divider>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card bordered={false}>
-                <div style={{ height: 300 }}>
-                  {activityByDayData.some((day) => day.value > 0) ? (
-                    <div style={{ display: "flex", height: "100%" }}>
-                      {activityByDayData.map((day, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            flex: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              marginTop: "auto",
-                              width: "60%",
-                              background: "#1677ff",
-                              height: `${
-                                (day.value /
-                                  Math.max(
-                                    ...activityByDayData.map((d) => d.value)
-                                  )) *
-                                  100 || 0
-                              }%`,
-                            }}
-                          />
-                          <div style={{ marginTop: "8px" }}>{day.category}</div>
-                          <div style={{ fontSize: "12px" }}>{day.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Empty description="No activity data available" />
-                  )}
-                </div>
+          {/* Repository Activity Summary */}
+          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
+            <Col xs={24} sm={12} md={8}>
+              <Card variant="borderless" className="analytics-card">
+                <Statistic
+                  title="Repositories Tracked"
+                  value={totalReposTracked}
+                  prefix={<GithubOutlined style={{ color: "#5e2a69" }} />}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Card variant="borderless" className="analytics-card">
+                <Statistic
+                  title="New Issues (24h)"
+                  value={totalIssuesCreated}
+                  prefix={<PlusOutlined style={{ color: "#52c41a" }} />}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={8}>
+              <Card variant="borderless" className="analytics-card">
+                <Statistic
+                  title="Updated Issues (24h)"
+                  value={totalIssuesUpdated}
+                  prefix={<EditOutlined style={{ color: "#1890ff" }} />}
+                />
               </Card>
             </Col>
           </Row>
 
-          <Divider orientation="left">Content Sources</Divider>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card bordered={false}>
-                <div style={{ height: 300 }}>
-                  {viewsBySourceData.length > 0 ? (
-                    <div style={{ display: "flex", height: "100%" }}>
-                      {viewsBySourceData.map((source, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            flex: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Text>{source.type}</Text>
-                          <div
-                            style={{
-                              flex: 1,
-                              display: "flex",
-                              alignItems: "flex-end",
-                              width: "100%",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: "60%",
-                                background: `hsl(${index * 30}, 70%, 50%)`,
-                                height: `${
-                                  (source.value /
-                                    Math.max(
-                                      ...viewsBySourceData.map((s) => s.value)
-                                    )) *
-                                  80
-                                }%`,
-                                minHeight: "20px",
-                                borderRadius: "4px 4px 0 0",
-                              }}
-                            />
-                          </div>
-                          <Text>{source.value} views</Text>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Empty description="No source data available" />
-                  )}
-                </div>
-              </Card>
+          {/* Charts row */}
+          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
+            <Col xs={24} lg={12}>
+              <BarChart
+                data={activityByDayData}
+                title="Activity by Day of Week"
+                description="Your content reading pattern by day"
+                color="#5e2a69"
+                loading={loading}
+              />
+            </Col>
+            <Col xs={24} lg={12}>
+              <PieChart
+                data={viewsBySourceData}
+                title="Content Sources"
+                description="Distribution of content viewed by source"
+                loading={loading}
+              />
             </Col>
           </Row>
         </>
@@ -273,58 +321,62 @@ const AnalyticsDashboard: React.FC = () => {
       label: "Post Analytics",
       children: (
         <>
-          <Divider orientation="left">Most Viewed Posts</Divider>
           <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card variant="borderless">
+            <Col xs={24} md={12}>
+              <Card
+                title="Most Viewed Posts"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
                 {topViewed.length > 0 ? (
-                  topViewed.map((issue, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        marginBottom: 16,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div>
-                        <div>#{issue.issueNumber}</div>
-                        <div>Views: {issue.viewCount}</div>
-                      </div>
-                      <div>
-                        <Button
-                          type="link"
-                          href={`/issue/${issue.issueNumber}`}
-                        >
-                          View Post
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                  <List
+                    dataSource={topViewed}
+                    renderItem={(issue) => (
+                      <List.Item
+                        actions={[
+                          <Link to={`/issue/${issue.issueNumber}`}>View</Link>,
+                        ]}
+                      >
+                        <List.Item.Meta
+                          avatar={
+                            <VineIcon width={24} height={24} color="#5e2a69" />
+                          }
+                          title={`#${issue.issueNumber}`}
+                          description={`${issue.viewCount} ${
+                            issue.viewCount === 1 ? "view" : "views"
+                          }`}
+                        />
+                      </List.Item>
+                    )}
+                  />
                 ) : (
                   <Empty description="No post view data available" />
                 )}
               </Card>
             </Col>
-          </Row>
-
-          <Divider orientation="left">Top Tags</Divider>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card variant="borderless">
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {topTags.length > 0 ? (
-                    topTags.map((tag, index) => (
-                      <div
+            <Col xs={24} md={12}>
+              <Card
+                title="Top Tags"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
+                {topTags.length > 0 ? (
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
+                  >
+                    {topTags.map((tag, index) => (
+                      <Tag
                         key={index}
+                        color={`hsl(${index * 20}, 70%, 80%)`}
                         style={{
-                          padding: "4px 12px",
-                          background: `hsl(${index * 20}, 70%, 90%)`,
-                          borderRadius: "16px",
+                          padding: "4px 8px",
+                          margin: "4px",
                           display: "flex",
                           alignItems: "center",
                           gap: "4px",
+                          color: "#111",
                         }}
                       >
                         <span>{tag.tag}</span>
@@ -338,16 +390,91 @@ const AnalyticsDashboard: React.FC = () => {
                             justifyContent: "center",
                             alignItems: "center",
                             fontSize: "12px",
+                            fontWeight: "bold",
                           }}
                         >
                           {tag.count}
                         </span>
-                      </div>
-                    ))
-                  ) : (
-                    <Empty description="No tag data available" />
-                  )}
-                </div>
+                      </Tag>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty description="No tag data available" />
+                )}
+              </Card>
+            </Col>
+          </Row>
+        </>
+      ),
+    },
+    {
+      key: "repositories",
+      label: "Repository Analytics",
+      children: (
+        <>
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <Card
+                title="Repository Activity"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
+                {repoActivity.length > 0 ? (
+                  <Table
+                    dataSource={repoActivity}
+                    columns={repoColumns}
+                    rowKey="repoId"
+                    pagination={{ pageSize: 5 }}
+                  />
+                ) : (
+                  <Empty description="No repository activity data available" />
+                )}
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
+            <Col span={24}>
+              <Card
+                title="Most Active Repositories"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
+                {mostActiveRepos.length > 0 ? (
+                  <List
+                    dataSource={mostActiveRepos}
+                    renderItem={(repo) => (
+                      <List.Item
+                        actions={[
+                          <Tooltip
+                            title={`${repo.created} new, ${repo.updated} updated`}
+                          >
+                            <Badge
+                              count={repo.created + repo.updated}
+                              overflowCount={999}
+                            />
+                          </Tooltip>,
+                        ]}
+                      >
+                        <List.Item.Meta
+                          avatar={
+                            <GithubOutlined
+                              style={{ fontSize: 24, color: "#5e2a69" }}
+                            />
+                          }
+                          title={`${repo.repoOwner}/${repo.repoName}`}
+                          description={`Last updated: ${new Date(
+                            repo.lastFetched
+                          ).toLocaleDateString()}`}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <Empty description="No active repositories data available" />
+                )}
               </Card>
             </Col>
           </Row>
@@ -359,44 +486,51 @@ const AnalyticsDashboard: React.FC = () => {
       label: "Browsing History",
       children: (
         <>
-          <Divider orientation="left">Recent Views</Divider>
           <Row gutter={[16, 16]}>
             <Col span={24}>
-              <Card variant="borderless">
+              <Card
+                title="Recent Views"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
                 {viewHistory.length > 0 ? (
-                  viewHistory.map((view, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        marginBottom: 16,
-                        padding: "12px",
-                        borderBottom: "1px solid #f0f0f0",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text strong>
-                          #{view.issueNumber} - {view.title}
-                        </Text>
-                        <Text type="secondary">
-                          {formatDate(view.timestamp)}
-                        </Text>
-                      </div>
-                      <div>
-                        <Text type="secondary">
-                          Reading time: {Math.floor(view.readingTime / 60)}m{" "}
-                          {view.readingTime % 60}s
-                        </Text>
-                        <Text type="secondary" style={{ marginLeft: 16 }}>
-                          Source: {view.source}
-                        </Text>
-                      </div>
-                    </div>
-                  ))
+                  <List
+                    dataSource={viewHistory}
+                    renderItem={(view) => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <Link to={`/issue/${view.issueNumber}`}>
+                                #{view.issueNumber} - {view.title}
+                              </Link>
+                              <Text type="secondary">
+                                {formatDate(view.timestamp)}
+                              </Text>
+                            </div>
+                          }
+                          description={
+                            <div>
+                              <Text type="secondary">
+                                Reading time:{" "}
+                                {Math.floor(view.readingTime / 60)}m{" "}
+                                {view.readingTime % 60}s
+                              </Text>
+                              <Text type="secondary" style={{ marginLeft: 16 }}>
+                                Source: {view.source}
+                              </Text>
+                            </div>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
                 ) : (
                   <Empty description="No browsing history available" />
                 )}
@@ -404,25 +538,31 @@ const AnalyticsDashboard: React.FC = () => {
             </Col>
           </Row>
 
-          <Divider orientation="left">Recent Searches</Divider>
-          <Row gutter={[16, 16]}>
+          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
             <Col span={24}>
-              <Card variant="borderless">
+              <Card
+                title="Recent Searches"
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
                 {recentSearches.length > 0 ? (
                   <div
                     style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
                   >
                     {recentSearches.map((search, index) => (
-                      <div
+                      <Tag
                         key={index}
                         style={{
                           padding: "4px 12px",
+                          margin: "4px",
                           background: "#f0f0f0",
                           borderRadius: "16px",
+                          color: "#333",
                         }}
                       >
                         {search}
-                      </div>
+                      </Tag>
                     ))}
                   </div>
                 ) : (
@@ -438,29 +578,23 @@ const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="analytics-dashboard">
-      <Row gutter={[16, 16]}>
+      <Row gutter={[0, 24]}>
         <Col span={24}>
-          {window.location.href.includes(
-            `${import.meta.env.VITE_HOST_AUTHOR}`
-          ) && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 16,
-              }}
-            >
-              <Title level={2}>Personal Analytics Dashboard</Title>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                onClick={handleClearData}
-              >
-                Clear Data
-              </Button>
-            </div>
-          )}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
+            <Title level={2} style={{ margin: 0, color: "#5e2a69" }}>
+              Personal Analytics Dashboard
+            </Title>
+            <Button danger icon={<DeleteOutlined />} onClick={handleClearData}>
+              Clear Data
+            </Button>
+          </div>
 
           {showNoDataAlert && (
             <Alert
@@ -472,7 +606,11 @@ const AnalyticsDashboard: React.FC = () => {
             />
           )}
 
-          <Tabs defaultActiveKey="overview" items={tabItems} />
+          <Tabs
+            defaultActiveKey="overview"
+            items={tabItems}
+            className="grapevine-tabs"
+          />
         </Col>
       </Row>
     </div>

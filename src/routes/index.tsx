@@ -14,65 +14,77 @@ import GitHubIssuesPage from "../pages/GitHubIssuesPage";
 import IssueSubmissionPage from "../pages/IssueSubmissionPage";
 import AuthorIssuesPage from "../pages/CreatedIssuesPage";
 
-const router = createBrowserRouter([
+// Create router with all future flags enabled
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <App />,
+      children: [
+        {
+          path: "",
+          element: <LandingPage />,
+        },
+        {
+          path: "home",
+          element: <HomePage />,
+        },
+        {
+          path: "github-issues",
+          element: <GitHubIssuesPage />,
+        },
+        {
+          path: "created-issues",
+          element: <AuthorIssuesPage />,
+        },
+        {
+          path: "issue-submitted",
+          element: <IssueSubmissionPage />,
+        },
+        {
+          path: "issue/:issueNumber",
+          element: <IssueDetail />,
+        },
+        {
+          path: "f2e-issue/:issueNumber",
+          element: <F2EIssueDetail />,
+        },
+        {
+          path: "repository-issue/:repoId/:issueNumber",
+          element: <RepositoryIssueDetail />,
+        },
+        {
+          path: "new-issue",
+          element: <NewIssue />,
+        },
+        {
+          path: "comments",
+          element: <CommentsExample />,
+        },
+        {
+          path: "manage-repositories",
+          element: <RepositoryManagementPage />,
+        },
+        {
+          path: "location",
+          element: <LocationPage />,
+        },
+        {
+          path: "analytics",
+          element: <AnalyticsDashboard />,
+        },
+      ],
+    },
+  ],
   {
-    path: "/",
-    element: <App />,
-    children: [
-      {
-        path: "",
-        element: <LandingPage />,
-      },
-      {
-        path: "home",
-        element: <HomePage />,
-      },
-      {
-        path: "github-issues",
-        element: <GitHubIssuesPage />,
-      },
-      {
-        path: "created-issues",
-        element: <AuthorIssuesPage />,
-      },
-      {
-        path: "issue-submitted",
-        element: <IssueSubmissionPage />,
-      },
-      {
-        path: "issue/:issueNumber",
-        element: <IssueDetail />,
-      },
-      {
-        path: "f2e-issue/:issueNumber",
-        element: <F2EIssueDetail />,
-      },
-      {
-        path: "repository-issue/:repoId/:issueNumber",
-        element: <RepositoryIssueDetail />,
-      },
-      {
-        path: "new-issue",
-        element: <NewIssue />,
-      },
-      {
-        path: "comments",
-        element: <CommentsExample />,
-      },
-      {
-        path: "manage-repositories",
-        element: <RepositoryManagementPage />,
-      },
-      {
-        path: "location",
-        element: <LocationPage />,
-      },
-      {
-        path: "analytics",
-        element: <AnalyticsDashboard />,
-      },
-    ],
-  },
-]);
+    future: {
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+    },
+  }
+);
 
 export default router;

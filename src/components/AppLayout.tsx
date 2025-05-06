@@ -192,6 +192,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               fontSize: "14px",
             }}
             items={mainNavItems}
+            theme="light"
           />
         </div>
 
@@ -248,6 +249,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           <Menu
             mode="vertical"
+            theme="light"
             selectedKeys={[location.pathname]}
             items={mobileNavItems}
           />

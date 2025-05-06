@@ -9,6 +9,15 @@ interface ViewRecord {
   source: string;
 }
 
+interface RepoActivity {
+  repoId: string;
+  repoOwner: string;
+  repoName: string;
+  created: number;
+  updated: number;
+  lastFetched: number;
+}
+
 interface AnalyticsData {
   viewHistory: ViewRecord[];
   mostViewed: Record<number, number>; // issueNumber: viewCount
@@ -16,6 +25,7 @@ interface AnalyticsData {
   lastActive: number; // timestamp
   tagsInteracted: Record<string, number>; // tagName: interactionCount
   searchQueries: string[];
+  repoActivity: Record<string, RepoActivity>; // repoId: RepoActivity
 }
 
 const STORAGE_KEY = "grapevine_analytics";
@@ -27,6 +37,7 @@ const getDefaultAnalyticsData = (): AnalyticsData => ({
   lastActive: Date.now(),
   tagsInteracted: {},
   searchQueries: [],
+  repoActivity: {},
 });
 
 // Load analytics data from localStorage
@@ -34,7 +45,12 @@ const loadAnalyticsData = (): AnalyticsData => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsedData = JSON.parse(data);
+      // Ensure repoActivity exists in older data
+      if (!parsedData.repoActivity) {
+        parsedData.repoActivity = {};
+      }
+      return parsedData;
     }
   } catch (error) {
     console.error("Failed to load analytics data:", error);
@@ -90,6 +106,43 @@ export const recordView = (issue: IssueType): void => {
     });
   }
 
+  // Record repository activity if issue has repo information
+  if (issue.source && issue.repoOwner && issue.repoName) {
+    recordRepoActivity(issue.source, issue.repoOwner, issue.repoName, 0, 0);
+  }
+
+  saveAnalyticsData(data);
+};
+
+// Record repository issues activity
+export const recordRepoActivity = (
+  repoId: string,
+  repoOwner: string,
+  repoName: string,
+  createdCount: number,
+  updatedCount: number
+): void => {
+  const data = loadAnalyticsData();
+
+  const now = Date.now();
+
+  // Update or create repository activity
+  if (!data.repoActivity[repoId]) {
+    data.repoActivity[repoId] = {
+      repoId,
+      repoOwner,
+      repoName,
+      created: 0,
+      updated: 0,
+      lastFetched: now,
+    };
+  }
+
+  // Update counts
+  data.repoActivity[repoId].created += createdCount;
+  data.repoActivity[repoId].updated += updatedCount;
+  data.repoActivity[repoId].lastFetched = now;
+
   saveAnalyticsData(data);
 };
 
@@ -133,6 +186,44 @@ export const getTopViewed = (
       viewCount,
     }))
     .sort((a, b) => b.viewCount - a.viewCount)
+    .slice(0, n);
+};
+
+// Get repository activity data
+export const getRepoActivity = (): RepoActivity[] => {
+  const data = loadAnalyticsData();
+  return Object.values(data.repoActivity);
+};
+
+// Get total issues created across all repositories
+export const getTotalIssuesCreated = (): number => {
+  const data = loadAnalyticsData();
+  return Object.values(data.repoActivity).reduce(
+    (total, repo) => total + repo.created,
+    0
+  );
+};
+
+// Get total issues updated across all repositories
+export const getTotalIssuesUpdated = (): number => {
+  const data = loadAnalyticsData();
+  return Object.values(data.repoActivity).reduce(
+    (total, repo) => total + repo.updated,
+    0
+  );
+};
+
+// Get total repositories tracked
+export const getTotalReposTracked = (): number => {
+  const data = loadAnalyticsData();
+  return Object.keys(data.repoActivity).length;
+};
+
+// Get most active repositories by created + updated issues
+export const getMostActiveRepos = (n: number = 5): RepoActivity[] => {
+  const data = loadAnalyticsData();
+  return Object.values(data.repoActivity)
+    .sort((a, b) => b.created + b.updated - (a.created + a.updated))
     .slice(0, n);
 };
 
