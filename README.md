@@ -2,6 +2,9 @@
 
 Grapevine is a modern forum application that integrates with GitHub issues to create a clean, collaborative discussion platform with analytics capabilities.
 
+[IMAGE](./src/assets/Screenshot.png)
+[DEMO](grapevine-six-gr925.vercel.app/)
+
 ## Features
 
 - **GitHub Integration**: Connect to GitHub repositories for content management
