@@ -13,6 +13,7 @@ import LandingPage from "../pages/LandingPage";
 import GitHubIssuesPage from "../pages/GitHubIssuesPage";
 import IssueSubmissionPage from "../pages/IssueSubmissionPage";
 import AuthorIssuesPage from "../pages/CreatedIssuesPage";
+import CommunityPage from "../pages/CommunityPage";
 
 // Create router with all future flags enabled
 const router = createBrowserRouter(
@@ -72,6 +73,10 @@ const router = createBrowserRouter(
         {
           path: "analytics",
           element: <AnalyticsDashboard />,
+        },
+        {
+          path: "community",
+          element: <CommunityPage />,
         },
       ],
     },

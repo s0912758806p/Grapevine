@@ -21,6 +21,10 @@ Grapevine is a modern forum application that integrates with GitHub issues to cr
 - **Modern UI**: Clean design built with Ant Design
 - **Responsive Design**: Optimized for all device sizes
 - **Data Visualization**: Interactive charts using Ant Design Charts
+- **Community Features**:
+  - **Anonymous Rumor Wall**: Share and vote on tech industry gossip without attribution
+  - **Active Commenters Leaderboard**: Showcase top community contributors
+  - **Weekly Rumor Digest**: Newsletter-style compilation of trending rumors
 
 ## Quick Start
 
@@ -105,6 +109,14 @@ Access location-based features:
 - Address details via reverse geocoding
 - Dedicated location services page
 
+### Community Features
+
+Engage with the community through specialized features:
+
+- **Anonymous Rumor Wall**: Share short, anonymous tech rumors and vote on their credibility
+- **Active Commenters Leaderboard**: See who's most actively contributing to discussions
+- **Weekly Rumor Digest**: Browse a curated collection of the week's most popular rumors in a newsletter format
+
 ## Project Structure
 
 ```
@@ -131,10 +143,16 @@ src/
 │   ├── RepositoryManagementPage.tsx  # Repository management
 │   ├── SearchAndFilter.tsx    # Search & filtering
 │   ├── UtterancesComments.tsx # GitHub comments integration
-│   └── charts/                # Data visualization components
+│   ├── charts/                # Data visualization components
+│   └── community/             # Community features components
+│       ├── AnonymousRumors.tsx   # Anonymous rumor wall
+│       ├── ActiveLeaderboard.tsx # Active commenters leaderboard
+│       ├── RumorDigest.tsx       # Weekly rumor digest
+│       └── CommunityFeatures.tsx # Main community component
 ├── pages/
 │   ├── AnalyticsDashboard.tsx # Data analytics page
 │   ├── CommentsExample.tsx    # Comment example page
+│   ├── CommunityPage.tsx      # Community features page
 │   ├── CreatedIssuesPage.tsx  # User-created issues
 │   ├── GitHubIssuesPage.tsx   # GitHub issues page
 │   ├── IssueSubmissionPage.tsx# Issue submission confirmation

@@ -1,0 +1,244 @@
+// Community Features Styles
+.community-features-container {
+  padding: 24px 0;
+
+  .community-header {
+    text-align: center;
+    margin-bottom: 24px;
+
+    .community-title {
+      margin-bottom: 8px;
+      color: #722ed1;
+    }
+
+    .community-subtitle {
+      font-size: 16px;
+      color: rgba(0, 0, 0, 0.65);
+    }
+  }
+
+  .community-divider {
+    margin: 12px 0 28px;
+  }
+}
+
+// Anonymous Rumor Wall Styles
+.rumor-wall {
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+
+  .section-title {
+    color: #722ed1;
+    margin-bottom: 8px;
+  }
+
+  .section-description {
+    color: rgba(0, 0, 0, 0.65);
+    margin-bottom: 20px;
+  }
+
+  .rumor-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .vote-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: 16px;
+
+      .vote-count {
+        font-weight: bold;
+        margin: 2px 0;
+      }
+
+      .voted-up {
+        color: #52c41a;
+      }
+
+      .voted-down {
+        color: #f5222d;
+      }
+    }
+
+    .rumor-content {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .rumor-timestamp {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 12px;
+    }
+  }
+}
+
+// Active Leaderboard Styles
+.active-leaderboard {
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+
+  .section-title {
+    color: #722ed1;
+    margin-bottom: 8px;
+
+    .anticon {
+      margin-right: 8px;
+      color: #fa8c16;
+    }
+  }
+
+  .section-description {
+    color: rgba(0, 0, 0, 0.65);
+    margin-bottom: 20px;
+  }
+
+  .leaderboard-item {
+    padding: 12px 0;
+
+    .leaderboard-avatar-container {
+      position: relative;
+
+      .medal-icon {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        z-index: 1;
+        font-size: 16px;
+      }
+    }
+
+    .user-name-container {
+      display: flex;
+      justify-content: space-between;
+
+      .user-name {
+        font-weight: bold;
+      }
+
+      .rank-number {
+        color: #722ed1;
+        font-weight: bold;
+      }
+    }
+
+    .user-stats {
+      display: flex;
+      flex-direction: column;
+
+      .stat-item {
+        margin-right: 16px;
+        color: rgba(0, 0, 0, 0.65);
+
+        .anticon {
+          margin-right: 4px;
+        }
+      }
+
+      .user-tags {
+        margin-top: 8px;
+
+        .expertise-tag {
+          margin-right: 8px;
+          margin-bottom: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Rumor Digest Styles
+.rumor-digest {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+
+  .digest-header {
+    .no-margin {
+      margin-bottom: 0;
+    }
+
+    .digest-date {
+      color: rgba(0, 0, 0, 0.45);
+      margin-top: 4px;
+    }
+
+    .subscribe-container {
+      text-align: right;
+    }
+  }
+
+  .newsletter-content {
+    margin-top: 16px;
+    background-color: #fafafa;
+    padding: 16px;
+    border-radius: 4px;
+
+    .highlight-rumor {
+      padding-bottom: 16px;
+
+      .highlight-label {
+        color: #722ed1;
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+
+      .highlight-title {
+        margin: 8px 0;
+      }
+
+      .highlight-content {
+        margin-bottom: 16px;
+      }
+
+      .highlight-stats {
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 13px;
+      }
+    }
+
+    .digest-divider {
+      margin: 8px 0 16px;
+    }
+
+    .trending-rumors {
+      .section-subtitle {
+        margin-bottom: 16px;
+      }
+
+      .digest-list-item {
+        padding: 12px 8px;
+        margin-bottom: 8px;
+        background-color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+          background-color: #f6f0ff;
+        }
+
+        .digest-item-tags {
+          margin-top: 8px;
+        }
+      }
+    }
+
+    .view-all-container {
+      text-align: center;
+      margin-top: 16px;
+    }
+  }
+}
+
+// Community Page Styles
+.community-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
