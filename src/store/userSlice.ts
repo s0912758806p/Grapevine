@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { isAuthor } from "../api/githubApi";
+import { isAuthor } from "../api/repositoryApi";
 
 interface UserState {
   currentUser: string | null;

@@ -26,28 +26,24 @@ const PieChart: React.FC<PieChartProps> = ({
   valueField = "value",
   loading = false,
 }) => {
+  // Ensure there's always data to render
+  const safeData =
+    data && data.length > 0 ? data : [{ type: "No Data", value: 0 }];
+
+  // Using minimal configuration to avoid compatibility issues with different versions of @ant-design/charts
   const config = {
     appendPadding: 10,
-    data,
+    data: safeData,
     angleField: valueField,
     colorField,
     radius: 0.8,
-    label: {
-      type: "outer",
-      content: "{name} {percentage}",
+    legend: {
+      position: "bottom",
     },
-    interactions: [
-      {
-        type: "pie-legend-active",
-      },
-      {
-        type: "element-active",
-      },
-    ],
   };
 
   return (
-    <Card loading={loading} bordered={false} className="analytics-card">
+    <Card loading={loading} variant="borderless" className="analytics-card">
       <Title level={4}>{title}</Title>
       {description && <p>{description}</p>}
       <Pie {...config} />

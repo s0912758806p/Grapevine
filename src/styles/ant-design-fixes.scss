@@ -243,4 +243,8 @@
       padding: 16px 24px;
     }
   }
-} 
+}
+
+.ant-menu-horizontal .ant-menu-item.ant-menu-item-selected {
+  border-bottom: transparent !important;
+}

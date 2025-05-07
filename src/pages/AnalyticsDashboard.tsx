@@ -153,12 +153,12 @@ const AnalyticsDashboard: React.FC = () => {
   ];
 
   // Format views by source data for visualization
-  const viewsBySourceData = Object.entries(viewsBySource).map(
-    ([source, count]) => ({
+  const viewsBySourceData = Object.entries(viewsBySource)
+    .filter(([source, count]) => source && count !== undefined)
+    .map(([source, count]) => ({
       type: source === "unknown" ? "Other" : source,
-      value: count,
-    })
-  );
+      value: count || 0,
+    }));
 
   // Repository activity table columns
   const repoColumns = [
@@ -180,7 +180,7 @@ const AnalyticsDashboard: React.FC = () => {
       render: (created: number) => (
         <Badge
           count={created}
-          showZero
+          showZero={true}
           style={{
             backgroundColor: created > 0 ? "#52c41a" : "#f5f5f5",
             color: created > 0 ? "white" : "#999",
@@ -195,7 +195,7 @@ const AnalyticsDashboard: React.FC = () => {
       render: (updated: number) => (
         <Badge
           count={updated}
-          showZero
+          showZero={true}
           style={{
             backgroundColor: updated > 0 ? "#1890ff" : "#f5f5f5",
             color: updated > 0 ? "white" : "#999",

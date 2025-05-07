@@ -43,9 +43,9 @@ const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
               boxShadowTertiary: "0 8px 24px rgba(94, 42, 105, 0.1)",
             },
             Menu: {
-              colorItemBgSelected: "#f5eef7",
-              colorItemTextSelected: grapeTheme.primaryColor,
-              colorItemTextHover: grapeTheme.primaryColor,
+              itemSelectedBg: "#f5eef7",
+              itemSelectedColor: grapeTheme.primaryColor,
+              itemHoverColor: grapeTheme.primaryColor,
             },
             Input: {
               borderRadius: 8,

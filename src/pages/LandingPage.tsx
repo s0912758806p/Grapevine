@@ -45,7 +45,7 @@ const LandingPage: React.FC = () => {
 
         <Row gutter={[32, 32]} className="feature-cards">
           <Col xs={24} md={12} lg={6}>
-            <Card className="feature-card" bordered={false}>
+            <Card className="feature-card" variant="borderless">
               <BranchesOutlined className="feature-icon" />
               <Title level={4}>Branch & Connect</Title>
               <Paragraph>
@@ -56,7 +56,7 @@ const LandingPage: React.FC = () => {
           </Col>
 
           <Col xs={24} md={12} lg={6}>
-            <Card className="feature-card" bordered={false}>
+            <Card className="feature-card" variant="borderless">
               <TeamOutlined className="feature-icon" />
               <Title level={4}>Community Tending</Title>
               <Paragraph>
@@ -67,7 +67,7 @@ const LandingPage: React.FC = () => {
           </Col>
 
           <Col xs={24} md={12} lg={6}>
-            <Card className="feature-card" bordered={false}>
+            <Card className="feature-card" variant="borderless">
               <FileSearchOutlined className="feature-icon" />
               <Title level={4}>Issue Cultivation</Title>
               <Paragraph>
@@ -78,7 +78,7 @@ const LandingPage: React.FC = () => {
           </Col>
 
           <Col xs={24} md={12} lg={6}>
-            <Card className="feature-card" bordered={false}>
+            <Card className="feature-card" variant="borderless">
               <AreaChartOutlined className="feature-icon" />
               <Title level={4}>Growth Insights</Title>
               <Paragraph>

@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchGrapevineIssues, fetchGrapevineIssue } from "../api/githubApi";
+import {
+  fetchGrapevineIssues,
+  fetchGrapevineIssue,
+} from "../api/repositoryApi";
 import { IssueType } from "../types";
 
 // Repository type

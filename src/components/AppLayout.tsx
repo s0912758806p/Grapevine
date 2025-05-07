@@ -18,7 +18,6 @@ import {
   SettingOutlined,
   LogoutOutlined,
   MenuOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
 import VineIcon from "./VineIcon";
@@ -128,7 +127,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       key: "/community",
       label: <Link to="/community">Community</Link>,
-      icon: <TeamOutlined />,
+      // icon: <TeamOutlined />,
       onClick: handleMenuClick,
     },
     {

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { fetchF2EIssues, fetchF2EIssue } from "../api/githubApi";
+import { fetchF2EIssues, fetchF2EIssue } from "../api/repositoryApi";
 
 // 簡化的GitHub Issue類型
 export interface F2EIssueType {

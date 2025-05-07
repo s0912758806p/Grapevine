@@ -28,34 +28,27 @@ const BarChart: React.FC<BarChartProps> = ({
   color = "#1677ff",
   loading = false,
 }) => {
+  // Ensure there's always data to render
+  const safeData =
+    data && data.length > 0 ? data : [{ category: "No Data", value: 0 }];
+
+  // Using minimal configuration to avoid compatibility issues with different versions of @ant-design/plots
   const config = {
-    data,
+    data: safeData,
     xField,
     yField,
-    columnWidthRatio: 0.6,
     color,
-    label: {
-      position: "top",
-      style: {
-        fill: "black",
-        opacity: 0.6,
-      },
-    },
+    columnWidthRatio: 0.6,
     xAxis: {
       label: {
         autoHide: true,
         autoRotate: false,
       },
     },
-    meta: {
-      [yField]: {
-        alias: title,
-      },
-    },
   };
 
   return (
-    <Card loading={loading} bordered={false} className="analytics-card">
+    <Card loading={loading} variant="borderless" className="analytics-card">
       <Title level={4}>{title}</Title>
       {description && <p>{description}</p>}
       <Column {...config} />

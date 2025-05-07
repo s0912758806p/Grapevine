@@ -30,7 +30,10 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { fetchGithubSingleIssue, fetchGithubIssues } from "../api/githubApi";
+import {
+  fetchGithubSingleIssue,
+  fetchGithubIssues,
+} from "../api/repositoryApi";
 dayjs.extend(relativeTime);
 
 const { Title, Paragraph, Text } = Typography;
