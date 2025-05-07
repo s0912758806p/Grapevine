@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Row,
   Col,
@@ -10,90 +10,107 @@ import {
   Tabs,
   Empty,
   List,
-  Tag,
   Table,
   Badge,
   Tooltip,
+  Progress,
+  Calendar,
 } from "antd";
 import {
-  ReadOutlined,
   EyeOutlined,
   ClockCircleOutlined,
-  TagOutlined,
   DeleteOutlined,
   GithubOutlined,
   PlusOutlined,
   EditOutlined,
+  UserOutlined,
+  FireOutlined,
+  CalendarOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import type { TabsProps } from "antd";
-import {
-  getFormattedReadingTime,
-  getTopViewed,
-  getMostInteractedTags,
-  getViewHistory,
-  getActivityByDayOfWeek,
-  getViewsBySource,
-  clearAnalyticsData,
-  getDaysSinceFirstView,
-  getRecentSearches,
-  getRepoActivity,
-  getTotalIssuesCreated,
-  getTotalIssuesUpdated,
-  getTotalReposTracked,
-  getMostActiveRepos,
-} from "../services/analyticsService";
+import { clearAnalyticsData } from "../services/analyticsService";
 import { Link } from "react-router-dom";
 import BarChart from "../components/charts/BarChart";
-import PieChart from "../components/charts/PieChart";
-import VineIcon from "../components/VineIcon";
+import {
+  getFilteredViewHistory,
+  getFilteredRepoActivity,
+  getFilteredMostActiveRepos,
+  getContributionMetrics,
+  getActivityByDate,
+  getRepoContributionsOverTime,
+  getDetailedContributionsByDate,
+  getActivityByDayOfWeekFromRepos,
+  TARGET_AUTHOR,
+} from "../services/authorAnalyticsService";
+import { formatDate, formatShortDate } from "../utils/dateUtils";
+import {
+  ViewRecord,
+  RepoActivity,
+  ContributionMetrics,
+  DailyActivity,
+} from "../types/analytics";
 
 const { Title, Text } = Typography;
 
-// Define the viewRecord type
-interface ViewRecord {
-  id: number;
-  issueNumber: number;
-  title: string;
-  timestamp: number;
-  readingTime: number;
-  source: string;
-}
-
-interface RepoActivity {
-  repoId: string;
-  repoOwner: string;
-  repoName: string;
-  created: number;
-  updated: number;
-  lastFetched: number;
-}
-
-// Helper function to format date for display
-const formatDate = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-};
-
 const AnalyticsDashboard: React.FC = () => {
-  const [topViewed, setTopViewed] = useState<
-    { issueNumber: number; viewCount: number }[]
-  >([]);
-  const [readingTime, setReadingTime] = useState<string>("0m");
-  const [topTags, setTopTags] = useState<{ tag: string; count: number }[]>([]);
   const [viewHistory, setViewHistory] = useState<ViewRecord[]>([]);
-  const [daysSinceFirstView, setDaysSinceFirstView] = useState<number>(0);
-  const [activityByDay, setActivityByDay] = useState<number[]>([]);
-  const [viewsBySource, setViewsBySource] = useState<Record<string, number>>(
-    {}
-  );
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [repoActivity, setRepoActivity] = useState<RepoActivity[]>([]);
-  const [totalIssuesCreated, setTotalIssuesCreated] = useState<number>(0);
-  const [totalIssuesUpdated, setTotalIssuesUpdated] = useState<number>(0);
-  const [totalReposTracked, setTotalReposTracked] = useState<number>(0);
   const [mostActiveRepos, setMostActiveRepos] = useState<RepoActivity[]>([]);
+  const [contributionMetrics, setContributionMetrics] =
+    useState<ContributionMetrics>({
+      totalContributions: 0,
+      issuesCreated: 0,
+      issuesUpdated: 0,
+      repos: 0,
+      avgContributionsPerRepo: 0,
+    });
+  const [activityByDate, setActivityByDate] = useState<DailyActivity[]>([]);
+  const [contributionsOverTime, setContributionsOverTime] = useState<
+    { date: string; contributions: number }[]
+  >([]);
+  const [activityByDay, setActivityByDay] = useState<number[]>([]);
   const [showNoDataAlert, setShowNoDataAlert] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Activity heatmap data formatted for the Calendar component
+  const calendarData = useMemo(() => {
+    const data: Record<string, number> = {};
+
+    // Ensure we're using consistently formatted date strings
+    activityByDate.forEach((item) => {
+      // Normalize the date format to ensure consistency
+      const normalizedDate = new Date(item.date);
+      const dateKey = formatShortDate(normalizedDate.getTime());
+      data[dateKey] = item.count;
+    });
+
+    return data;
+  }, [activityByDate]);
+
+  // Contributions over time formatted for BarChart
+  const contributionsChartData = useMemo(
+    () =>
+      contributionsOverTime.map((item) => ({
+        category: item.date.substring(5), // Only show month/day for cleaner display
+        value: item.contributions,
+      })),
+    [contributionsOverTime]
+  );
+
+  // Activity by day of week data for visualization
+  const activityByDayData = useMemo(
+    () => [
+      { category: "Sun", value: activityByDay[0] || 0 },
+      { category: "Mon", value: activityByDay[1] || 0 },
+      { category: "Tue", value: activityByDay[2] || 0 },
+      { category: "Wed", value: activityByDay[3] || 0 },
+      { category: "Thu", value: activityByDay[4] || 0 },
+      { category: "Fri", value: activityByDay[5] || 0 },
+      { category: "Sat", value: activityByDay[6] || 0 },
+    ],
+    [activityByDay]
+  );
 
   // Load data on component mount
   useEffect(() => {
@@ -104,25 +121,25 @@ const AnalyticsDashboard: React.FC = () => {
     setLoading(true);
 
     try {
-      const history = getViewHistory();
+      // Load filtered data focused on the target author
+      const history = getFilteredViewHistory();
       setViewHistory(history);
-      setTopViewed(getTopViewed(10));
-      setReadingTime(getFormattedReadingTime());
-      setTopTags(getMostInteractedTags(10));
-      setDaysSinceFirstView(getDaysSinceFirstView());
-      setActivityByDay(getActivityByDayOfWeek());
-      setViewsBySource(getViewsBySource());
-      setRecentSearches(getRecentSearches());
 
-      // Load repository activity data
-      setRepoActivity(getRepoActivity());
-      setTotalIssuesCreated(getTotalIssuesCreated());
-      setTotalIssuesUpdated(getTotalIssuesUpdated());
-      setTotalReposTracked(getTotalReposTracked());
-      setMostActiveRepos(getMostActiveRepos(5));
+      // Get repository activity
+      const repoActivityData = getFilteredRepoActivity();
+      setRepoActivity(repoActivityData);
+      setMostActiveRepos(getFilteredMostActiveRepos(5));
+
+      // Calculate contribution metrics
+      setContributionMetrics(getContributionMetrics());
+
+      // Get activity patterns
+      setActivityByDate(getActivityByDate());
+      setContributionsOverTime(getRepoContributionsOverTime(30));
+      setActivityByDay(getActivityByDayOfWeekFromRepos());
 
       // Show alert if no data is available
-      setShowNoDataAlert(history.length === 0);
+      setShowNoDataAlert(history.length === 0 && repoActivityData.length === 0);
     } catch (error) {
       console.error("Error loading analytics data:", error);
     } finally {
@@ -141,25 +158,6 @@ const AnalyticsDashboard: React.FC = () => {
     }
   };
 
-  // Format activity by day of week data for visualization
-  const activityByDayData = [
-    { category: "Sun", value: activityByDay[0] || 0 },
-    { category: "Mon", value: activityByDay[1] || 0 },
-    { category: "Tue", value: activityByDay[2] || 0 },
-    { category: "Wed", value: activityByDay[3] || 0 },
-    { category: "Thu", value: activityByDay[4] || 0 },
-    { category: "Fri", value: activityByDay[5] || 0 },
-    { category: "Sat", value: activityByDay[6] || 0 },
-  ];
-
-  // Format views by source data for visualization
-  const viewsBySourceData = Object.entries(viewsBySource)
-    .filter(([source, count]) => source && count !== undefined)
-    .map(([source, count]) => ({
-      type: source === "unknown" ? "Other" : source,
-      value: count || 0,
-    }));
-
   // Repository activity table columns
   const repoColumns = [
     {
@@ -169,7 +167,12 @@ const AnalyticsDashboard: React.FC = () => {
       render: (text: string, record: RepoActivity) => (
         <span>
           <GithubOutlined style={{ marginRight: 8 }} />
-          {record.repoOwner}/{text}
+          <Link
+            to={`https://github.com/${record.repoOwner}/${text}`}
+            target="_blank"
+          >
+            {text}
+          </Link>
         </span>
       ),
     },
@@ -204,12 +207,27 @@ const AnalyticsDashboard: React.FC = () => {
       ),
     },
     {
-      title: "Last Fetched",
+      title: "Total Activity",
+      key: "totalActivity",
+      render: (_: unknown, record: RepoActivity) => {
+        const total = record.created + record.updated;
+        return (
+          <Progress
+            percent={Math.min(100, total * 10)}
+            size="small"
+            showInfo={false}
+            strokeColor="#5e2a69"
+          />
+        );
+      },
+    },
+    {
+      title: "Last Updated",
       dataIndex: "lastFetched",
       key: "lastFetched",
       render: (lastFetched: number) => (
         <Tooltip title={formatDate(lastFetched)}>
-          {new Date(lastFetched).toLocaleDateString()}
+          {formatShortDate(lastFetched)}
         </Tooltip>
       ),
     },
@@ -226,184 +244,137 @@ const AnalyticsDashboard: React.FC = () => {
             <Col xs={24} sm={12} md={6}>
               <Card variant="borderless" className="analytics-card">
                 <Statistic
-                  title="Total Posts Viewed"
-                  value={Object.keys(viewsBySource).length}
-                  prefix={<EyeOutlined style={{ color: "#5e2a69" }} />}
+                  title="Total Contributions"
+                  value={contributionMetrics.totalContributions}
+                  prefix={<FireOutlined style={{ color: "#e25822" }} />}
                 />
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Card variant="borderless" className="analytics-card">
                 <Statistic
-                  title="Total Reading Time"
-                  value={readingTime}
-                  prefix={<ClockCircleOutlined style={{ color: "#1e5631" }} />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card variant="borderless" className="analytics-card">
-                <Statistic
-                  title="Active Days"
-                  value={daysSinceFirstView}
-                  prefix={<ReadOutlined style={{ color: "#5e2a69" }} />}
-                  suffix="days"
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card variant="borderless" className="analytics-card">
-                <Statistic
-                  title="Tags Interacted"
-                  value={Object.keys(topTags).length}
-                  prefix={<TagOutlined style={{ color: "#1e5631" }} />}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Repository Activity Summary */}
-          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
-            <Col xs={24} sm={12} md={8}>
-              <Card variant="borderless" className="analytics-card">
-                <Statistic
-                  title="Repositories Tracked"
-                  value={totalReposTracked}
-                  prefix={<GithubOutlined style={{ color: "#5e2a69" }} />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={8}>
-              <Card variant="borderless" className="analytics-card">
-                <Statistic
-                  title="New Issues (24h)"
-                  value={totalIssuesCreated}
+                  title="Issues Created"
+                  value={contributionMetrics.issuesCreated}
                   prefix={<PlusOutlined style={{ color: "#52c41a" }} />}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card variant="borderless" className="analytics-card">
                 <Statistic
-                  title="Updated Issues (24h)"
-                  value={totalIssuesUpdated}
+                  title="Issues Updated"
+                  value={contributionMetrics.issuesUpdated}
                   prefix={<EditOutlined style={{ color: "#1890ff" }} />}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card variant="borderless" className="analytics-card">
+                <Statistic
+                  title="Active Repositories"
+                  value={contributionMetrics.repos}
+                  prefix={<GithubOutlined style={{ color: "#5e2a69" }} />}
                 />
               </Card>
             </Col>
           </Row>
 
-          {/* Charts row */}
           <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
             <Col xs={24} lg={12}>
-              <BarChart
-                data={activityByDayData}
-                title="Activity by Day of Week"
-                description="Your content reading pattern by day"
-                color="#5e2a69"
+              <Card
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <CalendarOutlined
+                      style={{ marginRight: 8, color: "#5e2a69" }}
+                    />
+                    <span>Activity Trends (Daily Contributions)</span>
+                  </div>
+                }
+                variant="borderless"
+                className="analytics-card"
                 loading={loading}
-              />
+              >
+                <BarChart
+                  data={contributionsChartData.slice(-14)} // Show last 14 days for better visibility
+                  title=""
+                  description="Daily contribution activity by s0912758806p"
+                  color="#5e2a69"
+                  loading={loading}
+                />
+                <div
+                  style={{
+                    marginTop: 16,
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                  }}
+                >
+                  Shows actual contributions (created + updated issues) by day
+                  over the last 14 days
+                </div>
+              </Card>
             </Col>
             <Col xs={24} lg={12}>
-              <PieChart
-                data={viewsBySourceData}
-                title="Content Sources"
-                description="Distribution of content viewed by source"
-                loading={loading}
-              />
-            </Col>
-          </Row>
-        </>
-      ),
-    },
-    {
-      key: "posts",
-      label: "Post Analytics",
-      children: (
-        <>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={12}>
               <Card
-                title="Most Viewed Posts"
-                variant="borderless"
-                className="analytics-card"
-                loading={loading}
-              >
-                {topViewed.length > 0 ? (
-                  <List
-                    dataSource={topViewed}
-                    renderItem={(issue) => (
-                      <List.Item
-                        actions={[
-                          <Link to={`/issue/${issue.issueNumber}`}>View</Link>,
-                        ]}
-                      >
-                        <List.Item.Meta
-                          avatar={
-                            <VineIcon width={24} height={24} color="#5e2a69" />
-                          }
-                          title={`#${issue.issueNumber}`}
-                          description={`${issue.viewCount} ${
-                            issue.viewCount === 1 ? "view" : "views"
-                          }`}
-                        />
-                      </List.Item>
-                    )}
-                  />
-                ) : (
-                  <Empty description="No post view data available" />
-                )}
-              </Card>
-            </Col>
-            <Col xs={24} md={12}>
-              <Card
-                title="Top Tags"
-                variant="borderless"
-                className="analytics-card"
-                loading={loading}
-              >
-                {topTags.length > 0 ? (
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
-                  >
-                    {topTags.map((tag, index) => (
-                      <Tag
-                        key={index}
-                        color={`hsl(${index * 20}, 70%, 80%)`}
-                        style={{
-                          padding: "4px 8px",
-                          margin: "4px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          color: "#111",
-                        }}
-                      >
-                        <span>{tag.tag}</span>
-                        <span
-                          style={{
-                            background: "#fff",
-                            borderRadius: "50%",
-                            width: "20px",
-                            height: "20px",
-                            display: "inline-flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {tag.count}
-                        </span>
-                      </Tag>
-                    ))}
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <ClockCircleOutlined
+                      style={{ marginRight: 8, color: "#1e5631" }}
+                    />
+                    <span>Activity by Day of Week</span>
                   </div>
-                ) : (
-                  <Empty description="No tag data available" />
-                )}
+                }
+                variant="borderless"
+                className="analytics-card"
+                loading={loading}
+              >
+                <BarChart
+                  data={activityByDayData}
+                  title=""
+                  description="Estimated contribution pattern by day of week"
+                  color="#1e5631"
+                  loading={loading}
+                />
+                <div
+                  style={{
+                    marginTop: 16,
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                  }}
+                >
+                  Analyzes repository data and view history to estimate typical
+                  weekly activity pattern
+                </div>
               </Card>
             </Col>
           </Row>
+
+          {contributionMetrics.mostActiveRepo && (
+            <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
+              <Col span={24}>
+                <Card variant="borderless" className="analytics-card">
+                  <Row>
+                    <Col span={12}>
+                      <Statistic
+                        title="Most Active Repository"
+                        value={contributionMetrics.mostActiveRepo}
+                        prefix={<StarOutlined style={{ color: "#faad14" }} />}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic
+                        title="Avg. Contributions per Repo"
+                        value={contributionMetrics.avgContributionsPerRepo}
+                        precision={1}
+                        prefix={<FireOutlined style={{ color: "#e25822" }} />}
+                      />
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
+            </Row>
+          )}
         </>
       ),
     },
@@ -415,7 +386,14 @@ const AnalyticsDashboard: React.FC = () => {
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Card
-                title="Repository Activity"
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <GithubOutlined
+                      style={{ marginRight: 8, color: "#5e2a69" }}
+                    />
+                    <span>Repository Activity</span>
+                  </div>
+                }
                 variant="borderless"
                 className="analytics-card"
                 loading={loading}
@@ -425,7 +403,7 @@ const AnalyticsDashboard: React.FC = () => {
                     dataSource={repoActivity}
                     columns={repoColumns}
                     rowKey="repoId"
-                    pagination={{ pageSize: 5 }}
+                    pagination={{ pageSize: 8 }}
                   />
                 ) : (
                   <Empty description="No repository activity data available" />
@@ -437,7 +415,14 @@ const AnalyticsDashboard: React.FC = () => {
           <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
             <Col span={24}>
               <Card
-                title="Most Active Repositories"
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <FireOutlined
+                      style={{ marginRight: 8, color: "#e25822" }}
+                    />
+                    <span>Most Active Repositories</span>
+                  </div>
+                }
                 variant="borderless"
                 className="analytics-card"
                 loading={loading}
@@ -454,6 +439,7 @@ const AnalyticsDashboard: React.FC = () => {
                             <Badge
                               count={repo.created + repo.updated}
                               overflowCount={999}
+                              style={{ backgroundColor: "#5e2a69" }}
                             />
                           </Tooltip>,
                         ]}
@@ -464,10 +450,37 @@ const AnalyticsDashboard: React.FC = () => {
                               style={{ fontSize: 24, color: "#5e2a69" }}
                             />
                           }
-                          title={`${repo.repoOwner}/${repo.repoName}`}
-                          description={`Last updated: ${new Date(
-                            repo.lastFetched
-                          ).toLocaleDateString()}`}
+                          title={
+                            <Link
+                              to={`https://github.com/${repo.repoOwner}/${repo.repoName}`}
+                              target="_blank"
+                            >
+                              {repo.repoName}
+                            </Link>
+                          }
+                          description={
+                            <div>
+                              <Progress
+                                percent={Math.min(
+                                  100,
+                                  (repo.created + repo.updated) * 5
+                                )}
+                                size="small"
+                                showInfo={false}
+                                strokeColor={{
+                                  from: "#e25822",
+                                  to: "#5e2a69",
+                                }}
+                              />
+                              <Text
+                                type="secondary"
+                                style={{ fontSize: "12px" }}
+                              >
+                                Last updated:{" "}
+                                {formatShortDate(repo.lastFetched)}
+                              </Text>
+                            </div>
+                          }
                         />
                       </List.Item>
                     )}
@@ -482,96 +495,150 @@ const AnalyticsDashboard: React.FC = () => {
       ),
     },
     {
+      key: "activity",
+      label: "Activity Calendar",
+      children: (
+        <Row gutter={[16, 16]}>
+          <Col span={24}>
+            <Card
+              title={
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <CalendarOutlined
+                    style={{ marginRight: 8, color: "#5e2a69" }}
+                  />
+                  <span>Activity Calendar</span>
+                </div>
+              }
+              variant="borderless"
+              className="analytics-card"
+              loading={loading}
+            >
+              {activityByDate.length > 0 ? (
+                <div className="site-calendar-demo-card">
+                  <Calendar
+                    fullscreen={false}
+                    dateCellRender={(date) => {
+                      // 使用正确的日期格式
+                      const dateObj = date.toDate();
+                      const dateString = formatShortDate(dateObj.getTime());
+                      const count = calendarData[dateString] || 0;
+
+                      if (count === 0) return null;
+
+                      // Get repo information for this date if available
+                      const detailedData =
+                        getDetailedContributionsByDate(repoActivity)[
+                          dateString
+                        ];
+                      const repoNames = detailedData?.repos || [];
+
+                      return (
+                        <Tooltip
+                          title={
+                            <>
+                              <div>
+                                <strong>
+                                  {dateString}: {count} contribution(s)
+                                </strong>
+                              </div>
+                              {repoNames.length > 0 && (
+                                <div>Repos: {repoNames.join(", ")}</div>
+                              )}
+                            </>
+                          }
+                        >
+                          <div
+                            className="activity-badge"
+                            style={{
+                              backgroundColor:
+                                count > 3
+                                  ? "#5e2a69"
+                                  : count > 1
+                                  ? "#8c6697"
+                                  : "#bfa8c9",
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: "4px",
+                              color: "white",
+                              textAlign: "center",
+                              lineHeight: "24px",
+                            }}
+                          >
+                            {count}
+                          </div>
+                        </Tooltip>
+                      );
+                    }}
+                  />
+                </div>
+              ) : (
+                <Empty description="No activity calendar data available" />
+              )}
+            </Card>
+          </Col>
+        </Row>
+      ),
+    },
+    {
       key: "history",
       label: "Browsing History",
       children: (
-        <>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Card
-                title="Recent Views"
-                variant="borderless"
-                className="analytics-card"
-                loading={loading}
-              >
-                {viewHistory.length > 0 ? (
-                  <List
-                    dataSource={viewHistory}
-                    renderItem={(view) => (
-                      <List.Item>
-                        <List.Item.Meta
-                          title={
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <Link to={`/issue/${view.issueNumber}`}>
-                                #{view.issueNumber} - {view.title}
-                              </Link>
-                              <Text type="secondary">
-                                {formatDate(view.timestamp)}
-                              </Text>
-                            </div>
-                          }
-                          description={
-                            <div>
-                              <Text type="secondary">
-                                Reading time:{" "}
-                                {Math.floor(view.readingTime / 60)}m{" "}
-                                {view.readingTime % 60}s
-                              </Text>
-                              <Text type="secondary" style={{ marginLeft: 16 }}>
-                                Source: {view.source}
-                              </Text>
-                            </div>
-                          }
-                        />
-                      </List.Item>
-                    )}
-                  />
-                ) : (
-                  <Empty description="No browsing history available" />
-                )}
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]} style={{ marginTop: "16px" }}>
-            <Col span={24}>
-              <Card
-                title="Recent Searches"
-                variant="borderless"
-                className="analytics-card"
-                loading={loading}
-              >
-                {recentSearches.length > 0 ? (
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
-                  >
-                    {recentSearches.map((search, index) => (
-                      <Tag
-                        key={index}
-                        style={{
-                          padding: "4px 12px",
-                          margin: "4px",
-                          background: "#f0f0f0",
-                          borderRadius: "16px",
-                          color: "#333",
-                        }}
-                      >
-                        {search}
-                      </Tag>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty description="No search history available" />
-                )}
-              </Card>
-            </Col>
-          </Row>
-        </>
+        <Row gutter={[16, 16]}>
+          <Col span={24}>
+            <Card
+              title={
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <EyeOutlined style={{ marginRight: 8, color: "#5e2a69" }} />
+                  <span>Recent Views</span>
+                </div>
+              }
+              variant="borderless"
+              className="analytics-card"
+              loading={loading}
+            >
+              {viewHistory.length > 0 ? (
+                <List
+                  dataSource={viewHistory}
+                  renderItem={(view) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Link to={`/issue/${view.issueNumber}`}>
+                              #{view.issueNumber} - {view.title}
+                            </Link>
+                            <Text type="secondary">
+                              {formatDate(view.timestamp)}
+                            </Text>
+                          </div>
+                        }
+                        description={
+                          <div>
+                            <Text type="secondary">
+                              Reading time: {Math.floor(view.readingTime / 60)}m{" "}
+                              {view.readingTime % 60}s
+                            </Text>
+                            <Text type="secondary" style={{ marginLeft: 16 }}>
+                              Source: {view.source}
+                            </Text>
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                  pagination={{ pageSize: 10 }}
+                />
+              ) : (
+                <Empty description="No browsing history available" />
+              )}
+            </Card>
+          </Col>
+        </Row>
       ),
     },
   ];
@@ -589,7 +656,8 @@ const AnalyticsDashboard: React.FC = () => {
             }}
           >
             <Title level={2} style={{ margin: 0, color: "#5e2a69" }}>
-              Personal Analytics Dashboard
+              <UserOutlined style={{ marginRight: 12 }} />
+              {TARGET_AUTHOR}'s Activity Dashboard
             </Title>
             <Button danger icon={<DeleteOutlined />} onClick={handleClearData}>
               Clear Data
@@ -598,8 +666,8 @@ const AnalyticsDashboard: React.FC = () => {
 
           {showNoDataAlert && (
             <Alert
-              message="No Analytics Data Available"
-              description="Start browsing content to collect usage analytics. Your data is stored locally and is not shared."
+              message={`No Analytics Data Available for ${TARGET_AUTHOR}`}
+              description="Start browsing content or tracking repositories to collect analytics data. Your data is stored locally and is not shared."
               type="info"
               showIcon
               style={{ marginBottom: 16 }}

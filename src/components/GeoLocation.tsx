@@ -15,6 +15,11 @@ import {
   updateLocationAddress,
   LocationData,
 } from "../store/locationSlice";
+import {
+  throttleGeoPosition,
+  getDistanceMeters,
+  fetchLocationAddress,
+} from "../utils";
 import dayjs from "dayjs";
 
 const GeoLocation = () => {
@@ -26,45 +31,8 @@ const GeoLocation = () => {
   const [addressLoading, setAddressLoading] = useState(false);
 
   const THROTTLE_INTERVAL: number = 3000;
-  let lastProcessTime: number = 0;
-
   const MIN_DISTANCE_METERS: number = 10;
   let lastFetchedLocation: LocationData | null = null;
-
-  const throttle = <T extends (position: GeolocationPosition) => void>(
-    func: T,
-    delay: number
-  ): ((position: GeolocationPosition) => void) => {
-    return (position: GeolocationPosition) => {
-      const now = Date.now();
-      if (now - lastProcessTime >= delay) {
-        lastProcessTime = now;
-        func(position);
-      }
-    };
-  };
-
-  const getDistanceMeters = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ) => {
-    const R = 6371; // Radius of the earth in km
-    const toRadians = (value: number) => {
-      return (value * Math.PI) / 180;
-    };
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c * 1000;
-  };
 
   const handlePositionUpdate = async (position: GeolocationPosition) => {
     const locationData: LocationData = {
@@ -88,7 +56,10 @@ const GeoLocation = () => {
     }
     dispatch(setLocationSuccess(locationData));
     setShowMap(true);
-    await fetchLocationAddress(locationData.latitude, locationData.longitude);
+    await fetchAddressAndUpdateStore(
+      locationData.latitude,
+      locationData.longitude
+    );
     lastFetchedLocation = locationData;
   };
 
@@ -100,8 +71,11 @@ const GeoLocation = () => {
 
     dispatch(setLocationLoading());
 
-    const throttledPositionUpdate = throttle(
-      handlePositionUpdate,
+    // Use the specialized throttle function for GeolocationPosition
+    const throttledPositionUpdate = throttleGeoPosition(
+      (position: GeolocationPosition) => {
+        void handlePositionUpdate(position);
+      },
       THROTTLE_INTERVAL
     );
 
@@ -132,45 +106,17 @@ const GeoLocation = () => {
     );
   };
 
-  const fetchLocationAddress = async (latitude: number, longitude: number) => {
+  const fetchAddressAndUpdateStore = async (
+    latitude: number,
+    longitude: number
+  ) => {
     try {
       setAddressLoading(true);
-      // 使用OpenStreetMap的Nominatim API進行反向地理編碼
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-        {
-          headers: {
-            "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7",
-            "User-Agent": "Grapevine App Location Service",
-          },
-        }
-      );
 
-      if (!response.ok) {
-        throw new Error("Failed to get address");
-      }
+      const addressData = await fetchLocationAddress(latitude, longitude);
 
-      const data = await response.json();
-
-      // 提取地址信息
-      const address = data.display_name;
-      const city =
-        data.address.city ||
-        data.address.town ||
-        data.address.village ||
-        data.address.hamlet;
-      const region = data.address.state || data.address.county;
-      const country = data.address.country;
-
-      // 更新Redux中的地址信息
-      dispatch(
-        updateLocationAddress({
-          address,
-          city,
-          region,
-          country,
-        })
-      );
+      // Update Redux with the address information
+      dispatch(updateLocationAddress(addressData));
     } catch (error) {
       console.error("Error occurred while getting address:", error);
       notification.error({
@@ -183,7 +129,7 @@ const GeoLocation = () => {
     }
   };
 
-  // 格式化顯示地址
+  // Format displayed address
   const getFormattedAddress = () => {
     if (!currentLocation) return null;
 
@@ -253,30 +199,26 @@ const GeoLocation = () => {
               Accuracy: {currentLocation.accuracy} meters
             </Typography.Text>
             <br />
-            {currentLocation.address && (
-              <>
-                <Typography.Text>
-                  Detailed address: {currentLocation.address}
-                </Typography.Text>
-                <br />
-              </>
+            {currentLocation.timestamp && (
+              <Typography.Text>
+                Time:{" "}
+                {dayjs(currentLocation.timestamp).format("YYYY-MM-DD HH:mm:ss")}
+              </Typography.Text>
             )}
-            <Typography.Text>
-              Time:{" "}
-              {dayjs(currentLocation.timestamp).format("YYYY-MM-DD HH:mm:ss")}
-            </Typography.Text>
+          </div>
+        )}
 
-            {showMap && (
-              <LocationMap
-                latitude={currentLocation.latitude}
-                longitude={currentLocation.longitude}
-                accuracy={currentLocation.accuracy}
-                address={currentLocation.address}
-                city={currentLocation.city}
-                region={currentLocation.region}
-                country={currentLocation.country}
-              />
-            )}
+        {showMap && currentLocation && (
+          <div style={{ marginTop: 16 }}>
+            <LocationMap
+              latitude={currentLocation.latitude}
+              longitude={currentLocation.longitude}
+              accuracy={currentLocation.accuracy}
+              address={currentLocation.address}
+              city={currentLocation.city}
+              region={currentLocation.region}
+              country={currentLocation.country}
+            />
           </div>
         )}
       </Space>

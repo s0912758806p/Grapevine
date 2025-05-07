@@ -1,57 +1,14 @@
 import { Octokit } from "octokit";
-import { RepositorySource, IssueType } from "../types";
+import { RepositorySource } from "../types";
 import { recordRepoActivity } from "../services/analyticsService";
-
-// 定義 GitHub API 回應中的 issue 標籤結構
-interface GitHubLabel {
-  name: string;
-  color: string;
-}
-
-// 定義 GitHub API 回應中的 issue 使用者結構
-interface GitHubUser {
-  login: string;
-  avatar_url: string;
-}
+import {
+  formatGitHubIssue,
+  extractTotalCount,
+  checkIssueActivity,
+} from "../utils";
 
 // 初始化Octokit，不需要token來獲取公開倉庫的issues
 const octokit = new Octokit();
-
-// 將 GitHub API 回應處理為我們的 IssueType
-function formatIssue(
-  apiIssue: Record<string, unknown>,
-  repoOwner: string,
-  repoName: string,
-  source: string
-): IssueType {
-  return {
-    id: Number(apiIssue.id),
-    number: Number(apiIssue.number),
-    title: String(apiIssue.title),
-    body: apiIssue.body ? String(apiIssue.body) : "",
-    user: {
-      login: apiIssue.user
-        ? String((apiIssue.user as GitHubUser).login)
-        : "unknown",
-      avatar_url: apiIssue.user
-        ? String((apiIssue.user as GitHubUser).avatar_url)
-        : "",
-    },
-    created_at: String(apiIssue.created_at),
-    updated_at: String(apiIssue.updated_at),
-    comments: Number(apiIssue.comments),
-    labels: Array.isArray(apiIssue.labels)
-      ? (apiIssue.labels as GitHubLabel[]).map((label) => ({
-          name: label.name,
-          color: label.color,
-        }))
-      : [],
-    state: String(apiIssue.state),
-    source,
-    repoOwner,
-    repoName,
-  };
-}
 
 // 獲取指定倉庫的issues
 export const fetchRepositoryIssues = async (
@@ -60,11 +17,6 @@ export const fetchRepositoryIssues = async (
   perPage = 10
 ) => {
   try {
-    // Get the current date and time
-    const now = new Date();
-    // Set a time 24 hours ago for tracking new and updated issues
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
     const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
       owner: repoSource.owner,
       repo: repoSource.repo,
@@ -77,49 +29,26 @@ export const fetchRepositoryIssues = async (
     });
 
     // 獲取總計數
-    const linkHeader = response.headers.link;
-    let totalCount = 0;
-
-    if (response.headers["x-total-count"]) {
-      totalCount = parseInt(response.headers["x-total-count"] as string, 10);
-    } else if (linkHeader) {
-      const lastPageMatch = linkHeader.match(/page=(\d+)>;\s*rel="last"/);
-      if (lastPageMatch && lastPageMatch[1]) {
-        const lastPage = parseInt(lastPageMatch[1], 10);
-        totalCount = lastPage * perPage;
-      }
-    }
-
-    // 如果無法從標頭提取總計數，請根據當前頁面進行估計
-    if (!totalCount) {
-      totalCount =
-        response.data.length < perPage
-          ? page * perPage - (perPage - response.data.length)
-          : page * perPage + perPage;
-    }
-
-    const issues = response.data.map((issue: Record<string, unknown>) =>
-      formatIssue(issue, repoSource.owner, repoSource.repo, repoSource.id)
+    const totalCount = extractTotalCount(
+      response.headers,
+      perPage,
+      page,
+      response.data.length
     );
 
-    // Count new issues (created in the last 24 hours)
-    const newIssuesCount = response.data.filter(
-      (issue: Record<string, unknown>) => {
-        const createdAt = new Date(String(issue.created_at));
-        return createdAt > twentyFourHoursAgo;
-      }
-    ).length;
+    const issues = response.data.map((issue: Record<string, unknown>) =>
+      formatGitHubIssue(issue, repoSource.owner, repoSource.repo, repoSource.id)
+    );
 
-    // Count updated issues (updated in the last 24 hours but created before that)
-    const updatedIssuesCount = response.data.filter(
-      (issue: Record<string, unknown>) => {
-        const createdAt = new Date(String(issue.created_at));
-        const updatedAt = new Date(String(issue.updated_at));
-        return (
-          createdAt <= twentyFourHoursAgo && updatedAt > twentyFourHoursAgo
-        );
-      }
-    ).length;
+    // Count new and updated issues (in the last 24 hours)
+    let newIssuesCount = 0;
+    let updatedIssuesCount = 0;
+
+    response.data.forEach((issue: Record<string, unknown>) => {
+      const { isNew, isUpdated } = checkIssueActivity(issue);
+      if (isNew) newIssuesCount++;
+      if (isUpdated) updatedIssuesCount++;
+    });
 
     // Record the analytics data
     recordRepoActivity(
@@ -161,7 +90,7 @@ export const fetchRepositoryIssue = async (
       }
     );
 
-    return formatIssue(
+    return formatGitHubIssue(
       response.data,
       repoSource.owner,
       repoSource.repo,

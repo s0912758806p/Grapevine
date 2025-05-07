@@ -1,4 +1,10 @@
 import { IssueType } from "../types";
+import {
+  loadFromStorage,
+  saveToStorage,
+  formatTimeFromSeconds,
+  getDaysSince,
+} from "../utils";
 
 interface ViewRecord {
   id: number;
@@ -42,29 +48,22 @@ const getDefaultAnalyticsData = (): AnalyticsData => ({
 
 // Load analytics data from localStorage
 const loadAnalyticsData = (): AnalyticsData => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-      const parsedData = JSON.parse(data);
-      // Ensure repoActivity exists in older data
-      if (!parsedData.repoActivity) {
-        parsedData.repoActivity = {};
-      }
-      return parsedData;
-    }
-  } catch (error) {
-    console.error("Failed to load analytics data:", error);
+  const data = loadFromStorage<AnalyticsData>(
+    STORAGE_KEY,
+    getDefaultAnalyticsData()
+  );
+
+  // Ensure repoActivity exists in older data
+  if (!data.repoActivity) {
+    data.repoActivity = {};
   }
-  return getDefaultAnalyticsData();
+
+  return data;
 };
 
 // Save analytics data to localStorage
 const saveAnalyticsData = (data: AnalyticsData): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error("Failed to save analytics data:", error);
-  }
+  saveToStorage(STORAGE_KEY, data);
 };
 
 // Record a view of an issue
@@ -236,13 +235,7 @@ export const getReadingTimeTotal = (): number => {
 // Get formatted reading time as string (e.g., "2h 15m")
 export const getFormattedReadingTime = (): string => {
   const totalSeconds = getReadingTimeTotal();
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
+  return formatTimeFromSeconds(totalSeconds);
 };
 
 // Get most interacted tags
@@ -262,44 +255,48 @@ export const getRecentSearches = (): string[] => {
   return data.searchQueries;
 };
 
-// Clear all analytics data
+// Clear analytics data
 export const clearAnalyticsData = (): void => {
-  localStorage.removeItem(STORAGE_KEY);
+  saveAnalyticsData(getDefaultAnalyticsData());
 };
 
 // Get days since first view
 export const getDaysSinceFirstView = (): number => {
   const data = loadAnalyticsData();
-  if (data.viewHistory.length === 0) return 0;
+  if (data.viewHistory.length === 0) {
+    return 0;
+  }
 
-  const oldestView = [...data.viewHistory].sort(
-    (a, b) => a.timestamp - b.timestamp
-  )[0];
-  const daysDiff = (Date.now() - oldestView.timestamp) / (1000 * 60 * 60 * 24);
-  return Math.floor(daysDiff);
+  // Find the earliest view
+  const timestamps = data.viewHistory.map((record) => record.timestamp);
+  const earliestTimestamp = Math.min(...timestamps);
+
+  return getDaysSince(earliestTimestamp);
 };
 
-// Get activity by day of week (0 = Sunday, 6 = Saturday)
+// Get activity by day of week (Sunday = 0, Saturday = 6)
 export const getActivityByDayOfWeek = (): number[] => {
   const data = loadAnalyticsData();
-  const activityByDay = [0, 0, 0, 0, 0, 0, 0]; // Sunday to Saturday
+  const activityByDay = [0, 0, 0, 0, 0, 0, 0]; // Initialize counts for each day
 
-  data.viewHistory.forEach((view) => {
-    const day = new Date(view.timestamp).getDay();
-    activityByDay[day]++;
+  data.viewHistory.forEach((record) => {
+    const date = new Date(record.timestamp);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    activityByDay[dayOfWeek]++;
   });
 
   return activityByDay;
 };
 
-// Get view counts by source
+// Get views by source
 export const getViewsBySource = (): Record<string, number> => {
   const data = loadAnalyticsData();
-  const sourceViews: Record<string, number> = {};
+  const viewsBySource: Record<string, number> = {};
 
-  data.viewHistory.forEach((view) => {
-    sourceViews[view.source] = (sourceViews[view.source] || 0) + 1;
+  data.viewHistory.forEach((record) => {
+    const source = record.source || "unknown";
+    viewsBySource[source] = (viewsBySource[source] || 0) + 1;
   });
 
-  return sourceViews;
+  return viewsBySource;
 };
