@@ -13,13 +13,13 @@ import {
   getDateBeforeDays,
 } from "../utils/dateUtils";
 
-// 作者ID常量
+// Author ID constant
 export const TARGET_AUTHOR = import.meta.env.VITE_GITHUB_REPO_OWNER;
 
 /**
- * 判断记录是否来自目标作者
- * @param record 仓库活动或视图记录
- * @returns 是否属于目标作者
+ * Determine if a record is from the target author
+ * @param record Repository activity or view record
+ * @returns Whether it belongs to the target author
  */
 export const isFromTargetAuthor = (
   record: RepoActivity | ViewRecord
@@ -28,7 +28,7 @@ export const isFromTargetAuthor = (
     return record.repoOwner === TARGET_AUTHOR;
   }
 
-  // 对于视图记录，检查source字段
+  // For view records, check the source field
   if ("source" in record) {
     const sourceString = record.source || "";
     return sourceString.includes(TARGET_AUTHOR);
@@ -38,8 +38,8 @@ export const isFromTargetAuthor = (
 };
 
 /**
- * 获取经过作者筛选的视图历史
- * @returns 筛选后的视图记录数组
+ * Get view history filtered by author
+ * @returns Filtered view record array
  */
 export const getFilteredViewHistory = (): ViewRecord[] => {
   const history = getViewHistory();
@@ -47,8 +47,8 @@ export const getFilteredViewHistory = (): ViewRecord[] => {
 };
 
 /**
- * 获取经过作者筛选的仓库活动
- * @returns 筛选后的仓库活动数组
+ * Get repository activity filtered by author
+ * @returns Filtered repository activity array
  */
 export const getFilteredRepoActivity = (): RepoActivity[] => {
   const activity = getRepoActivity();
@@ -56,9 +56,9 @@ export const getFilteredRepoActivity = (): RepoActivity[] => {
 };
 
 /**
- * 获取最活跃的仓库
- * @param n 返回数量
- * @returns 最活跃仓库数组
+ * Get the most active repositories
+ * @param n Number of repositories to return
+ * @returns Array of most active repositories
  */
 export const getFilteredMostActiveRepos = (n: number = 5): RepoActivity[] => {
   const repos = getFilteredRepoActivity();
@@ -68,8 +68,8 @@ export const getFilteredMostActiveRepos = (n: number = 5): RepoActivity[] => {
 };
 
 /**
- * 计算作者贡献度量指标
- * @returns 贡献度量指标
+ * Calculate author contribution metrics
+ * @returns Contribution metrics
  */
 export const getContributionMetrics = (): ContributionMetrics => {
   const repos = getFilteredRepoActivity();
@@ -88,7 +88,7 @@ export const getContributionMetrics = (): ContributionMetrics => {
   const issuesUpdated = repos.reduce((sum, repo) => sum + repo.updated, 0);
   const totalContributions = issuesCreated + issuesUpdated;
 
-  // 找出最活跃的仓库
+  // Find the most active repository
   const mostActiveRepo = repos.reduce((prev, current) =>
     prev.created + prev.updated > current.created + current.updated
       ? prev
@@ -107,9 +107,9 @@ export const getContributionMetrics = (): ContributionMetrics => {
 };
 
 /**
- * 获取详细贡献按日期映射
- * @param repos 仓库活动数组
- * @returns 日期到贡献的映射
+ * Get detailed contributions mapped by date
+ * @param repos Repository activity array
+ * @returns Mapping from dates to contributions
  */
 export const getDetailedContributionsByDate = (
   repos: RepoActivity[]
@@ -121,11 +121,11 @@ export const getDetailedContributionsByDate = (
     const total = repo.created + repo.updated;
     if (total === 0 || repo.lastFetched < thirtyDaysAgo) return;
 
-    // 获取主要贡献日期
+    // Get the main contribution date
     const fetchDate = new Date(repo.lastFetched);
     const fetchDateStr = formatShortDate(fetchDate.getTime());
 
-    // 创建或更新每日贡献记录
+    // Create or update daily contribution record
     if (!contributions[fetchDateStr]) {
       contributions[fetchDateStr] = {
         date: fetchDateStr,
@@ -134,13 +134,13 @@ export const getDetailedContributionsByDate = (
       };
     }
 
-    // 更新主要贡献
+    // Update main contribution
     contributions[fetchDateStr].count += Math.ceil(total * 0.7);
     if (!contributions[fetchDateStr].repos.includes(repo.repoName)) {
       contributions[fetchDateStr].repos.push(repo.repoName);
     }
 
-    // 分配剩余贡献到邻近日期
+    // Distribute remaining contributions to nearby dates
     const nearbyDates = getNearbyDates(repo.lastFetched, 3, thirtyDaysAgo);
     const remainingContributions = Math.floor(total * 0.3);
 
@@ -171,22 +171,22 @@ export const getDetailedContributionsByDate = (
 };
 
 /**
- * 获取按日期的活动数据
- * @returns 日期活动数组
+ * Get activity data by date
+ * @returns Daily activity array
  */
 export const getActivityByDate = (): DailyActivity[] => {
   const detailedContributions = getDetailedContributionsByDate(
     getFilteredRepoActivity()
   );
 
-  // 转换为DailyActivity格式
+  // Convert to DailyActivity format
   return Object.values(detailedContributions)
     .map((contribution) => ({
       date: contribution.date,
       count: contribution.count,
     }))
     .sort((a, b) => {
-      // 确保正确排序日期
+      // Ensure correct date sorting
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
@@ -194,9 +194,9 @@ export const getActivityByDate = (): DailyActivity[] => {
 };
 
 /**
- * 获取随时间的仓库贡献
- * @param days 天数范围
- * @returns 日期贡献数组
+ * Get repository contributions over time
+ * @param days Number of days range
+ * @returns Date contribution array
  */
 export const getRepoContributionsOverTime = (
   days: number = 30
@@ -204,10 +204,10 @@ export const getRepoContributionsOverTime = (
   const repos = getFilteredRepoActivity();
   const startTime = getDateBeforeDays(days);
 
-  // 创建日期映射，使用完整Date对象精确创建日期
+  // Create date mapping, using complete Date objects for precise date creation
   const contributionsByDate: Record<string, number> = {};
 
-  // 初始化日期范围内的所有日期为0
+  // Initialize all dates in the range with zero
   for (let i = 0; i < days; i++) {
     const dateTime = Date.now() - i * 24 * 60 * 60 * 1000;
     const date = new Date(dateTime);
@@ -215,21 +215,21 @@ export const getRepoContributionsOverTime = (
     contributionsByDate[dateStr] = 0;
   }
 
-  // 分配贡献到日期
+  // Assign contributions to dates
   repos.forEach((repo) => {
     const total = repo.created + repo.updated;
     if (total === 0) return;
 
-    // 获取正确的日期字符串
+    // Get the correct date string
     const fetchDate = new Date(repo.lastFetched);
     const fetchDateStr = formatShortDate(fetchDate.getTime());
 
     if (repo.lastFetched >= startTime) {
-      // 将主要部分分配到实际获取日期
+      // Assign the main portion to the actual fetch date
       contributionsByDate[fetchDateStr] =
         (contributionsByDate[fetchDateStr] || 0) + Math.ceil(total * 0.7);
 
-      // 将剩余贡献分配到邻近日期
+      // Distribute remaining contributions to nearby dates
       const nearbyDates = getNearbyDates(repo.lastFetched, 3, startTime);
       const remainingContributions = Math.floor(total * 0.3);
 
@@ -241,7 +241,7 @@ export const getRepoContributionsOverTime = (
 
         nearbyDates.forEach((date) => {
           if (date !== fetchDateStr) {
-            // 避免重复计算
+            // Avoid duplicate counting
             contributionsByDate[date] =
               (contributionsByDate[date] || 0) + perDateContribution;
           }
@@ -250,11 +250,11 @@ export const getRepoContributionsOverTime = (
     }
   });
 
-  // 转换为数组格式并按时间排序
+  // Convert to array format and sort chronologically
   return Object.entries(contributionsByDate)
     .map(([date, contributions]) => ({ date, contributions }))
     .sort((a, b) => {
-      // 确保正确比较日期
+      // Ensure correct date comparison
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
@@ -262,36 +262,36 @@ export const getRepoContributionsOverTime = (
 };
 
 /**
- * 基于实际仓库数据获取按星期几的活动
- * @returns 按星期的活动数量数组
+ * Get activity by day of week based on actual repository data
+ * @returns Activity count array by day of week
  */
 export const getActivityByDayOfWeekFromRepos = (): number[] => {
   const repos = getFilteredRepoActivity();
   const viewHistory = getFilteredViewHistory();
-  const activityByDay = [0, 0, 0, 0, 0, 0, 0]; // 初始化每天的计数
+  const activityByDay = [0, 0, 0, 0, 0, 0, 0]; // Initialize count for each day
 
-  // 创建详细的按日期贡献跟踪
+  // Create detailed tracking of contributions by date
   const detailedContributions = getDetailedContributionsByDate(repos);
 
-  // 将日期转换为星期几并汇总贡献
+  // Convert dates to days of week and sum up contributions
   Object.values(detailedContributions).forEach((dailyData) => {
     const date = new Date(dailyData.date);
     const dayOfWeek = date.getDay();
     activityByDay[dayOfWeek] += dailyData.count;
   });
 
-  // 添加视图历史数据作为附加信号
+  // Add view history data as additional signal
   viewHistory.forEach((record) => {
     const date = new Date(record.timestamp);
     const dayOfWeek = date.getDay();
-    activityByDay[dayOfWeek] += 1; // 每个视图添加一个小权重
+    activityByDay[dayOfWeek] += 1; // Each view adds a small weight
   });
 
-  // 如果没有有意义的数据，提供现实的后备方案
+  // If no meaningful data, provide a realistic fallback
   const totalActivity = activityByDay.reduce((sum, val) => sum + val, 0);
   if (totalActivity < 7) {
-    // 平均每天至少一个
-    return [3, 5, 8, 10, 8, 5, 2]; // 现实的工作周模式
+    // At least one per day on average
+    return [3, 5, 8, 10, 8, 5, 2]; // Realistic work week pattern
   }
 
   return activityByDay;

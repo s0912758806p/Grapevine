@@ -518,7 +518,7 @@ const AnalyticsDashboard: React.FC = () => {
                   <Calendar
                     fullscreen={false}
                     dateCellRender={(date) => {
-                      // 使用正确的日期格式
+                      // Use correct date format
                       const dateObj = date.toDate();
                       const dateString = formatShortDate(dateObj.getTime());
                       const count = calendarData[dateString] || 0;

@@ -1,20 +1,20 @@
 /**
- * 日期处理工具函数
+ * Date processing utility functions
  */
 
 /**
- * 统一的日期格式化函数
- * @param date Date对象
- * @returns 格式化后的日期字符串 MM/DD/YYYY
+ * Unified date formatting function
+ * @param date Date object
+ * @returns Formatted date string MM/DD/YYYY
  */
 export const formatDateString = (date: Date): string => {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 };
 
 /**
- * 格式化短日期
- * @param timestamp 时间戳
- * @returns 格式化后的日期字符串 MM/DD/YYYY
+ * Format short date
+ * @param timestamp Timestamp
+ * @returns Formatted date string MM/DD/YYYY
  */
 export const formatShortDate = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -22,9 +22,9 @@ export const formatShortDate = (timestamp: number): string => {
 };
 
 /**
- * 格式化日期和时间
- * @param timestamp 时间戳
- * @returns 格式化后的日期时间字符串 MM/DD/YYYY HH:MM
+ * Format date and time
+ * @param timestamp Timestamp
+ * @returns Formatted date and time string MM/DD/YYYY HH:MM
  */
 export const formatDate = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -35,11 +35,11 @@ export const formatDate = (timestamp: number): string => {
 };
 
 /**
- * 获取以给定时间戳为中心的邻近日期
- * @param timestamp 中心时间戳
- * @param dayRange 范围天数
- * @param minTime 最小时间限制
- * @returns 邻近日期字符串数组
+ * Get nearby dates centered around a given timestamp
+ * @param timestamp Center timestamp
+ * @param dayRange Number of days in range
+ * @param minTime Minimum time limit
+ * @returns Array of nearby date strings
  */
 export const getNearbyDates = (
   timestamp: number,
@@ -49,16 +49,16 @@ export const getNearbyDates = (
   const dates: string[] = [];
   const currentDate = new Date(timestamp);
 
-  // 获取前后日期
+  // Get dates before and after
   for (let i = -dayRange; i <= dayRange; i++) {
-    if (i === 0) continue; // 跳过当前日期
+    if (i === 0) continue; // Skip the current date
 
-    // 创建新日期对象避免修改原始对象
+    // Create new date object to avoid modifying the original
     const nearbyDate = new Date(currentDate.getTime());
-    // 通过调整天数设置日期
+    // Set the date by adjusting days
     nearbyDate.setDate(currentDate.getDate() + i);
 
-    // 仅包含时间范围内的日期
+    // Only include dates within the time range
     if (nearbyDate.getTime() >= minTime && nearbyDate.getTime() <= Date.now()) {
       dates.push(formatShortDate(nearbyDate.getTime()));
     }
@@ -68,9 +68,9 @@ export const getNearbyDates = (
 };
 
 /**
- * 计算指定天数前的时间戳
- * @param days 天数
- * @returns 指定天数前的时间戳
+ * Calculate timestamp for specified days ago
+ * @param days Number of days
+ * @returns Timestamp for the specified number of days ago
  */
 export const getDateBeforeDays = (days: number): number => {
   return Date.now() - days * 24 * 60 * 60 * 1000;

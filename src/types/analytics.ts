@@ -1,4 +1,4 @@
-// 仓库活动类型
+// Repository activity type
 export interface RepoActivity {
   repoId: string;
   repoOwner: string;
@@ -8,7 +8,7 @@ export interface RepoActivity {
   lastFetched: number;
 }
 
-// 视图记录类型
+// View record type
 export interface ViewRecord {
   id: number;
   issueNumber: number;
@@ -18,20 +18,20 @@ export interface ViewRecord {
   source: string;
 }
 
-// 每日活动类型
+// Daily activity type
 export interface DailyActivity {
   date: string;
   count: number;
 }
 
-// 增强的每日贡献类型，包含仓库信息
+// Enhanced daily contribution type with repository information
 export interface DailyContribution {
   date: string;
   count: number;
   repos: string[];
 }
 
-// 贡献度量指标类型
+// Contribution metrics type
 export interface ContributionMetrics {
   totalContributions: number;
   issuesCreated: number;
@@ -41,13 +41,13 @@ export interface ContributionMetrics {
   mostActiveRepo?: string;
 }
 
-// 日期贡献分析结果
+// Date contribution analysis result
 export interface DateContribution {
   date: string;
   contributions: number;
 }
 
-// 图表数据类型
+// Chart data type
 export interface ChartDataItem {
   category: string;
   value: number;
