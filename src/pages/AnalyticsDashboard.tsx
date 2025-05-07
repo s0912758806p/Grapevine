@@ -41,7 +41,6 @@ import {
   getRepoContributionsOverTime,
   getDetailedContributionsByDate,
   getActivityByDayOfWeekFromRepos,
-  TARGET_AUTHOR,
 } from "../services/authorAnalyticsService";
 import { formatDate, formatShortDate } from "../utils/dateUtils";
 import {
@@ -657,7 +656,7 @@ const AnalyticsDashboard: React.FC = () => {
           >
             <Title level={2} style={{ margin: 0, color: "#5e2a69" }}>
               <UserOutlined style={{ marginRight: 12 }} />
-              {TARGET_AUTHOR}'s Activity Dashboard
+              Author's Activity Dashboard
             </Title>
             <Button danger icon={<DeleteOutlined />} onClick={handleClearData}>
               Clear Data
@@ -666,7 +665,7 @@ const AnalyticsDashboard: React.FC = () => {
 
           {showNoDataAlert && (
             <Alert
-              message={`No Analytics Data Available for ${TARGET_AUTHOR}`}
+              message={`No Analytics Data Available for Author`}
               description="Start browsing content or tracking repositories to collect analytics data. Your data is stored locally and is not shared."
               type="info"
               showIcon
