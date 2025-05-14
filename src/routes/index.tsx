@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "../App";
 import IssueDetail from "../components/IssueDetail";
 import HomePage from "../components/HomePage";
@@ -10,10 +10,9 @@ import RepositoryManagementPage from "../components/RepositoryManagementPage";
 import LocationPage from "../pages/LocationPage";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import LandingPage from "../pages/LandingPage";
-import GitHubIssuesPage from "../pages/GitHubIssuesPage";
 import IssueSubmissionPage from "../pages/IssueSubmissionPage";
-import AuthorIssuesPage from "../pages/CreatedIssuesPage";
 import CommunityPage from "../pages/CommunityPage";
+import EssayPage from "../pages/EssayPage";
 
 // Create router with all future flags enabled
 const router = createBrowserRouter(
@@ -32,11 +31,11 @@ const router = createBrowserRouter(
         },
         {
           path: "github-issues",
-          element: <GitHubIssuesPage />,
+          element: <Navigate to="/essays" replace />,
         },
         {
           path: "created-issues",
-          element: <AuthorIssuesPage />,
+          element: <Navigate to="/essays?tab=author-issues" replace />,
         },
         {
           path: "issue-submitted",
@@ -77,6 +76,10 @@ const router = createBrowserRouter(
         {
           path: "community",
           element: <CommunityPage />,
+        },
+        {
+          path: "essays",
+          element: <EssayPage />,
         },
       ],
     },

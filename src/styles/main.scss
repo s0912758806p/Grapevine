@@ -8,6 +8,7 @@
 @use "./responsive.scss";
 @use "./variables";
 @use "./LandingPage.scss";
+@use "./EssayPage.scss";
 
 /* Variables */
 $grape-purple: #5e2a69;
@@ -213,4 +214,26 @@ body {
 /* Add the vine animation container styles for consistent positioning */
 .vine-background {
   z-index: -1;
+}
+
+/* Modular issue list styles */
+.modular-issues-container {
+  .modular-issues-list {
+    .ant-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(94, 42, 105, 0.15);
+      }
+    }
+
+    .ant-tag {
+      margin: 2px 4px 2px 0;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
 }

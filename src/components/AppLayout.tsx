@@ -68,12 +68,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: <Link to="/">Home</Link>,
     },
     {
-      key: "/github-issues",
-      label: <Link to="/github-issues">F2E Jobs</Link>,
-    },
-    {
-      key: "/created-issues",
-      label: <Link to="/created-issues">Author Issues</Link>,
+      key: "/essays",
+      label: <Link to="/essays">Essays</Link>,
     },
     ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
       ? [
@@ -106,13 +102,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       onClick: handleMenuClick,
     },
     {
-      key: "/github-issues",
-      label: <Link to="/github-issues">F2E Jobs</Link>,
-      onClick: handleMenuClick,
-    },
-    {
-      key: "/created-issues",
-      label: <Link to="/created-issues">Author Issues</Link>,
+      key: "/essays",
+      label: <Link to="/essays">Essays</Link>,
       onClick: handleMenuClick,
     },
     ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
