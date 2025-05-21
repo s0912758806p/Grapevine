@@ -92,11 +92,17 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
         setHasMorePages(result.data.length === perPage);
         setCurrentPage(result.page);
       } else {
+        const owner =
+          type === "ruanyf-weekly"
+            ? "ruanyf"
+            : import.meta.env.VITE_GITHUB_REPO_OWNER;
+        const repo =
+          type === "ruanyf-weekly"
+            ? "weekly"
+            : import.meta.env.VITE_GITHUB_REPO_NAME;
+
         // Fetch Author Issues
-        const issuesResponse = await fetchGithubIssues(
-          import.meta.env.VITE_GITHUB_REPO_OWNER,
-          import.meta.env.VITE_GITHUB_REPO_NAME
-        );
+        const issuesResponse = await fetchGithubIssues(owner, repo);
 
         // Format Author Issues to match common format
         const formattedIssues = issuesResponse.map(
@@ -135,7 +141,11 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
       console.error(`Failed to fetch ${type}:`, err);
       setError(
         `Failed to load ${
-          type === "f2e-jobs" ? "F2E Jobs" : "Author Issues"
+          type === "f2e-jobs"
+            ? "F2E Jobs"
+            : type === "ruanyf-weekly"
+            ? "Ruanyf Weekly"
+            : "Author Issues"
         }. Please try again later.`
       );
     } finally {
@@ -171,7 +181,11 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
     return (
       <Empty
         description={`No ${
-          type === "f2e-jobs" ? "F2E job posts" : "author issues"
+          type === "f2e-jobs"
+            ? "F2E job posts"
+            : type === "ruanyf-weekly"
+            ? "Ruanyf Weekly posts"
+            : "author issues"
         } found`}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         style={{ margin: "40px 0" }}
@@ -183,17 +197,29 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
   const getIssueDetailUrl = (issue: BaseIssue) => {
     return type === "f2e-jobs"
       ? `/f2e-issue/${issue.number}`
+      : type === "ruanyf-weekly"
+      ? `/ruanyf-weekly/${issue.number}`
       : `/issue/${issue.number}`;
   };
 
   const getListTitle = () => {
-    return type === "f2e-jobs" ? "F2E Jobs" : "Author Issues";
+    return type === "f2e-jobs"
+      ? "F2E Jobs"
+      : type === "ruanyf-weekly"
+      ? "Ruanyf Weekly"
+      : "Author Issues";
   };
 
   if (loading && issues.length === 0) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
-        Loading {type === "f2e-jobs" ? "F2E Jobs" : "Author Issues"}...
+        Loading{" "}
+        {type === "f2e-jobs"
+          ? "F2E Jobs"
+          : type === "ruanyf-weekly"
+          ? "Ruanyf Weekly"
+          : "Author Issues"}
+        ...
       </div>
     );
   }

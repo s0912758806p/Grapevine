@@ -6,6 +6,7 @@ import githubIssuesReducer from "./githubIssuesSlice";
 import repositoriesReducer from "./repositoriesSlice";
 import searchReducer from "./searchSlice";
 import locationReducer from "./locationSlice";
+import ruanyfWeeklyReducer from "./ruanyfWeeklySlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     repositories: repositoriesReducer,
     search: searchReducer,
     location: locationReducer,
+    ruanyfWeekly: ruanyfWeeklyReducer,
   },
 });
 

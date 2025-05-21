@@ -70,7 +70,7 @@ const RepositoryIssueDetail: React.FC = () => {
           message.error("Failed to load issue details.");
         });
     }
-  }, [dispatch, repoId, issueNumber, message]);
+  }, [dispatch, repoId, issueNumber]);
 
   if (status === "loading") {
     return (

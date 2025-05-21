@@ -6,6 +6,7 @@ import NewIssue from "../components/NewIssue";
 import CommentsExample from "../pages/CommentsExample";
 import F2EIssueDetail from "../components/F2EIssueDetail";
 import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
+import RuanyfWeeklyDetail from "../components/RuanyfWeeklyDetail";
 import RepositoryManagementPage from "../components/RepositoryManagementPage";
 import LocationPage from "../pages/LocationPage";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
@@ -52,6 +53,10 @@ const router = createBrowserRouter(
         {
           path: "repository-issue/:repoId/:issueNumber",
           element: <RepositoryIssueDetail />,
+        },
+        {
+          path: "ruanyf-weekly/:issueNumber",
+          element: <RuanyfWeeklyDetail />,
         },
         {
           path: "new-issue",

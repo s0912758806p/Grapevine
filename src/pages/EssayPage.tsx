@@ -20,6 +20,15 @@ const tabItems = [
     children: <ModularIssueList type="f2e-jobs" />,
   },
   {
+    key: "ruanyf-weekly",
+    label: (
+      <span>
+        <BookOutlined /> Ruanyf Weekly
+      </span>
+    ),
+    children: <ModularIssueList type="ruanyf-weekly" />,
+  },
+  {
     key: "author-issues",
     label: (
       <span>
@@ -54,6 +63,8 @@ const EssayPage: React.FC = () => {
       setActiveTab("author-issues");
     } else if (tabFromUrl === "f2e-jobs") {
       setActiveTab("f2e-jobs");
+    } else if (tabFromUrl === "ruanyf-weekly") {
+      setActiveTab("ruanyf-weekly");
     }
   }, [tabFromUrl]);
 
@@ -72,28 +83,21 @@ const EssayPage: React.FC = () => {
         </Paragraph>
 
         <Space wrap className="essay-category-tags">
-          <Tag
-            color={activeTab === "f2e-jobs" ? "#5e2a69" : "default"}
-            onClick={() => setActiveTab("f2e-jobs")}
-            className="essay-category-tag"
-          >
-            <CodeOutlined /> F2E Jobs
-            <Badge
-              status={activeTab === "f2e-jobs" ? "success" : "default"}
-              className="essay-category-badge"
-            />
-          </Tag>
-          <Tag
-            color={activeTab === "author-issues" ? "#1e5631" : "default"}
-            onClick={() => setActiveTab("author-issues")}
-            className="essay-category-tag"
-          >
-            <UserOutlined /> Author Issues
-            <Badge
-              status={activeTab === "author-issues" ? "success" : "default"}
-              className="essay-category-badge"
-            />
-          </Tag>
+          {/** list multiple tags */}
+          {tabItems.map((item) => (
+            <Tag
+              key={item.key}
+              color={activeTab === item.key ? "#5e2a69" : "default"}
+              onClick={() => setActiveTab(item.key)}
+              className="essay-category-tag"
+            >
+              {item.label}
+              <Badge
+                status={activeTab === item.key ? "success" : "default"}
+                className="essay-category-badge"
+              />
+            </Tag>
+          ))}
         </Space>
       </div>
 
