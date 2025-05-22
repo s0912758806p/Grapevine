@@ -48,6 +48,13 @@ export interface BaseIssue {
   html_url: string;
 }
 
+// F2E thunk response type
+interface F2EResponse {
+  data: F2EIssueType[];
+  page: number;
+  perPage: number;
+}
+
 // Map F2EIssueType to BaseIssue
 const mapF2EIssueToBaseIssue = (issue: F2EIssueType): BaseIssue => {
   return {
@@ -78,19 +85,16 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
   const fetchIssues = async (page: number) => {
     setLoading(true);
     try {
+      let targetIssues: BaseIssue[] = [];
+
       if (type === "f2e-jobs") {
         // Fetch F2E Jobs using the existing Redux thunk
-        const result = await dispatch(
+        const f2eResponse = (await dispatch(
           fetchF2EIssuesThunk({ page, perPage })
-        ).unwrap();
+        ).unwrap()) as F2EResponse;
+
         // Access data from the result and map to BaseIssue type
-        const mappedIssues = result.data.map(mapF2EIssueToBaseIssue);
-        setIssues((prev) =>
-          page > 1 ? [...prev, ...mappedIssues] : mappedIssues
-        );
-        // Check if more pages are available by comparing returned data length with perPage
-        setHasMorePages(result.data.length === perPage);
-        setCurrentPage(result.page);
+        targetIssues = f2eResponse.data.map(mapF2EIssueToBaseIssue);
       } else {
         const owner =
           type === "ruanyf-weekly"
@@ -102,41 +106,49 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
             : import.meta.env.VITE_GITHUB_REPO_NAME;
 
         // Fetch Author Issues
-        const issuesResponse = await fetchGithubIssues(owner, repo);
-
-        // Format Author Issues to match common format
-        const formattedIssues = issuesResponse.map(
-          (issue: Record<string, unknown>) => ({
-            id: Number(issue.id),
-            number: Number(issue.number),
-            title: String(issue.title || ""),
-            body: String(issue.body || ""),
-            created_at: String(issue.created_at || ""),
-            labels: (
-              (issue.labels as Array<Record<string, unknown>>) || []
-            ).map((label) => ({
-              name: String(label.name || ""),
-              color: String(label.color || ""),
-            })),
-            comments: Number(issue.comments || 0),
-            user: {
-              login: String(
-                ((issue.user as Record<string, unknown>) || {}).login || ""
-              ),
-              avatar_url: String(
-                ((issue.user as Record<string, unknown>) || {}).avatar_url || ""
-              ),
-            },
-            state: String(issue.state || ""),
-            html_url: String(issue.html_url || ""),
-          })
+        const githubResponse = await fetchGithubIssues(
+          owner,
+          repo,
+          page,
+          perPage
         );
 
-        setIssues(formattedIssues);
-        // For author issues, we're loading all at once for now
-        setHasMorePages(false);
-        setCurrentPage(1);
+        // Format Author Issues to match common format
+        targetIssues = githubResponse.map((issue: Record<string, unknown>) => ({
+          id: Number(issue.id),
+          number: Number(issue.number),
+          title: String(issue.title || ""),
+          body: String(issue.body || ""),
+          created_at: String(issue.created_at || ""),
+          labels: ((issue.labels as Array<Record<string, unknown>>) || []).map(
+            (label) => ({
+              name: String(label.name || ""),
+              color: String(label.color || ""),
+            })
+          ),
+          comments: Number(issue.comments || 0),
+          user: {
+            login: String(
+              ((issue.user as Record<string, unknown>) || {}).login || ""
+            ),
+            avatar_url: String(
+              ((issue.user as Record<string, unknown>) || {}).avatar_url || ""
+            ),
+          },
+          state: String(issue.state || ""),
+          html_url: String(issue.html_url || ""),
+        }));
       }
+
+      setIssues((prev) =>
+        page > 1 ? [...prev, ...targetIssues] : targetIssues
+      );
+      // Check if more pages are available by comparing returned data length with perPage
+      setHasMorePages(targetIssues.length === perPage);
+
+      // Always update currentPage to the requested page number
+      // This ensures proper pagination regardless of response structure
+      setCurrentPage(page);
     } catch (err) {
       console.error(`Failed to fetch ${type}:`, err);
       setError(
@@ -258,9 +270,9 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
           renderEmptyState()
         ) : (
           <>
-            {issues.map((issue) => (
+            {issues.map((issue, index) => (
               <Card
-                key={issue.id}
+                key={`${type}-${issue.id}-${index}`}
                 style={{
                   marginBottom: 16,
                   borderRadius: 4,
