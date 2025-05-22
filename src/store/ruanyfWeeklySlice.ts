@@ -1,9 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-// Assume API functions will be created in a similar fashion to f2eIssuesSlice
-// e.g., import { fetchRuanyfWeeklyIssues, fetchRuanyfWeeklyIssue } from "../api/ruanyfWeeklyApi";
 
-// Define a placeholder for the raw API response structure
-// Replace this with the actual interface for your API data
 interface RawRuanyfWeeklyIssuePayload {
   id: string | number;
   title: string;
@@ -19,10 +15,9 @@ interface RawRuanyfWeeklyIssuePayload {
   number?: number;
   comments?: number;
   user?: { login: string; avatar_url?: string };
-  [key: string]: unknown; // Allow other properties if the API response is flexible
+  [key: string]: unknown;
 }
 
-// Placeholder API functions - replace with your actual API calls
 const fetchRuanyfWeeklyIssues = async (
   page: number,
   perPage: number
@@ -50,8 +45,6 @@ const fetchRuanyfWeeklyIssue = async (
   issueId: string
 ): Promise<RawRuanyfWeeklyIssuePayload> => {
   try {
-    // GitHub API expects a number for issues, but our router might provide a string
-    // Make sure to parse it if it's a number
     const issueNumber = !isNaN(Number(issueId)) ? issueId : null;
 
     if (!issueNumber) {
@@ -83,28 +76,24 @@ const fetchRuanyfWeeklyIssue = async (
 
 export interface RuanyfWeeklyLabel {
   name: string;
-  color?: string; // color might be optional
+  color?: string;
 }
 
-// Define the structure of a Ruanyf Weekly Issue
 export interface RuanyfWeeklyIssueType {
-  id: string; // Assuming id is a string, adjust if different
+  id: string;
   title: string;
-  body?: string; // Or content, main text of the weekly
-  content?: string; // Alternative to body
-  author?: string; // If there's an author field
-  published_at: string; // Date of publication
-  created_at?: string; // If different from published_at
+  body?: string;
+  content?: string;
+  author?: string;
+  published_at: string;
+  created_at?: string;
   updated_at?: string;
-  html_url?: string; // Link to the original source if available
-  source_url?: string; // Alternative for html_url
+  html_url?: string;
+  source_url?: string;
   labels?: RuanyfWeeklyLabel[];
-  // Add any other fields relevant to Ruanyf Weekly issues
-  // e.g., tags, categories, summary etc.
-  number: number; // GitHub issue number - required for routing
-  comments?: number; // If you track comments directly on the object
+  number: number;
+  comments?: number;
   user?: {
-    // If there's a user object similar to GitHub
     login: string;
     avatar_url?: string;
   };
@@ -128,12 +117,11 @@ const initialState: RuanyfWeeklyState = {
   hasMorePages: true,
 };
 
-// Transform API response to RuanyfWeeklyIssueType
 const transformRuanyfWeeklyIssue = (
   issue: RawRuanyfWeeklyIssuePayload
 ): RuanyfWeeklyIssueType => {
   return {
-    id: String(issue.id || issue.number || Date.now()), // Ensure ID is a string
+    id: String(issue.id || issue.number || Date.now()),
     title: String(issue.title || "Untitled Issue"),
     body: issue.body ? String(issue.body) : undefined,
     content: issue.content ? String(issue.content) : undefined,
@@ -151,7 +139,7 @@ const transformRuanyfWeeklyIssue = (
           color: label.color ? String(label.color) : undefined,
         }))
       : [],
-    number: Number(issue.number || 0), // Ensure number is always set
+    number: Number(issue.number || 0),
     comments: issue.comments ? Number(issue.comments) : undefined,
     user: issue.user
       ? {
@@ -178,7 +166,7 @@ export const fetchRuanyfWeeklyIssuesThunk = createAsyncThunk(
         page,
         perPage,
         totalItems: response.length,
-      }; // Assuming API might not give total, use response.length for hasMorePages logic
+      };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error
@@ -192,11 +180,9 @@ export const fetchRuanyfWeeklyIssuesThunk = createAsyncThunk(
 export const fetchRuanyfWeeklyIssueThunk = createAsyncThunk(
   "ruanyfWeekly/fetchIssue",
   async (issueId: string, { rejectWithValue }) => {
-    // issueId is a string
     try {
       const issue = await fetchRuanyfWeeklyIssue(issueId);
       if (!issue || Object.keys(issue).length === 0) {
-        // Handle case where issue might be empty or not found
         return rejectWithValue("Weekly issue not found");
       }
       return transformRuanyfWeeklyIssue(issue);
@@ -226,7 +212,7 @@ export const ruanyfWeeklySlice = createSlice({
     builder
       .addCase(fetchRuanyfWeeklyIssuesThunk.pending, (state) => {
         state.status = "loading";
-        state.error = null; // Clear previous errors
+        state.error = null;
       })
       .addCase(fetchRuanyfWeeklyIssuesThunk.fulfilled, (state, action) => {
         state.status = "succeeded";
@@ -245,7 +231,7 @@ export const ruanyfWeeklySlice = createSlice({
       })
       .addCase(fetchRuanyfWeeklyIssueThunk.pending, (state) => {
         state.status = "loading";
-        state.error = null; // Clear previous errors
+        state.error = null;
       })
       .addCase(fetchRuanyfWeeklyIssueThunk.fulfilled, (state, action) => {
         state.status = "succeeded";
@@ -253,7 +239,7 @@ export const ruanyfWeeklySlice = createSlice({
       })
       .addCase(fetchRuanyfWeeklyIssueThunk.rejected, (state, action) => {
         state.status = "failed";
-        state.currentIssue = null; // Clear current issue on failure
+        state.currentIssue = null;
         state.error = action.payload as string;
       });
   },

@@ -54,7 +54,7 @@ const F2EIssueDetail: React.FC = () => {
 
   const handleBackToHome = () => {
     dispatch(clearCurrentF2EIssue());
-    navigate("/");
+    navigate("/essays");
   };
 
   const handleShare = () => {
@@ -105,7 +105,7 @@ const F2EIssueDetail: React.FC = () => {
         onClick={handleBackToHome}
         className="responsive-spacing"
       >
-        Back to Jobs
+        Back to Essays
       </Button>
 
       <Card

@@ -66,7 +66,7 @@ const RuanyfWeeklyDetail: React.FC = () => {
 
   const handleBackToList = () => {
     dispatch(clearCurrentRuanyfWeeklyIssue());
-    navigate("/ruanyf-weekly");
+    navigate("/essays");
   };
 
   const handleShare = () => {
@@ -122,7 +122,7 @@ const RuanyfWeeklyDetail: React.FC = () => {
         onClick={handleBackToList}
         className="responsive-spacing"
       >
-        Back to Weekly Issues
+        Back to Essays
       </Button>
 
       <Card

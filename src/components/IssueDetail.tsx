@@ -53,7 +53,7 @@ const IssueDetail: React.FC = () => {
   }, [dispatch, issueNumber]);
 
   const handleBackToIssues = () => {
-    navigate("/");
+    navigate("/essays");
   };
 
   const handleShare = () => {
@@ -98,7 +98,7 @@ const IssueDetail: React.FC = () => {
             "The requested issue could not be found or may have been deleted."}
         </Text>
         <Button type="primary" onClick={handleBackToIssues}>
-          Back to Issues
+          Back to Essays
         </Button>
       </div>
     );
