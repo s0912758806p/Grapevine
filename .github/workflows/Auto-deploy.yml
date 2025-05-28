@@ -1,0 +1,158 @@
+name: Auto PR + Auto Merge + Main Push Notify
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr-dev-to-release:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Get Commit Info
+        id: commit
+        run: |
+          echo "name=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+          echo "email=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_OUTPUT
+
+      - name: Check if PR exists to release
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --repo ${{ github.repository }} --head ${{ github.ref_name }} --base release --json number --jq 'length')
+          echo "pr_exists=$([ "$PR_EXISTS" -gt 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Create PR to release
+        if: steps.check-pr.outputs.pr_exists == 'false'
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+          commit-message: "Auto PR from ${{ github.ref_name }}"
+          branch: ${{ github.ref_name }}
+          base: release
+          title: "Auto PR: ${{ github.ref_name }}"
+          body: |
+            Auto-created PR from branch: `${{ github.ref_name }}`
+            Author: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          author: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          committer: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          signoff: true
+          labels: auto-pr
+
+      - name: Auto Approve PR
+        if: steps.cpr.outputs.pull-request-url
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Enable Auto Merge
+        if: steps.cpr.outputs.pull-request-url
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: merge
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+
+  pr-release-to-main:
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Get Commit Info
+        id: commit
+        run: |
+          echo "name=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+          echo "email=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_OUTPUT
+
+      - name: Check if PR exists to main
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --repo ${{ github.repository }} --head ${{ github.ref_name }} --base main --json number --jq 'length')
+          echo "pr_exists=$([ "$PR_EXISTS" -gt 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Create PR to main
+        if: steps.check-pr.outputs.pr_exists == 'false'
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+          commit-message: "Auto PR from ${{ github.ref_name }}"
+          branch: ${{ github.ref_name }}
+          base: main
+          title: "Auto PR: ${{ github.ref_name }}"
+          body: |
+            Auto-created PR from branch: `${{ github.ref_name }}`
+            Author: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          author: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          committer: ${{ steps.commit.outputs.name }} <${{ steps.commit.outputs.email }}>
+          signoff: true
+          labels: auto-pr
+
+      - name: Auto Approve PR
+        if: steps.cpr.outputs.pull-request-url
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.BOT_PAT_TOKEN }}
+
+      - name: Enable Auto Merge
+        if: steps.cpr.outputs.pull-request-url
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: merge
+          token: ${{ secrets.BOT_PAT_TOKEN }}
+
+  notify-main-updated:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Issue for Main branch update if not exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "🔔 Main branch has been updated";
+            const body = `Main branch updated at commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }} by @${{ github.actor }}`;
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+
+            const exists = issues.some(issue => issue.title === title);
+
+            if (exists) {
+              console.log("Issue with same title already exists. Skipping creation.");
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+              console.log("Created new issue for main branch update.");
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_PAT_TOKEN }}
