@@ -4,6 +4,7 @@ import {
   fetchGrapevineIssue,
 } from "../api/repositoryApi";
 import { IssueType } from "../types";
+import { formatGitHubIssue, calcHasMorePages } from "../utils";
 
 // Repository type
 export interface Repository {
@@ -38,18 +39,6 @@ interface GithubIssuesState {
   currentRepository: string | null;
 }
 
-// 定義 GitHub API 回應中的 issue 標籤結構
-interface GitHubLabel {
-  name: string;
-  color: string;
-}
-
-// 定義 GitHub API 回應中的 issue 使用者結構
-interface GitHubUser {
-  login: string;
-  avatar_url: string;
-}
-
 const initialState: GithubIssuesState = {
   issues: [],
   currentIssue: null,
@@ -66,63 +55,6 @@ const initialState: GithubIssuesState = {
   repositories: [],
   currentRepository: null,
 };
-
-// 將 GitHub API 回應處理為我們的 IssueType
-function formatIssue(apiIssue: Record<string, unknown>): IssueType {
-  // 提取repository信息的函數
-  const extractRepository = (repoUrl: string | undefined): string => {
-    if (!repoUrl) return "unknown/unknown";
-
-    try {
-      // 嘗試從URL中提取owner/repo格式
-      if (repoUrl.includes("/repos/")) {
-        return repoUrl.split("/repos/")[1];
-      }
-
-      // 嘗試使用URL對象解析
-      const url = new URL(repoUrl);
-      const pathParts = url.pathname.split("/");
-
-      // 尋找repos後面的兩個部分
-      for (let i = 0; i < pathParts.length - 1; i++) {
-        if (pathParts[i] === "repos") {
-          return `${pathParts[i + 1]}/${pathParts[i + 2]}`;
-        }
-      }
-
-      return "unknown/unknown";
-    } catch (e) {
-      console.error("解析repository URL出錯:", repoUrl, e);
-      return "unknown/unknown";
-    }
-  };
-
-  return {
-    id: Number(apiIssue.id),
-    number: Number(apiIssue.number),
-    title: String(apiIssue.title),
-    body: apiIssue.body ? String(apiIssue.body) : "",
-    user: {
-      login: apiIssue.user
-        ? String((apiIssue.user as GitHubUser).login)
-        : "unknown",
-      avatar_url: apiIssue.user
-        ? String((apiIssue.user as GitHubUser).avatar_url)
-        : "",
-    },
-    created_at: String(apiIssue.created_at),
-    updated_at: String(apiIssue.updated_at),
-    comments: Number(apiIssue.comments),
-    labels: Array.isArray(apiIssue.labels)
-      ? (apiIssue.labels as GitHubLabel[]).map((label) => ({
-          name: label.name,
-          color: label.color,
-        }))
-      : [],
-    state: String(apiIssue.state),
-    repository: extractRepository(apiIssue.repository_url as string),
-  };
-}
 
 export const fetchGithubIssuesThunk = createAsyncThunk(
   "githubIssues/fetchIssues",
@@ -142,30 +74,30 @@ export const fetchGithubIssuesThunk = createAsyncThunk(
       if (repository) {
         filteredIssues = filteredIssues.filter(
           (issue: Record<string, unknown>) => {
-            // 直接檢查issue.repository屬性
+            // Check issue.repository property directly
             const repoName = issue.repository as string | undefined;
             if (repoName && repoName === repository) {
               return true;
             }
 
-            // 如果沒有repository屬性，則檢查repository_url
+            // Fall back to checking repository_url if repository property is absent
             const repoUrl = issue.repository_url as string | undefined;
 
             if (!repoUrl) return false;
 
-            // 從URL中提取owner/repo格式
+            // Extract owner/repo from URL
             try {
-              // 嘗試提取"/repos/{owner}/{repo}"格式
+              // Try extracting "/repos/{owner}/{repo}" format
               const urlParts = repoUrl.split("/repos/");
               if (urlParts.length < 2) return false;
 
-              const extractedRepo = urlParts[1]; // 例如: "owner/repo/issues/123" 或 "owner/repo"
-              const repoPath = extractedRepo.split("/").slice(0, 2).join("/"); // 獲取 "owner/repo" 部分
+              const extractedRepo = urlParts[1]; // e.g. "owner/repo/issues/123" or "owner/repo"
+              const repoPath = extractedRepo.split("/").slice(0, 2).join("/"); // Get "owner/repo" part
 
-              // 精確匹配 owner/repo
+              // Exact match on owner/repo
               return repoPath === repository;
             } catch (e) {
-              console.error("解析repository URL出錯:", repoUrl, e);
+              console.error("Error parsing repository URL:", repoUrl, e);
               return false;
             }
           }
@@ -173,9 +105,11 @@ export const fetchGithubIssuesThunk = createAsyncThunk(
       }
 
       return {
-        issues: filteredIssues.map((issue: Record<string, unknown>) =>
-          formatIssue(issue)
-        ),
+        issues: filteredIssues.map((issue: Record<string, unknown>) => {
+          const repoStr = (issue.repository as string) || "unknown/unknown";
+          const [owner = "unknown", repoName = "unknown"] = repoStr.split("/");
+          return formatGitHubIssue(issue, owner, repoName, repoStr);
+        }),
         pagination: {
           currentPage: page,
           perPage,
@@ -195,16 +129,18 @@ export const fetchGithubIssueThunk = createAsyncThunk(
   "githubIssues/fetchIssue",
   async (issueNumber: number) => {
     const issue = await fetchGrapevineIssue(issueNumber);
-    return formatIssue(issue);
+    const owner = import.meta.env.VITE_GITHUB_REPO_OWNER;
+    const repo = import.meta.env.VITE_GITHUB_REPO_NAME;
+    return formatGitHubIssue(issue, owner, repo, `${owner}/${repo}`);
   }
 );
 
-// 改為從 repositoriesSlice 獲取資料
+// Fetches repository list from repositoriesSlice state
 export const fetchRepositoriesThunk = createAsyncThunk(
   "githubIssues/fetchRepositories",
   async (_, { rejectWithValue, getState }) => {
     try {
-      // 從 state 獲取 repositories
+      // Get repositories from state
       const state = getState() as {
         repositories: { repositories: Record<string, unknown>[] };
       };
@@ -212,15 +148,15 @@ export const fetchRepositoriesThunk = createAsyncThunk(
         (repo) => repo.isActive as boolean
       );
 
-      // 轉換格式以匹配 GitHub API 格式
+      // Convert to match GitHub API format
       const repositories = managedRepos.map((repo) => ({
-        id: parseInt(repo.id as string) || Math.floor(Math.random() * 10000), // 如果沒有ID就生成一個
+        id: parseInt(repo.id as string) || Math.floor(Math.random() * 10000), // Generate an ID if none exists
         name: repo.repo as string,
         full_name: `${repo.owner as string}/${repo.repo as string}`,
         description: (repo.description as string) || "",
-        stargazers_count: 0, // 預設值
-        forks_count: 0, // 預設值
-        open_issues_count: 0, // 預設值
+        stargazers_count: 0, // Default value
+        forks_count: 0, // Default value
+        open_issues_count: 0, // Default value
         visibility: "public",
         owner: {
           login: repo.owner as string,
@@ -293,9 +229,10 @@ export const githubIssuesSlice = createSlice({
         }
 
         state.pagination = action.payload.pagination;
-        // If returned issues are fewer than perPage, there are no more pages
-        state.hasMorePages =
-          action.payload.issues.length === action.payload.pagination.perPage;
+        state.hasMorePages = calcHasMorePages(
+          action.payload.issues.length,
+          action.payload.pagination.perPage
+        );
         state.error = null;
 
         if (action.payload.currentRepository !== undefined) {

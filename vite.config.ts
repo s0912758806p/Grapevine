@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     // Add a plugin to handle the os module
@@ -35,9 +35,11 @@ export default defineConfig({
       os: "node:os",
     },
   },
+  // Strip all console.* calls and debugger statements in production builds
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : {},
   build: {
     rollupOptions: {
       external: ["os"],
     },
   },
-});
+}));

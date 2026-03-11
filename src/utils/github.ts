@@ -1,12 +1,12 @@
 import { IssueType } from "../types";
 
-// 定義 GitHub API 回應中的 issue 標籤結構
+// GitHub API response label structure
 interface GitHubLabel {
   name: string;
   color: string;
 }
 
-// 定義 GitHub API 回應中的 issue 使用者結構
+// GitHub API response user structure
 interface GitHubUser {
   login: string;
   avatar_url: string;
@@ -96,6 +96,23 @@ export const extractTotalCount = (
   }
 
   return totalCount;
+};
+
+/**
+ * Calculate whether there are more pages to load.
+ * Uses totalCount + loadedCount when both are available (more accurate),
+ * otherwise falls back to comparing responseLength with perPage.
+ */
+export const calcHasMorePages = (
+  responseLength: number,
+  perPage: number,
+  totalCount?: number,
+  loadedCount?: number
+): boolean => {
+  if (totalCount !== undefined && loadedCount !== undefined) {
+    return loadedCount < totalCount;
+  }
+  return responseLength === perPage;
 };
 
 /**

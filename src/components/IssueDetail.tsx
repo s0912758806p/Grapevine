@@ -9,6 +9,7 @@ import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import "../styles/markdown.scss";
 import { RootState, AppDispatch } from "../store";
 import { fetchGithubIssueThunk } from "../store/githubIssuesSlice";
@@ -180,7 +181,7 @@ const IssueDetail: React.FC = () => {
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
             >
               {issue.body}
             </ReactMarkdown>

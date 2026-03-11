@@ -43,8 +43,9 @@ const EssayPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabFromUrl = searchParams.get("tab");
+  const validTabs = ["f2e-jobs", "ruanyf-weekly", "author-issues"];
   const [activeTab, setActiveTab] = useState(
-    tabFromUrl === "author-issues" ? "author-issues" : "f2e-jobs"
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "f2e-jobs"
   );
 
   // Update URL when tab changes

@@ -19,7 +19,12 @@ import {
 } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchF2EIssuesThunk, F2EIssueType } from "../store/f2eIssuesSlice";
+import {
+  fetchRuanyfWeeklyIssuesThunk,
+  RuanyfWeeklyIssueType,
+} from "../store/ruanyfWeeklySlice";
 import { fetchGithubIssues } from "../api/repositoryApi";
+import { formatGitHubIssue } from "../utils";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../store";
 import dayjs from "dayjs";
@@ -70,6 +75,7 @@ interface ModularIssueListProps {
 const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
   const [issues, setIssues] = useState<BaseIssue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMorePages, setHasMorePages] = useState(false);
@@ -77,71 +83,90 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  // Load issues based on type
+  // Reset and reload when tab type changes
   useEffect(() => {
+    setIssues([]);
+    setCurrentPage(1);
+    setHasMorePages(false);
+    setError(null);
     fetchIssues(1);
   }, [type]);
 
   const fetchIssues = async (page: number) => {
-    setLoading(true);
+    if (page === 1) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     try {
       let targetIssues: BaseIssue[] = [];
 
       if (type === "f2e-jobs") {
         // Fetch F2E Jobs using the existing Redux thunk
         const f2eResponse = (await dispatch(
-          fetchF2EIssuesThunk({ page, perPage })
+          fetchF2EIssuesThunk({ page, perPage }),
         ).unwrap()) as F2EResponse;
 
         // Access data from the result and map to BaseIssue type
         targetIssues = f2eResponse.data.map(mapF2EIssueToBaseIssue);
-      } else {
-        const owner =
-          type === "ruanyf-weekly"
-            ? "ruanyf"
-            : import.meta.env.VITE_GITHUB_REPO_OWNER;
-        const repo =
-          type === "ruanyf-weekly"
-            ? "weekly"
-            : import.meta.env.VITE_GITHUB_REPO_NAME;
+      } else if (type === "ruanyf-weekly") {
+        // Use the dedicated Redux thunk instead of a direct API call
+        const result = await dispatch(
+          fetchRuanyfWeeklyIssuesThunk({ page, perPage }),
+        ).unwrap();
 
-        // Fetch Author Issues
+        targetIssues = result.data.map(
+          (issue: RuanyfWeeklyIssueType): BaseIssue => ({
+            id: issue.number,
+            number: issue.number,
+            title: issue.title,
+            body: issue.body || "",
+            created_at: issue.published_at || issue.created_at || "",
+            labels: (issue.labels || []).map((l) => ({
+              name: l.name,
+              color: l.color || "",
+            })),
+            comments: issue.comments || 0,
+            user: issue.user
+              ? {
+                  login: issue.user.login,
+                  avatar_url: issue.user.avatar_url || "",
+                }
+              : { login: "unknown", avatar_url: "" },
+            state: "open",
+            html_url: issue.html_url || "",
+          }),
+        );
+      } else {
+        // author-issues: fetch from the Grapevine community repository
+        const owner = import.meta.env.VITE_GITHUB_REPO_OWNER;
+        const repo = import.meta.env.VITE_GITHUB_REPO_NAME;
         const githubResponse = await fetchGithubIssues(
           owner,
           repo,
           page,
-          perPage
+          perPage,
         );
 
-        // Format Author Issues to match common format
-        targetIssues = githubResponse.map((issue: Record<string, unknown>) => ({
-          id: Number(issue.id),
-          number: Number(issue.number),
-          title: String(issue.title || ""),
-          body: String(issue.body || ""),
-          created_at: String(issue.created_at || ""),
-          labels: ((issue.labels as Array<Record<string, unknown>>) || []).map(
-            (label) => ({
-              name: String(label.name || ""),
-              color: String(label.color || ""),
-            })
-          ),
-          comments: Number(issue.comments || 0),
-          user: {
-            login: String(
-              ((issue.user as Record<string, unknown>) || {}).login || ""
-            ),
-            avatar_url: String(
-              ((issue.user as Record<string, unknown>) || {}).avatar_url || ""
-            ),
-          },
-          state: String(issue.state || ""),
-          html_url: String(issue.html_url || ""),
-        }));
+        targetIssues = (githubResponse as Record<string, unknown>[])
+          .filter((issue) => !issue.pull_request) // exclude pull requests
+          .map((issue) => {
+            const formatted = formatGitHubIssue(
+              issue,
+              owner,
+              repo,
+              `${owner}/${repo}`,
+            );
+            return {
+              ...formatted,
+              body: formatted.body || "",
+              html_url: String(issue.html_url || ""),
+            };
+          });
       }
 
       setIssues((prev) =>
-        page > 1 ? [...prev, ...targetIssues] : targetIssues
+        page > 1 ? [...prev, ...targetIssues] : targetIssues,
       );
       // Check if more pages are available by comparing returned data length with perPage
       setHasMorePages(targetIssues.length === perPage);
@@ -156,12 +181,13 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
           type === "f2e-jobs"
             ? "F2E Jobs"
             : type === "ruanyf-weekly"
-            ? "Ruanyf Weekly"
-            : "Author Issues"
-        }. Please try again later.`
+              ? "Ruanyf Weekly"
+              : "Author Issues"
+        }. Please try again later.`,
       );
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -196,8 +222,8 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
           type === "f2e-jobs"
             ? "F2E job posts"
             : type === "ruanyf-weekly"
-            ? "Ruanyf Weekly posts"
-            : "author issues"
+              ? "Ruanyf Weekly posts"
+              : "author issues"
         } found`}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         style={{ margin: "40px 0" }}
@@ -210,16 +236,16 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
     return type === "f2e-jobs"
       ? `/f2e-issue/${issue.number}`
       : type === "ruanyf-weekly"
-      ? `/ruanyf-weekly/${issue.number}`
-      : `/issue/${issue.number}`;
+        ? `/ruanyf-weekly/${issue.number}`
+        : `/issue/${issue.number}`;
   };
 
   const getListTitle = () => {
     return type === "f2e-jobs"
       ? "F2E Jobs"
       : type === "ruanyf-weekly"
-      ? "Ruanyf Weekly"
-      : "Author Issues";
+        ? "Ruanyf Weekly"
+        : "Author Issues";
   };
 
   if (loading && issues.length === 0) {
@@ -229,8 +255,8 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
         {type === "f2e-jobs"
           ? "F2E Jobs"
           : type === "ruanyf-weekly"
-          ? "Ruanyf Weekly"
-          : "Author Issues"}
+            ? "Ruanyf Weekly"
+            : "Author Issues"}
         ...
       </div>
     );
@@ -364,8 +390,8 @@ const ModularIssueList: React.FC<ModularIssueListProps> = ({ type }) => {
               <div style={{ textAlign: "center", margin: "20px 0" }}>
                 <Button
                   onClick={handleLoadMore}
-                  loading={loading}
-                  disabled={!hasMorePages}
+                  loading={loadingMore}
+                  disabled={loadingMore}
                 >
                   Load More
                 </Button>

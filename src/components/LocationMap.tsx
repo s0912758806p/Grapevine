@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// 解決Leaflet圖標問題的替代方法
+// Workaround for Leaflet icon issue
 const icon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -41,7 +41,7 @@ const LocationMap = ({
     }
   }, [latitude, longitude]);
 
-  // 生成位置描述
+  // Generate location description
   const getLocationDescription = () => {
     if (city && region && country) {
       return `${country} - ${region} - ${city}`;

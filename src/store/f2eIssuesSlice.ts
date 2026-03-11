@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { fetchF2EIssues, fetchF2EIssue } from "../api/repositoryApi";
+import { calcHasMorePages } from "../utils";
 
-// 簡化的GitHub Issue類型
+// Simplified GitHub Issue type
 export interface F2EIssueType {
   id: number;
   number: number;
@@ -39,7 +40,7 @@ const initialState: F2EIssuesState = {
   hasMorePages: true,
 };
 
-// 將GitHub API響應轉換為我們的F2EIssueType類型
+// Transform GitHub API response to our F2EIssueType format
 const transformGitHubIssue = (issue: unknown): F2EIssueType => {
   const githubIssue = issue as Record<string, unknown>;
 
@@ -82,7 +83,7 @@ const transformGitHubIssue = (issue: unknown): F2EIssueType => {
   };
 };
 
-// 非同步獲取F2E issues
+// Async thunk to fetch F2E issues
 export const fetchF2EIssuesThunk = createAsyncThunk(
   "f2eIssues/fetchIssues",
   async ({ page, perPage }: { page: number; perPage: number }) => {
@@ -92,7 +93,7 @@ export const fetchF2EIssuesThunk = createAsyncThunk(
   }
 );
 
-// 非同步獲取單個F2E issue
+// Async thunk to fetch a single F2E issue
 export const fetchF2EIssueThunk = createAsyncThunk(
   "f2eIssues/fetchIssue",
   async (issueNumber: number) => {
@@ -124,15 +125,14 @@ export const f2eIssuesSlice = createSlice({
         state.status = "succeeded";
         const { data, page } = action.payload;
 
-        // 如果是第1頁，則替換所有數據，否則添加到現有數據
+        // If page 1, replace all data; otherwise append to existing data
         if (page === 1) {
           state.issues = data;
         } else {
           state.issues = [...state.issues, ...data];
         }
 
-        // 如果返回的數據少於請求的perPage，表示沒有更多頁面
-        state.hasMorePages = data.length === action.payload.perPage;
+        state.hasMorePages = calcHasMorePages(data.length, action.payload.perPage);
         state.currentPage = page;
       })
       .addCase(fetchF2EIssuesThunk.rejected, (state, action) => {

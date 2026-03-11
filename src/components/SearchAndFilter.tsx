@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Input,
   Select,
@@ -49,6 +49,12 @@ const SearchAndFilter: React.FC = () => {
   const { currentFilter, savedFilters } = useSelector(
     (state: RootState) => state.search
   );
+  const repositoryIssues = useSelector(
+    (state: RootState) => state.repositories.issues
+  );
+  const githubIssues = useSelector(
+    (state: RootState) => state.githubIssues.issues
+  );
 
   // Local state for the form values
   const [keyword, setKeyword] = useState(currentFilter.keyword || "");
@@ -76,24 +82,20 @@ const SearchAndFilter: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedFilterName, setSavedFilterName] = useState("");
 
-  // Collect all available labels from the issues
-  const [availableLabels, setAvailableLabels] = useState<string[]>([]);
-  const [availableAuthors, setAvailableAuthors] = useState<string[]>([]);
+  // Derive available labels and authors from loaded issues in the store
+  const availableLabels = useMemo(() => {
+    const allIssues = [...repositoryIssues, ...githubIssues];
+    const labels = new Set<string>();
+    allIssues.forEach((issue) => issue.labels.forEach((l) => labels.add(l.name)));
+    return Array.from(labels).sort();
+  }, [repositoryIssues, githubIssues]);
 
-  // Load labels and authors
-  useEffect(() => {
-    // This would typically come from an API or be collected from the loaded issues
-    // For demo purposes, let's set some sample values
-    setAvailableLabels([
-      "bug",
-      "feature",
-      "documentation",
-      "enhancement",
-      "help wanted",
-      "good first issue",
-    ]);
-    setAvailableAuthors(["johndoe", "janedoe", "bobsmith", "alicejones"]);
-  }, []);
+  const availableAuthors = useMemo(() => {
+    const allIssues = [...repositoryIssues, ...githubIssues];
+    const authors = new Set<string>();
+    allIssues.forEach((issue) => authors.add(issue.user.login));
+    return Array.from(authors).sort();
+  }, [repositoryIssues, githubIssues]);
 
   // Handle search submission
   const handleSearch = (value: string) => {

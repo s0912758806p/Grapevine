@@ -70,15 +70,15 @@ const NewIssue: React.FC = () => {
   };
   const handleSubmit = async () => {
     try {
-      // 顯示成功訊息
+      // Show success message
       message.success(`Issue created successfully in ${repository}!`);
-      // 跳轉到Issue提交頁面，將表單數據傳遞過去
+      // Navigate to the submission confirmation page with form data
       navigate("/issue-submitted", {
         state: {
           issueData: {
             ...form.getFieldsValue(),
             repository,
-            number: Math.floor(Math.random() * 1000), // 模擬issue編號
+            number: Math.floor(Math.random() * 1000), // Simulated issue number
             created_at: new Date().toISOString(),
             status: "open",
             labels: form.getFieldValue("tag")

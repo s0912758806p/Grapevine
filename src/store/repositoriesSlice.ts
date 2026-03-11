@@ -4,8 +4,9 @@ import {
   fetchRepositoryIssues,
   fetchRepositoryIssue,
 } from "../api/repositoryApi";
+import { calcHasMorePages } from "../utils";
 
-// 定義 state 接口
+// State interface definition
 interface RepositoriesState {
   repositories: RepositorySource[];
   categories: CategoryType[];
@@ -22,7 +23,7 @@ interface RepositoriesState {
   activeCategory: string | null;
 }
 
-// 初始狀態
+// Initial state
 const initialState: RepositoriesState = {
   repositories: [
     {
@@ -78,7 +79,7 @@ const initialState: RepositoriesState = {
   activeCategory: "all",
 };
 
-// 根據選定的類別獲取問題的 Thunk
+// Thunk to fetch issues filtered by category
 export const fetchIssuesByCategory = createAsyncThunk(
   "repositories/fetchIssuesByCategory",
   async (
@@ -99,12 +100,12 @@ export const fetchIssuesByCategory = createAsyncThunk(
         (repo) => repo.isActive
       );
 
-      // 如果不是 "all"，則按類別過濾倉庫
+      // Filter repositories by category unless "all" is selected
       if (categoryId !== "all") {
         repos = repos.filter((repo) => repo.category === categoryId);
       }
 
-      // 如果沒有可用倉庫，返回空結果
+      // Return empty result if no repositories are available
       if (repos.length === 0) {
         return {
           issues: [],
@@ -116,13 +117,13 @@ export const fetchIssuesByCategory = createAsyncThunk(
         };
       }
 
-      // 獲取所有倉庫的問題
+      // Fetch issues from all matching repositories
       const promises = repos.map((repo) =>
         fetchRepositoryIssues(repo, page, perPage)
       );
       const results = await Promise.all(promises);
 
-      // 合併結果
+      // Merge results from all repositories
       let allIssues: IssueType[] = [];
       let totalCount = 0;
 
@@ -131,14 +132,14 @@ export const fetchIssuesByCategory = createAsyncThunk(
         totalCount += result.totalCount;
       });
 
-      // 按更新日期排序問題
+      // Sort issues by updated date
       allIssues.sort(
         (a, b) =>
           new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
 
-      // 分頁結果
-      const startIndex = 0; // 不需要額外的分頁邏輯，因為 API 已經返回了請求的頁面
+      // Paginate results
+      const startIndex = 0; // No extra pagination needed — the API already returns the requested page
       const endIndex = allIssues.length;
       const paginatedIssues = allIssues.slice(startIndex, endIndex);
 
@@ -158,7 +159,7 @@ export const fetchIssuesByCategory = createAsyncThunk(
   }
 );
 
-// 獲取特定倉庫中的單個問題
+// Thunk to fetch a single issue from a specific repository
 export const fetchRepositoryIssueThunk = createAsyncThunk(
   "repositories/fetchIssue",
   async (
@@ -173,28 +174,15 @@ export const fetchRepositoryIssueThunk = createAsyncThunk(
   ) => {
     try {
       const state = getState() as { repositories: RepositoriesState };
-      console.log("[Debug] fetchRepositoryIssueThunk - repoId:", repoId);
       const repository = state.repositories.repositories.find(
         (repo) => repo.id === repoId
       );
-      console.log(
-        "[Debug] fetchRepositoryIssueThunk - found repository:",
-        repository
-      );
 
       if (!repository) {
-        console.error(
-          `[Debug] Repository ${repoId} not found in state.repositories.repositories. Current repositories:`,
-          state.repositories.repositories
-        );
         throw new Error(`Repository ${repoId} not found`);
       }
 
       const issue = await fetchRepositoryIssue(repository, issueNumber);
-      console.log(
-        "[Debug] fetchRepositoryIssueThunk - API response (issue):",
-        issue
-      );
       return issue;
     } catch (error: unknown) {
       return rejectWithValue(
@@ -204,14 +192,14 @@ export const fetchRepositoryIssueThunk = createAsyncThunk(
   }
 );
 
-// 創建存儲分片
+// Create the store slice
 export const repositoriesSlice = createSlice({
   name: "repositories",
   initialState,
   reducers: {
-    // 添加新倉庫
+    // Add a new repository
     addRepository: (state, action: PayloadAction<RepositorySource>) => {
-      // 檢查是否已存在相同ID的倉庫
+      // Check if a repository with the same ID already exists
       const exists = state.repositories.some(
         (repo) => repo.id === action.payload.id
       );
@@ -220,7 +208,7 @@ export const repositoriesSlice = createSlice({
       }
     },
 
-    // 編輯現有倉庫
+    // Update an existing repository
     updateRepository: (state, action: PayloadAction<RepositorySource>) => {
       const index = state.repositories.findIndex(
         (repo) => repo.id === action.payload.id
@@ -230,14 +218,14 @@ export const repositoriesSlice = createSlice({
       }
     },
 
-    // 移除倉庫
+    // Remove a repository
     removeRepository: (state, action: PayloadAction<string>) => {
       state.repositories = state.repositories.filter(
         (repo) => repo.id !== action.payload
       );
     },
 
-    // 切換倉庫活動狀態
+    // Toggle repository active state
     toggleRepositoryActive: (state, action: PayloadAction<string>) => {
       const repository = state.repositories.find(
         (repo) => repo.id === action.payload
@@ -247,7 +235,7 @@ export const repositoriesSlice = createSlice({
       }
     },
 
-    // 添加新分類
+    // Add a new category
     addCategory: (state, action: PayloadAction<CategoryType>) => {
       const exists = state.categories.some(
         (cat) => cat.id === action.payload.id
@@ -257,7 +245,7 @@ export const repositoriesSlice = createSlice({
       }
     },
 
-    // 更新分類
+    // Update a category
     updateCategory: (state, action: PayloadAction<CategoryType>) => {
       const index = state.categories.findIndex(
         (cat) => cat.id === action.payload.id
@@ -267,16 +255,16 @@ export const repositoriesSlice = createSlice({
       }
     },
 
-    // 移除分類
+    // Remove a category
     removeCategory: (state, action: PayloadAction<string>) => {
-      // 無法移除預設分類 (all)
+      // Cannot remove the default "all" category
       if (action.payload === "all") return;
 
       state.categories = state.categories.filter(
         (cat) => cat.id !== action.payload
       );
 
-      // 將使用此分類的倉庫重置為無分類
+      // Reset repositories using this category to uncategorized
       state.repositories.forEach((repo) => {
         if (repo.category === action.payload) {
           repo.category = undefined;
@@ -284,30 +272,30 @@ export const repositoriesSlice = createSlice({
       });
     },
 
-    // 設置活動分類
+    // Set the active category
     setActiveCategory: (state, action: PayloadAction<string>) => {
       state.activeCategory = action.payload;
-      // 重置分頁
+      // Reset pagination
       state.pagination.currentPage = 1;
       state.issues = [];
     },
 
-    // 清除當前問題
+    // Clear the current issue
     clearCurrentIssue: (state) => {
       state.currentIssue = null;
     },
 
-    // 設置頁碼
+    // Set the current page number
     setPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
 
-    // 設置每頁數量
+    // Set items per page
     setPerPage: (state, action: PayloadAction<number>) => {
       state.pagination.perPage = action.payload;
     },
 
-    // 清除問題
+    // Clear all issues
     clearIssues: (state) => {
       state.issues = [];
       state.pagination.currentPage = 1;
@@ -316,7 +304,7 @@ export const repositoriesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // 處理按類別獲取問題
+      // Handle fetch issues by category
       .addCase(fetchIssuesByCategory.pending, (state) => {
         state.status = "loading";
       })
@@ -324,7 +312,7 @@ export const repositoriesSlice = createSlice({
         state.status = "succeeded";
         const { currentPage, totalCount } = action.payload.pagination;
 
-        // 如果是第一頁，替換所有數據，否則追加到現有數據
+        // If page 1, replace all data; otherwise append to existing data
         if (currentPage === 1) {
           state.issues = action.payload.issues;
         } else {
@@ -332,10 +320,12 @@ export const repositoriesSlice = createSlice({
         }
 
         state.pagination = action.payload.pagination;
-
-        // 計算是否還有更多頁面：總數是否大於目前已載入的數量
-        const loadedIssuesCount = state.issues.length;
-        state.hasMorePages = totalCount > loadedIssuesCount;
+        state.hasMorePages = calcHasMorePages(
+          action.payload.issues.length,
+          action.payload.pagination.perPage,
+          totalCount,
+          state.issues.length
+        );
 
         state.error = null;
       })
@@ -344,7 +334,7 @@ export const repositoriesSlice = createSlice({
         state.error = (action.payload as string) || "Failed to fetch issues";
       })
 
-      // 處理獲取單個問題
+      // Handle fetch single issue
       .addCase(fetchRepositoryIssueThunk.pending, (state) => {
         state.status = "loading";
       })
@@ -360,7 +350,7 @@ export const repositoriesSlice = createSlice({
   },
 });
 
-// 導出 actions
+// Export actions
 export const {
   addRepository,
   updateRepository,

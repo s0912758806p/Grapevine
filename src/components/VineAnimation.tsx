@@ -9,48 +9,35 @@ const VineAnimation: React.FC<VineAnimationProps> = ({ className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    // Initialize the vine animation
     const svg = svgRef.current;
     if (!svg) return;
 
-    // Reset animation effect
-    const resetAnimation = () => {
-      const paths = Array.from(svg.querySelectorAll("path"));
-      paths.forEach((path) => {
-        const length = path.getTotalLength();
+    // Pre-calculate path lengths once to avoid repeated getTotalLength() calls
+    const paths = Array.from(svg.querySelectorAll<SVGPathElement>("path"));
+    const pathLengths = paths.map((path) => path.getTotalLength());
 
-        // Initialize paths
+    const runAnimation = (duration: string) => {
+      paths.forEach((path, i) => {
+        const length = pathLengths[i];
+        path.style.transition = "none";
         path.style.strokeDasharray = `${length}`;
         path.style.strokeDashoffset = `${length}`;
+      });
 
-        // Trigger reflow
-        path.getBoundingClientRect();
-
-        // Start animation
-        path.style.transition = "stroke-dashoffset 2s ease-in-out";
-        path.style.strokeDashoffset = "0";
+      // Use rAF to flush the style reset before starting the transition
+      requestAnimationFrame(() => {
+        paths.forEach((path) => {
+          path.style.transition = `stroke-dashoffset ${duration} ease-in-out`;
+          path.style.strokeDashoffset = "0";
+        });
       });
     };
 
-    // Initial animation run
-    resetAnimation();
+    // Initial animation
+    runAnimation("2s");
 
-    // Set up periodic animation
-    const intervalId = setInterval(() => {
-      const paths = Array.from(svg.querySelectorAll("path"));
-      paths.forEach((path) => {
-        const length = path.getTotalLength();
-        path.style.transition = "none";
-        path.style.strokeDashoffset = `${length}`;
-
-        // Trigger reflow
-        path.getBoundingClientRect();
-
-        // Restart animation
-        path.style.transition = "stroke-dashoffset 3s ease-in-out";
-        path.style.strokeDashoffset = "0";
-      });
-    }, 10000); // Repeat every 10 seconds
+    // Periodic replay every 10 seconds
+    const intervalId = setInterval(() => runAnimation("3s"), 10000);
 
     return () => clearInterval(intervalId);
   }, []);
