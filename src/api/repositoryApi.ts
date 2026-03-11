@@ -7,15 +7,38 @@ import {
   checkIssueActivity,
 } from "../utils";
 
-// 初始化Octokit，不需要token來獲取公開倉庫的issues
+// Initialize Octokit — no token required for public repository issues
 const octokit = new Octokit();
 
-// 獲取指定倉庫的issues
+// ── In-memory cache (TTL: 5 minutes) ─────────────────────────────────
+const CACHE_TTL = 5 * 60 * 1000;
+const apiCache = new Map<string, { data: unknown; timestamp: number }>();
+
+const getCached = <T>(key: string): T | null => {
+  const entry = apiCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    apiCache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+};
+
+const setCache = (key: string, data: unknown): void => {
+  apiCache.set(key, { data, timestamp: Date.now() });
+};
+// ─────────────────────────────────────────────────────────────────────
+
+// Fetch issues for a given repository
 export const fetchRepositoryIssues = async (
   repoSource: RepositorySource,
   page = 1,
   perPage = 10
 ) => {
+  const cacheKey = `repo-issues-${repoSource.owner}/${repoSource.repo}-${page}-${perPage}`;
+  const cached = getCached<{ issues: ReturnType<typeof formatGitHubIssue>[]; totalCount: number }>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
       owner: repoSource.owner,
@@ -28,7 +51,7 @@ export const fetchRepositoryIssues = async (
       },
     });
 
-    // 獲取總計數
+    // Get total count
     const totalCount = extractTotalCount(
       response.headers,
       perPage,
@@ -59,10 +82,9 @@ export const fetchRepositoryIssues = async (
       updatedIssuesCount
     );
 
-    return {
-      issues,
-      totalCount,
-    };
+    const result = { issues, totalCount };
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
     console.error(
       `Error fetching issues for ${repoSource.owner}/${repoSource.repo}:`,
@@ -72,7 +94,7 @@ export const fetchRepositoryIssues = async (
   }
 };
 
-// 獲取單個issue的詳細資訊
+// Fetch details for a single issue
 export const fetchRepositoryIssue = async (
   repoSource: RepositorySource,
   issueNumber: number
@@ -105,8 +127,12 @@ export const fetchRepositoryIssue = async (
   }
 };
 
-// 獲取f2etw/jobs倉庫的issues
+// Fetch issues from the f2etw/jobs repository
 export const fetchF2EIssues = async (page = 1, perPage = 10) => {
+  const cacheKey = `f2e-issues-${page}-${perPage}`;
+  const cached = getCached<unknown[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
       owner: "f2etw",
@@ -119,6 +145,7 @@ export const fetchF2EIssues = async (page = 1, perPage = 10) => {
       },
     });
 
+    setCache(cacheKey, response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching F2E issues:", error);
@@ -126,7 +153,7 @@ export const fetchF2EIssues = async (page = 1, perPage = 10) => {
   }
 };
 
-// 獲取單個issue的詳細資訊
+// Fetch details for a single F2E issue
 export const fetchF2EIssue = async (issueNumber: number) => {
   try {
     const response = await octokit.request(
@@ -148,26 +175,30 @@ export const fetchF2EIssue = async (issueNumber: number) => {
   }
 };
 
-// 檢查當前用戶是否是指定的作者
+// Check if the current user is a designated author
 export const isAuthor = (currentUser: string | null): boolean => {
-  // 這裡可以根據實際情況設定誰是作者
-  const authorUsernames = ["admin", "moderator"]; // 可以根據需求替換成真實的用戶名
+  // Replace with real usernames as needed
+  const authorUsernames = ["admin", "moderator"]; // Replace with actual usernames as needed
   return !!currentUser && authorUsernames.includes(currentUser);
 };
 
 export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
+  const cacheKey = `grapevine-issues-${page}-${perPage}`;
+  const cached = getCached<{ issues: Record<string, unknown>[]; totalCount: number }>(cacheKey);
+  if (cached) return cached;
+
   try {
-    // 從當前環境變量中獲取默認倉庫
+    // Get default repository from environment variables
     const defaultOwner = import.meta.env.VITE_GITHUB_REPO_OWNER;
     const defaultRepo = import.meta.env.VITE_GITHUB_REPO_NAME;
 
-    // 定義要獲取issues的倉庫列表
+    // Define the list of repositories to fetch issues from
     const repositories = [
       { owner: defaultOwner, repo: defaultRepo },
       { owner: "f2etw", repo: "jobs" },
     ];
 
-    // 從所有倉庫獲取issues
+    // Fetch issues from all repositories
     const issuesPromises = repositories.map(async (repo) => {
       try {
         const response = await octokit.request(
@@ -175,7 +206,7 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
           {
             owner: repo.owner,
             repo: repo.repo,
-            state: "all", // 獲取所有狀態的issues，包括open和closed
+            state: "all", // Fetch all issues including open and closed
             per_page: perPage,
             page: page,
             headers: {
@@ -184,15 +215,15 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
           }
         );
 
-        // 添加repository信息
+        // Attach repository metadata to each issue
         const repoIssues = response.data.map(
           (issue: Record<string, unknown>) => {
-            // 如果没有repository_url，則添加
+            // Add repository_url if missing
             if (!issue.repository_url) {
               issue.repository_url = `https://api.github.com/repos/${repo.owner}/${repo.repo}`;
             }
 
-            // 添加repository屬性
+            // Add repository property
             issue.repository = `${repo.owner}/${repo.repo}`;
 
             return issue;
@@ -205,7 +236,7 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
           name: `${repo.owner}/${repo.repo}`,
         };
       } catch (error) {
-        console.error(`獲取 ${repo.owner}/${repo.repo} 的issues失敗:`, error);
+        console.error(`Failed to fetch issues for ${repo.owner}/${repo.repo}:`, error);
         return {
           issues: [],
           totalCount: 0,
@@ -214,10 +245,10 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
       }
     });
 
-    // 等待所有請求完成
+    // Wait for all requests to complete
     const results = await Promise.all(issuesPromises);
 
-    // 合併所有issues
+    // Merge all issues
     let allIssues: Record<string, unknown>[] = [];
     let totalCount = 0;
 
@@ -226,12 +257,11 @@ export const fetchGrapevineIssues = async (page = 1, perPage = 10) => {
       totalCount += result.totalCount;
     });
 
-    return {
-      issues: allIssues,
-      totalCount,
-    };
+    const result = { issues: allIssues, totalCount };
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
-    console.error("獲取issues時發生錯誤:", error);
+    console.error("Error fetching issues:", error);
     throw error;
   }
 };
@@ -280,11 +310,15 @@ export const fetchGithubIssues = async (
   page = 1,
   perPage = 10
 ) => {
+  const cacheKey = `github-issues-${owner}/${repo}-${page}-${perPage}`;
+  const cached = getCached<unknown[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await octokit.request("GET /repos/{owner}/{repo}/issues", {
       owner: owner,
       repo: repo,
-      state: "all", // 獲取所有狀態的issues，包括open和closed
+      state: "all", // Fetch all issues including open and closed
       per_page: perPage,
       page: page,
       headers: {
@@ -292,6 +326,7 @@ export const fetchGithubIssues = async (
       },
     });
 
+    setCache(cacheKey, response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching GitHub issues:", error);

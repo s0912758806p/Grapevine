@@ -7,7 +7,7 @@ interface UserState {
 }
 
 const initialState: UserState = {
-  currentUser: "visitor", // 默認為訪客用戶
+  currentUser: "visitor", // Default to guest user
   isAuthor: false,
 };
 
@@ -19,7 +19,7 @@ export const userSlice = createSlice({
       state.currentUser = action.payload;
       state.isAuthor = isAuthor(action.payload);
     },
-    // 模擬用戶登入 - 在實際應用中，這將通過真實的身份驗證系統實現
+    // Simulated login — in production this will go through a real auth system
     loginAsAdmin: (state) => {
       state.currentUser = "admin";
       state.isAuthor = true;

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { calcHasMorePages } from "../utils";
 
 interface RawRuanyfWeeklyIssuePayload {
   id: string | number;
@@ -222,7 +223,7 @@ export const ruanyfWeeklySlice = createSlice({
         } else {
           state.issues = [...state.issues, ...data];
         }
-        state.hasMorePages = data.length === perPage;
+        state.hasMorePages = calcHasMorePages(data.length, perPage);
         state.currentPage = page;
       })
       .addCase(fetchRuanyfWeeklyIssuesThunk.rejected, (state, action) => {

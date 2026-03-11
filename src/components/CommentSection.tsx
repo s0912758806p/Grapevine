@@ -142,7 +142,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   }, []);
   const handleSubmit = async (values: { body: string; userName?: string }) => {
     if (!values.body.trim()) {
-      message.warning("評論內容不能為空");
+      message.warning("Comment cannot be empty");
       return;
     }
     try {
@@ -156,9 +156,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       ).unwrap();
       form.resetFields(["body"]);
       setCharacterCount(0);
-      message.success("評論發布成功");
+      message.success("Comment posted successfully");
     } catch {
-      message.error("發布評論失敗，請稍後再試");
+      message.error("Failed to post comment, please try again");
     } finally {
       setSubmitting(false);
     }
@@ -174,7 +174,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         title={
           <div style={{ display: "flex", alignItems: "center" }}>
             <CommentOutlined style={{ marginRight: 8 }} />
-            <span>評論 ({comments.length})</span>
+            <span>Comments ({comments.length})</span>
           </div>
         }
         bordered={false}

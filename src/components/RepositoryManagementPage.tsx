@@ -48,7 +48,7 @@ const RepositoryManagementPage: React.FC = () => {
     (state: RootState) => state.repositories
   );
 
-  // 狀態管理
+  // State management
   const [isRepoModalVisible, setIsRepoModalVisible] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [editingRepo, setEditingRepo] = useState<RepositorySource | null>(null);
@@ -58,7 +58,7 @@ const RepositoryManagementPage: React.FC = () => {
   const [repoForm] = Form.useForm();
   const [categoryForm] = Form.useForm();
 
-  // 重置表單
+  // Reset forms
   const resetRepoForm = () => {
     repoForm.resetFields();
     setEditingRepo(null);
@@ -69,7 +69,7 @@ const RepositoryManagementPage: React.FC = () => {
     setEditingCategory(null);
   };
 
-  // 打開添加/編輯倉庫模態框
+  // Open add/edit repository modal
   const showRepoModal = (repo?: RepositorySource) => {
     if (repo) {
       setEditingRepo(repo);
@@ -80,7 +80,7 @@ const RepositoryManagementPage: React.FC = () => {
     setIsRepoModalVisible(true);
   };
 
-  // 打開添加/編輯分類模態框
+  // Open add/edit category modal
   const showCategoryModal = (category?: CategoryType) => {
     if (category) {
       setEditingCategory(category);
@@ -91,20 +91,20 @@ const RepositoryManagementPage: React.FC = () => {
     setIsCategoryModalVisible(true);
   };
 
-  // 處理倉庫表單提交
+  // Handle repository form submission
   const handleRepoSubmit = (values: RepositorySource) => {
-    // 確保 isActive 欄位存在
+    // Ensure isActive field is present
     const repoData = {
       ...values,
       isActive: values.isActive === undefined ? true : values.isActive,
     };
 
     if (editingRepo) {
-      // 編輯現有倉庫
+      // Update existing repository
       dispatch(updateRepository(repoData));
       message.success("Repository updated");
     } else {
-      // 添加新倉庫
+      // Add new repository
       dispatch(addRepository(repoData));
       message.success("Repository added");
     }
@@ -112,14 +112,14 @@ const RepositoryManagementPage: React.FC = () => {
     resetRepoForm();
   };
 
-  // 處理分類表單提交
+  // Handle category form submission
   const handleCategorySubmit = (values: CategoryType) => {
     if (editingCategory) {
-      // 編輯現有分類
+      // Update existing category
       dispatch(updateCategory(values));
       message.success("Category updated");
     } else {
-      // 添加新分類
+      // Add new category
       dispatch(addCategory(values));
       message.success("Category added");
     }
@@ -127,7 +127,7 @@ const RepositoryManagementPage: React.FC = () => {
     resetCategoryForm();
   };
 
-  // 確認刪除倉庫
+  // Confirm repository deletion
   const confirmDeleteRepo = (id: string) => {
     Modal.confirm({
       title: "Confirm delete",
@@ -142,7 +142,7 @@ const RepositoryManagementPage: React.FC = () => {
     });
   };
 
-  // 確認刪除分類
+  // Confirm category deletion
   const confirmDeleteCategory = (id: string) => {
     if (id === "all") {
       message.error("Cannot delete the 'all' category");
@@ -162,7 +162,7 @@ const RepositoryManagementPage: React.FC = () => {
     });
   };
 
-  // 倉庫表格列定義
+  // Repository table column definitions
   const repoColumns = [
     {
       title: "Name",
@@ -225,7 +225,7 @@ const RepositoryManagementPage: React.FC = () => {
     },
   ];
 
-  // 分類表格列定義
+  // Category table column definitions
   const categoryColumns = [
     {
       title: "Name",
@@ -317,7 +317,7 @@ const RepositoryManagementPage: React.FC = () => {
         <Table columns={categoryColumns} dataSource={categories} rowKey="id" />
       </Card>
 
-      {/* 添加/編輯倉庫模態框 */}
+      {/* Add/Edit repository modal */}
       <Modal
         title={editingRepo ? "Edit repository" : "Add new repository"}
         open={isRepoModalVisible}
@@ -420,7 +420,7 @@ const RepositoryManagementPage: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* 添加/編輯分類模態框 */}
+      {/* Add/Edit category modal */}
       <Modal
         title={editingCategory ? "Edit category" : "Add new category"}
         open={isCategoryModalVisible}

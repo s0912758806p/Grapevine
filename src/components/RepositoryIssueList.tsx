@@ -10,12 +10,12 @@ import { fetchIssuesByCategory, setPage } from "../store/repositoriesSlice";
 import { IssueType, RepositorySource } from "../types";
 import SearchAndFilter from "./SearchAndFilter";
 
-// 設置 dayjs 的相對時間插件
+// Set up dayjs relative time plugin
 dayjs.extend(relativeTime);
 
 const { Text } = Typography;
 
-// 加載圖標
+// Loading icon
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 const RepositoryIssueList: React.FC = () => {
@@ -31,12 +31,12 @@ const RepositoryIssueList: React.FC = () => {
   
   const { currentFilter } = useSelector((state: RootState) => state.search);
 
-  // 追蹤每個來源的顏色
+  // Track color per source
   const [repoColors, setRepoColors] = useState<Record<string, string>>({});
 
-  // 在組件掛載時為每個來源生成隨機顏色
+  // Generate a color for each source on mount
   useEffect(() => {
-    // 預定義的顏色
+    // Predefined colors
     const colors = [
       "#f50", "#108ee9", "#87d068", "#2db7f5", "#673ab7",
       "#ff5722", "#4caf50", "#9c27b0", "#607d8b", "#ff9800"
@@ -44,14 +44,14 @@ const RepositoryIssueList: React.FC = () => {
     
     const newColors: Record<string, string> = {};
     repositories.forEach((repo, index) => {
-      // 為每個倉庫循環使用顏色
+      // Cycle through colors for each repository
       newColors[repo.id] = colors[index % colors.length];
     });
     
     setRepoColors(newColors);
   }, [repositories]);
 
-  // 獲取更多問題
+  // Load more issues
   const loadMore = useCallback(() => {
     if (activeCategory && !status.includes("loading")) {
       const nextPage = pagination.currentPage + 1;
@@ -64,12 +64,12 @@ const RepositoryIssueList: React.FC = () => {
     }
   }, [activeCategory, status, pagination.currentPage, pagination.perPage, dispatch]);
 
-  // 獲取倉庫資料
+  // Get repository by ID
   const getRepositoryById = (repoId: string): RepositorySource | undefined => {
     return repositories.find(repo => repo.id === repoId);
   };
 
-  // 渲染倉庫標籤
+  // Render source tag
   const renderSourceTag = (issue: IssueType) => {
     if (!issue.source) return null;
     
@@ -83,15 +83,15 @@ const RepositoryIssueList: React.FC = () => {
     );
   };
 
-  // 篩選並排序 issues
+  // Filter and sort issues
   const filteredIssues = useMemo(() => {
-    // 如果沒有過濾條件，返回原始問題列表
+    // Return original list if no filters applied
     if (!currentFilter || Object.keys(currentFilter).length === 0) {
       return issues;
     }
 
     return issues.filter(issue => {
-      // 關鍵字過濾
+      // Keyword filter
       if (currentFilter.keyword && currentFilter.keyword.trim() !== '') {
         const keyword = currentFilter.keyword.toLowerCase();
         const title = issue.title.toLowerCase();
@@ -105,7 +105,7 @@ const RepositoryIssueList: React.FC = () => {
         }
       }
       
-      // 倉庫過濾
+      // Repository filter
       if (currentFilter.repositories && 
           currentFilter.repositories.length > 0 && 
           issue.source && 
@@ -113,7 +113,7 @@ const RepositoryIssueList: React.FC = () => {
         return false;
       }
       
-      // 標籤過濾
+      // Label filter
       if (currentFilter.labels && currentFilter.labels.length > 0) {
         const issueLabels = issue.labels.map(l => l.name.toLowerCase());
         const filterLabels = currentFilter.labels.map(l => l.toLowerCase());
@@ -123,14 +123,14 @@ const RepositoryIssueList: React.FC = () => {
         }
       }
       
-      // 作者過濾
+      // Author filter
       if (currentFilter.authors && 
           currentFilter.authors.length > 0 && 
           !currentFilter.authors.includes(issue.user.login)) {
         return false;
       }
       
-      // 日期過濾
+      // Date range filter
       if (currentFilter.dateRange && (currentFilter.dateRange[0] || currentFilter.dateRange[1])) {
         const issueDate = currentFilter.sortBy === 'created' 
           ? new Date(issue.created_at) 
@@ -153,7 +153,7 @@ const RepositoryIssueList: React.FC = () => {
       
       return true;
     }).sort((a, b) => {
-      // 排序
+      // Sort
       const sortField = currentFilter.sortBy === 'created' ? 'created_at' : 'updated_at';
       const dateA = new Date(a[sortField]).getTime();
       const dateB = new Date(b[sortField]).getTime();
@@ -162,7 +162,7 @@ const RepositoryIssueList: React.FC = () => {
     });
   }, [issues, currentFilter]);
 
-  // 自動加載更多過濾後的結果，如果過濾後結果太少
+  // Auto-load more if filtered results are too few
   useEffect(() => {
     const hasFilters = currentFilter && Object.keys(currentFilter).length > 0;
     const hasLimitedFilteredResults = filteredIssues.length < 5 && filteredIssues.length > 0;
@@ -172,10 +172,10 @@ const RepositoryIssueList: React.FC = () => {
     }
   }, [filteredIssues, currentFilter, hasMorePages, status, loadMore, activeCategory, pagination.perPage]);
 
-  // 渲染議題列表
+  // Render issue list
   return (
     <div>
-      {/* 搜索和過濾組件 */}
+      {/* Search and filter component */}
       <div style={{ marginBottom: 16 }}>
         <SearchAndFilter />
       </div>

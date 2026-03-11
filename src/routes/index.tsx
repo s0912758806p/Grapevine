@@ -1,19 +1,29 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "../App";
-import IssueDetail from "../components/IssueDetail";
-import HomePage from "../components/HomePage";
-import NewIssue from "../components/NewIssue";
-import CommentsExample from "../pages/CommentsExample";
-import F2EIssueDetail from "../components/F2EIssueDetail";
-import RepositoryIssueDetail from "../components/RepositoryIssueDetail";
-import RuanyfWeeklyDetail from "../components/RuanyfWeeklyDetail";
-import RepositoryManagementPage from "../components/RepositoryManagementPage";
-import LocationPage from "../pages/LocationPage";
-import AnalyticsDashboard from "../pages/AnalyticsDashboard";
+// LandingPage is statically imported — it's the first page users see
 import LandingPage from "../pages/LandingPage";
-import IssueSubmissionPage from "../pages/IssueSubmissionPage";
-import CommunityPage from "../pages/CommunityPage";
-import EssayPage from "../pages/EssayPage";
+
+// All other pages are lazy-loaded to reduce the initial bundle size
+const HomePage = lazy(() => import("../components/HomePage"));
+const IssueDetail = lazy(() => import("../components/IssueDetail"));
+const NewIssue = lazy(() => import("../components/NewIssue"));
+const CommentsExample = lazy(() => import("../pages/CommentsExample"));
+const F2EIssueDetail = lazy(() => import("../components/F2EIssueDetail"));
+const RepositoryIssueDetail = lazy(
+  () => import("../components/RepositoryIssueDetail")
+);
+const RuanyfWeeklyDetail = lazy(
+  () => import("../components/RuanyfWeeklyDetail")
+);
+const RepositoryManagementPage = lazy(
+  () => import("../components/RepositoryManagementPage")
+);
+const LocationPage = lazy(() => import("../pages/LocationPage"));
+const AnalyticsDashboard = lazy(() => import("../pages/AnalyticsDashboard"));
+const IssueSubmissionPage = lazy(() => import("../pages/IssueSubmissionPage"));
+const CommunityPage = lazy(() => import("../pages/CommunityPage"));
+const EssayPage = lazy(() => import("../pages/EssayPage"));
 
 // Create router with all future flags enabled
 const router = createBrowserRouter(

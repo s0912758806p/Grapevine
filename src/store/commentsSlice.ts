@@ -13,7 +13,7 @@ const initialState: CommentsState = {
   error: null,
 };
 
-// 直接返回空評論數組
+// Returns empty comments array (no backend support yet)
 export const fetchCommentsThunk = createAsyncThunk(
   "comments/fetchComments",
   async (issueNumber: number) => {
@@ -24,7 +24,7 @@ export const fetchCommentsThunk = createAsyncThunk(
   }
 );
 
-// 直接創建新評論
+// Creates a new comment locally (no backend support yet)
 export const addCommentThunk = createAsyncThunk(
   "comments/addComment",
   async ({

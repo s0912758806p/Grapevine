@@ -16,6 +16,7 @@ import UtterancesComments from "./UtterancesComments";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import "../styles/markdown.scss";
 import { recordView } from "../services/analyticsService";
 import { IssueType } from "../types";
@@ -176,7 +177,7 @@ const RuanyfWeeklyDetail: React.FC = () => {
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
             >
               {currentIssue.body || currentIssue.content || ""}
             </ReactMarkdown>

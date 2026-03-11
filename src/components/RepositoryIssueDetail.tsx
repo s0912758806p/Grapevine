@@ -23,6 +23,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import dayjs from "dayjs";
 import { RootState, AppDispatch } from "../store";
 import { fetchRepositoryIssueThunk } from "../store/repositoriesSlice";
@@ -33,7 +34,7 @@ const { Title, Text } = Typography;
 
 // Create a simple Markdown renderer without syntax highlighting
 const SimpleMarkdownContent: React.FC<{ content: string }> = ({ content }) => (
-  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
     {content}
   </ReactMarkdown>
 );
@@ -49,7 +50,7 @@ const RepositoryIssueDetail: React.FC = () => {
     (state: RootState) => state.repositories
   );
 
-  // 查找相應的倉庫數據
+  // Find the matching repository data
   const repository = repositories.find((repo) => repo.id === repoId);
 
   useEffect(() => {
@@ -107,22 +108,22 @@ const RepositoryIssueDetail: React.FC = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-            {/* 返回按鈕 */}
+            {/* Back button */}
             <Link to="/">
               <Button icon={<ArrowLeftOutlined />}>Back to list</Button>
             </Link>
 
-            {/* 來源標籤 */}
+            {/* Source tag */}
             {repository && (
               <Tag color="#108ee9" style={{ marginBottom: 8 }}>
                 {repository.name}
               </Tag>
             )}
 
-            {/* 標題 */}
+            {/* Title */}
             <Title level={2}>{currentIssue.title}</Title>
 
-            {/* 作者資訊和時間 */}
+            {/* Author info and timestamp */}
             <Space split={<Divider type="vertical" />}>
               <Space>
                 <Avatar src={currentIssue.user.avatar_url} />
@@ -149,7 +150,7 @@ const RepositoryIssueDetail: React.FC = () => {
               )}
             </Space>
 
-            {/* 標籤 */}
+            {/* Labels */}
             <div>
               {currentIssue.labels.map((label) => (
                 <Tag
@@ -164,7 +165,7 @@ const RepositoryIssueDetail: React.FC = () => {
 
             <Divider />
 
-            {/* 內容 */}
+            {/* Content */}
             <Card variant="borderless" style={{ width: "100%" }}>
               <div className="markdown-body">
                 <SimpleMarkdownContent content={currentIssue.body || ""} />
@@ -173,7 +174,7 @@ const RepositoryIssueDetail: React.FC = () => {
 
             <Divider orientation="left">Comments</Divider>
 
-            {/* 評論區 */}
+            {/* Comment section */}
             {repository && (
               <UtterancesComments
                 repo={`${repository.owner}/${repository.repo}`}

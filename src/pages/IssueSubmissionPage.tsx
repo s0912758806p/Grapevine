@@ -22,7 +22,7 @@ import VineAnimation from "../components/VineAnimation";
 const { Title, Paragraph } = Typography;
 
 const IssueSubmissionPage: React.FC = () => {
-  // 從location獲取issue數據，如果沒有則使用示例數據
+  // Get issue data from router location state, fall back to example data
   const location = useLocation();
   const issueData = location.state?.issueData || {
     title: "Example Issue Title",

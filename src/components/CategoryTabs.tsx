@@ -13,17 +13,17 @@ const CategoryTabs: React.FC = () => {
     (state: RootState) => state.repositories
   );
 
-  // 根據類別計算內容數量
+  // Calculate content count by category
   const getCountByCategory = (categoryId: string): number => {
     if (categoryId === "all") {
-      // 對於 "all" 類別，計算所有活動倉庫的議題數量
+      // For "all" category, count all active repositories
       return repositories.filter(repo => repo.isActive).length;
     }
-    // 對於其他類別，計算屬於該類別的活動倉庫數量
+    // For other categories, count active repositories in that category
     return repositories.filter(repo => repo.isActive && repo.category === categoryId).length;
   };
 
-  // 在首次渲染時獲取默認類別的問題
+  // Fetch issues for the default category on first render
   useEffect(() => {
     if (activeCategory) {
       dispatch(fetchIssuesByCategory({ 
@@ -34,17 +34,17 @@ const CategoryTabs: React.FC = () => {
     }
   }, [dispatch, activeCategory]);
 
-  // 處理標籤變更
+  // Handle tab change
   const handleTabChange = (key: string) => {
     dispatch(setActiveCategory(key));
   };
 
-  // 按順序對類別進行排序
+  // Sort categories by order
   const sortedCategories = [...categories].sort((a, b) => 
     (a.order || 0) - (b.order || 0)
   );
 
-  // 標籤項
+  // Tab items
   const tabItems: TabsProps["items"] = sortedCategories.map(category => ({
     key: category.id,
     label: (
