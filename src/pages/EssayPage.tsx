@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Tabs, Space, Tag, Badge } from "antd";
-import { BookOutlined, CodeOutlined, UserOutlined } from "@ant-design/icons";
+import { BookOutlined, UserOutlined } from "@ant-design/icons";
 import ModularIssueList from "../components/ModularIssueList";
 import VineAnimation from "../components/VineAnimation";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -10,15 +10,6 @@ const { Title, Paragraph } = Typography;
 
 // Define tab items for the Essays section
 const tabItems = [
-  {
-    key: "f2e-jobs",
-    label: (
-      <span>
-        <CodeOutlined /> F2E Jobs
-      </span>
-    ),
-    children: <ModularIssueList type="f2e-jobs" />,
-  },
   {
     key: "ruanyf-weekly",
     label: (
@@ -43,15 +34,15 @@ const EssayPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabFromUrl = searchParams.get("tab");
-  const validTabs = ["f2e-jobs", "ruanyf-weekly", "author-issues"];
+  const validTabs = ["ruanyf-weekly", "author-issues"];
   const [activeTab, setActiveTab] = useState(
-    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "f2e-jobs"
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "ruanyf-weekly"
   );
 
   // Update URL when tab changes
   const handleTabChange = (key: string) => {
     setActiveTab(key);
-    if (key === "f2e-jobs") {
+    if (key === "ruanyf-weekly") {
       navigate("/essays");
     } else {
       navigate(`/essays?tab=${key}`);
@@ -62,8 +53,6 @@ const EssayPage: React.FC = () => {
   useEffect(() => {
     if (tabFromUrl === "author-issues") {
       setActiveTab("author-issues");
-    } else if (tabFromUrl === "f2e-jobs") {
-      setActiveTab("f2e-jobs");
     } else if (tabFromUrl === "ruanyf-weekly") {
       setActiveTab("ruanyf-weekly");
     }
@@ -78,9 +67,10 @@ const EssayPage: React.FC = () => {
           <BookOutlined /> Essays
         </Title>
         <Paragraph className="essay-description">
-          Explore articles and job postings from our community. Browse F2E Jobs
-          for frontend opportunities or Author Issues for technical insights and
-          discussions.
+          Explore articles and writings from our community. Browse Ruanyf Weekly
+          for curated tech links, or Author Issues for technical insights and
+          discussions. Looking for jobs? Check out the{" "}
+          <a href="/jobs" style={{ color: "#5e2a69" }}>Jobs page</a>.
         </Paragraph>
 
         <Space wrap className="essay-category-tags">

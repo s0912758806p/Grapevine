@@ -113,7 +113,7 @@ body {
         transform: translateX(-50%);
         width: 20px;
         height: 3px;
-        background: linear-gradient(to right, $grape-purple, $vine-green);
+        background: $grape-purple;
         border-radius: 3px 3px 0 0;
       }
     }
@@ -138,6 +138,13 @@ body {
   .ant-divider {
     margin: 0 12px;
     height: 14px;
+  }
+}
+
+/* Bottom nav clearance on mobile */
+@media (max-width: 768px) {
+  .ant-layout-content {
+    padding-bottom: 64px;
   }
 }
 

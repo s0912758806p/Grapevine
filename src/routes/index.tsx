@@ -24,6 +24,10 @@ const AnalyticsDashboard = lazy(() => import("../pages/AnalyticsDashboard"));
 const IssueSubmissionPage = lazy(() => import("../pages/IssueSubmissionPage"));
 const CommunityPage = lazy(() => import("../pages/CommunityPage"));
 const EssayPage = lazy(() => import("../pages/EssayPage"));
+const JobsPage = lazy(() => import("../pages/JobsPage"));
+const ProfilePage = lazy(() => import("../pages/ProfilePage"));
+const SettingsPage = lazy(() => import("../pages/SettingsPage"));
+const BookmarksPage = lazy(() => import("../pages/BookmarksPage"));
 
 // Create router with all future flags enabled
 const router = createBrowserRouter(
@@ -95,6 +99,22 @@ const router = createBrowserRouter(
         {
           path: "essays",
           element: <EssayPage />,
+        },
+        {
+          path: "jobs",
+          element: <JobsPage />,
+        },
+        {
+          path: "profile",
+          element: <ProfilePage />,
+        },
+        {
+          path: "settings",
+          element: <SettingsPage />,
+        },
+        {
+          path: "bookmarks",
+          element: <BookmarksPage />,
         },
       ],
     },

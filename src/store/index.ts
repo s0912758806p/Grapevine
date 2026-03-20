@@ -7,6 +7,8 @@ import repositoriesReducer from "./repositoriesSlice";
 import searchReducer from "./searchSlice";
 import locationReducer from "./locationSlice";
 import ruanyfWeeklyReducer from "./ruanyfWeeklySlice";
+import characterReducer from "./characterSlice";
+import bookmarksReducer from "./bookmarksSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ export const store = configureStore({
     search: searchReducer,
     location: locationReducer,
     ruanyfWeekly: ruanyfWeeklyReducer,
+    character: characterReducer,
+    bookmarks: bookmarksReducer,
   },
 });
 

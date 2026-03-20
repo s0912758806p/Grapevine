@@ -2,12 +2,12 @@ import React from "react";
 import { ConfigProvider, theme } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
 
-// Define grape and vine theme colors
+// Flat color palette — no gradients
 const grapeTheme = {
   primaryColor: "#5e2a69",
   primaryColorHover: "#8a4a95",
-  infoColor: "#1e5631",
-  successColor: "#3d7a4f",
+  infoColor: "#1a4a6e",
+  successColor: "#1e5631",
 };
 
 interface AntConfigProviderProps {
@@ -24,12 +24,16 @@ const AntConfigProvider: React.FC<AntConfigProviderProps> = ({ children }) => {
             colorLink: grapeTheme.primaryColor,
             colorInfo: grapeTheme.infoColor,
             colorSuccess: grapeTheme.successColor,
+            colorWarning: "#92600a",
+            colorError: "#8b2020",
             borderRadius: 8,
             fontFamily:
               'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            colorBgBase: "#faf9f7",
             colorBgContainer: "#ffffff",
-            colorText: "#333333",
-            colorTextSecondary: "#666666",
+            colorText: "#1a1025",
+            colorTextSecondary: "#5c5570",
+            colorBorder: "#e8e3ed",
           },
           components: {
             Button: {

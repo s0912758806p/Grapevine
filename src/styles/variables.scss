@@ -1,46 +1,87 @@
-// Theme color variables
-$grape-purple: #5e2a69;
-$grape-purple-light: #8a4a95;
-$grape-purple-lighter: #c9a7d2;
-$vine-green: #1e5631;
-$vine-green-light: #3d7a4f;
-$vine-green-lighter: #a6c7af;
-$cream: #f7f5f0;
-$soft-gray: #f0f0f0;
-$text-dark: #333333;
+// ── Brand Colors ──────────────────────────────────────────
+$grape:           #5e2a69;   // Primary CTA, active states
+$grape-mid:       #8a4a95;   // Hover
+$grape-tint:      #f5eef7;   // Selected bg, subtle surfaces
+$grape-border:    #d4aede;   // Borders on grape-tinted areas
+$vine:            #1e5631;   // Content/success, CTA section bg
+$vine-mid:        #3d7a4f;   // Hover
+$vine-tint:       #edf5f0;   // Light green tints
+$vine-border:     #a3cbb0;
 
-// Spacing variables
-$spacing-xs: 4px;
-$spacing-sm: 8px;
-$spacing-md: 16px;
-$spacing-lg: 24px;
-$spacing-xl: 32px;
+// Legacy aliases (keep for backwards compat with existing components)
+$grape-purple:          $grape;
+$grape-purple-light:    $grape-mid;
+$grape-purple-lighter:  #c9a7d2;
+$vine-green:            $vine;
+$vine-green-light:      $vine-mid;
+$vine-green-lighter:    #a6c7af;
+
+// ── Neutrals ──────────────────────────────────────────────
+$background:      #faf9f7;   // Page background (slightly warm)
+$surface:         #ffffff;   // Card background
+$surface-2:       #f5f3f0;   // Nested/subtle surfaces
+$border:          #e8e3ed;   // Purple-tinted neutral border
+$border-light:    #f0ecf5;   // Dividers
+
+// Legacy aliases
+$cream:           $background;
+$soft-gray:       #f0f0f0;
+
+// ── Text ──────────────────────────────────────────────────
+$text-primary:    #1a1025;   // Near-black with purple undertone
+$text-secondary:  #5c5570;   // Purple-gray
+$text-muted:      #9b92a8;   // Placeholder/tertiary
+$text-dark:       $text-primary;
+
+// ── Semantic ──────────────────────────────────────────────
+$success:         $vine;
+$warning:         #92600a;
+$danger:          #8b2020;
+
+// ── Gamification medals ───────────────────────────────────
+$gold:            #b8860b;
+$silver:          #607080;
+$bronze:          #7a4a30;
+
+// ── Spacing ───────────────────────────────────────────────
+$spacing-xs:  4px;
+$spacing-sm:  8px;
+$spacing-md:  16px;
+$spacing-lg:  24px;
+$spacing-xl:  32px;
 $spacing-xxl: 48px;
 
-// Shadow variables
+// ── Shadows ───────────────────────────────────────────────
 $shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
 $shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 $shadow-lg: 0 8px 24px rgba(94, 42, 105, 0.15);
 
-// Border radius
+// ── Border radius ─────────────────────────────────────────
 $border-radius-sm: 4px;
 $border-radius-md: 8px;
 $border-radius-lg: 16px;
 
-// Transition durations
-$transition-fast: 0.2s;
+// ── Transitions ───────────────────────────────────────────
+$transition-fast:   0.2s;
 $transition-normal: 0.3s;
-$transition-slow: 0.5s;
+$transition-slow:   0.5s;
 
-// Font sizes
-$font-size-xs: 12px;
-$font-size-sm: 14px;
-$font-size-md: 16px;
-$font-size-lg: 18px;
-$font-size-xl: 24px;
+// ── Font sizes ────────────────────────────────────────────
+$font-size-xs:  12px;
+$font-size-sm:  14px;
+$font-size-md:  16px;
+$font-size-lg:  18px;
+$font-size-xl:  24px;
 $font-size-xxl: 32px;
 
-// Breakpoints
+// ── Fluid Typography Scale ────────────────────────────────
+$font-display:        clamp(2rem, 5vw, 3.5rem);
+$font-page-title:     clamp(1.5rem, 3vw, 2rem);
+$font-section-title:  clamp(1.25rem, 2.5vw, 1.75rem);
+$line-height-body:    1.7;
+$line-height-heading: 1.2;
+
+// ── Breakpoints ───────────────────────────────────────────
 $breakpoint-xs: 480px;
 $breakpoint-sm: 576px;
 $breakpoint-md: 768px;

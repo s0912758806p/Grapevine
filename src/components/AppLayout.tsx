@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Layout,
   Input,
@@ -18,9 +18,14 @@ import {
   SettingOutlined,
   LogoutOutlined,
   MenuOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
 import { RootState } from "../store";
+import { useDispatch } from "react-redux";
+import { recordDailyVisit } from "../store/characterSlice";
 import VineIcon from "./VineIcon";
+import SearchModal from "./SearchModal";
+import BottomNav from "./BottomNav";
 
 const { Header, Content, Footer } = Layout;
 
@@ -32,9 +37,27 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
-  // Get user role information
+  const dispatch = useDispatch();
   const { isAuthor } = useSelector((state: RootState) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Record daily visit for XP/streak
+  useEffect(() => {
+    dispatch(recordDailyVisit());
+  }, []);
+
+  // Cmd+K / Ctrl+K shortcut to open search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   const handleMenuClick = () => {
     setMobileMenuOpen(false);
@@ -44,12 +67,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       key: "profile",
       icon: <UserOutlined />,
-      label: "Your profile",
+      label: <Link to="/profile">Your profile</Link>,
+    },
+    {
+      key: "bookmarks",
+      icon: <BookOutlined />,
+      label: <Link to="/bookmarks">Bookmarks</Link>,
     },
     {
       key: "settings",
       icon: <SettingOutlined />,
-      label: "Settings",
+      label: <Link to="/settings">Settings</Link>,
     },
     {
       type: "divider",
@@ -71,6 +99,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       key: "/essays",
       label: <Link to="/essays">Essays</Link>,
     },
+    {
+      key: "/jobs",
+      label: <Link to="/jobs">Jobs</Link>,
+    },
     ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
       ? [
           {
@@ -82,7 +114,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       key: "/community",
       label: <Link to="/community">Community</Link>,
-      // icon: <TeamOutlined />,
     },
     {
       key: "/location",
@@ -106,6 +137,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: <Link to="/essays">Essays</Link>,
       onClick: handleMenuClick,
     },
+    {
+      key: "/jobs",
+      label: <Link to="/jobs">Jobs</Link>,
+      onClick: handleMenuClick,
+    },
     ...(window.location.href.includes(`${import.meta.env.VITE_HOST_AUTHOR}`)
       ? [
           {
@@ -118,7 +154,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       key: "/community",
       label: <Link to="/community">Community</Link>,
-      // icon: <TeamOutlined />,
       onClick: handleMenuClick,
     },
     {
@@ -142,6 +177,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
 
   return (
+    <>
     <Layout style={{ minHeight: "100vh", background: "#f7f5f0" }}>
       <Header
         style={{
@@ -170,9 +206,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 marginLeft: "8px",
                 fontSize: "18px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #5e2a69 0%, #1e5631 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                color: "#5e2a69",
               }}
             >
               Grapevine
@@ -207,6 +241,38 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             gap: "16px",
           }}
         >
+          {/* Search pill (desktop) */}
+          <Button
+            className="hide-on-mobile"
+            onClick={() => setSearchOpen(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              border: "1px solid #e8e3ed",
+              borderRadius: 20,
+              padding: "0 12px",
+              height: 32,
+              color: "#9b92a8",
+              background: "#faf9f7",
+              cursor: "pointer",
+            }}
+          >
+            <SearchOutlined />
+            <span style={{ fontSize: 13 }}>Search</span>
+            <span
+              style={{
+                fontSize: 11,
+                background: "#f0ecf5",
+                borderRadius: 4,
+                padding: "0 4px",
+                color: "#5c5570",
+              }}
+            >
+              ⌘K
+            </span>
+          </Button>
+
           <Link to="/new-issue" className="hide-on-mobile">
             <Button type="primary">New Issue</Button>
           </Link>
@@ -247,6 +313,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             placeholder="Search..."
             prefix={<SearchOutlined />}
             style={{ marginBottom: "16px" }}
+            onFocus={() => {
+              setMobileMenuOpen(false);
+              setSearchOpen(true);
+            }}
           />
 
           <Menu
@@ -259,14 +329,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </Drawer>
 
       <Content>
-        <div
-          className="responsive-container"
-          style={{
-            padding: "24px 16px",
-          }}
-        >
-          {children}
-        </div>
+        {location.pathname === "/" ? (
+          children
+        ) : (
+          <div
+            className="responsive-container"
+            style={{ padding: "24px 16px" }}
+          >
+            {children}
+          </div>
+        )}
       </Content>
 
       <Footer
@@ -299,10 +371,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 style={{
                   fontSize: "16px",
                   fontWeight: 600,
-                  background:
-                    "linear-gradient(135deg, #5e2a69 0%, #1e5631 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  color: "#5e2a69",
                 }}
               >
                 Grapevine
@@ -329,6 +398,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
       </Footer>
     </Layout>
+
+    {/* Global Search Modal */}
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+    {/* Mobile Bottom Tab Navigation */}
+    <div className="hide-on-desktop">
+      <BottomNav />
+    </div>
+    </>
   );
 };
 
