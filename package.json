@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:info": "node scripts/update-build-info.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
