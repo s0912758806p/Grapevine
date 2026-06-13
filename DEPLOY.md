@@ -58,6 +58,11 @@ push 到 dev  ──►  自動建立 PR (dev → release) ──► 自動核�
 相關設定見 `.github/workflows/Auto-deploy.yml`。只要把變更推送到 `dev`，
 其餘流程會自動完成並部署。
 
+> ⚠️ 此串接依賴 repository secret `BOT_PAT_TOKEN`。若該 PAT 過期或缺失，
+> checkout 步驟會失敗（`could not read Username for 'https://github.com'`），整條串接停擺。
+> 此時請到 repo Settings → Secrets 更新 `BOT_PAT_TOKEN`；在修復前，正式部署改由下方
+> 「每日安全部署」負責（它不依賴此 PAT）。
+
 ## 每日安全部署（Daily Safe Deploy）
 
 `.github/workflows/daily-deploy.yml` 會每天定時執行，確保專案「每天至少部署一次、
@@ -66,12 +71,15 @@ push 到 dev  ──►  自動建立 PR (dev → release) ──► 自動核�
 1. 重新產生 `public/build-info.json`（當日的檔案變更，純靜態資產，不被程式碼 import，零執行期風險）。
 2. 執行 `npm run build` 作為**硬性閘門**：若建置失敗，工作流程在此中止，
    **不會 commit、不會 push、不會觸發部署**，線上網站維持原狀。
-3. 只有在建置成功時，才會 commit 並 push 到 `dev`，觸發上述自動部署串接。
+3. 只有在建置成功時，才會 commit 並**直接 push 到 `main`**（並盡量同步 `dev`/`release`）。
+   Vercel 透過自己的 GitHub App webhook 偵測 `main` 的 push 而部署，且**僅在 Vercel 端建置也成功時
+   才切換線上版本**（atomic deploy）——即使建置失敗，線上網站仍維持前一版。
 
 可在 GitHub Actions 頁面以 **Run workflow**（`workflow_dispatch`）手動觸發。
 
-> 前置需求：repository secret `BOT_PAT_TOKEN`（已供 `Auto-deploy.yml` 使用）。
-> 使用 PAT 而非預設 `GITHUB_TOKEN`，push 才能再次觸發下游的自動部署工作流程。
+> 本工作流程刻意**不依賴 `BOT_PAT_TOKEN`**，改用內建的 `GITHUB_TOKEN`。
+> 因為本 repo 為 public、`main`/`release` 無分支保護，且 Vercel 由 webhook 觸發部署（與 PAT 無關），
+> 所以即使 `Auto-deploy.yml` 所需的 PAT 過期，每日部署仍可照常運作。
 
 ### build-info.json
 

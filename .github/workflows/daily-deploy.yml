@@ -1,15 +1,21 @@
 name: Daily Safe Deploy
 
-# Guarantees at least one deploy per day with a real file change, while never
-# breaking the live site:
+# Guarantees at least one production deploy per day with a real file change,
+# while never breaking the live site. Intentionally PAT-free so it keeps working
+# even when secrets.BOT_PAT_TOKEN (used by Auto-deploy.yml) is expired/missing:
 #   1. Regenerate public/build-info.json  -> the daily file change
 #   2. npm run build                      -> HARD GATE; if it fails the job
 #                                            aborts here and NOTHING is pushed,
 #                                            so production stays untouched.
-#   3. Commit + push to dev               -> only runs if the build passed,
-#                                            triggering the existing
-#                                            dev -> release -> main -> Vercel
-#                                            auto-deploy cascade (Auto-deploy.yml).
+#   3. Commit + push to main              -> only runs if the build passed.
+#                                            Vercel deploys main via its own
+#                                            GitHub App webhook (independent of
+#                                            GitHub Actions / any PAT), and only
+#                                            swaps the live site if ITS build
+#                                            succeeds too (atomic deploys).
+#
+# The default GITHUB_TOKEN is sufficient: the repo is public with no branch
+# protection, and Vercel's webhook fires on the push regardless of token.
 
 on:
   schedule:
@@ -29,14 +35,11 @@ jobs:
   daily-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout dev
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: main
           fetch-depth: 0
-          # PAT so the resulting push re-triggers Auto-deploy.yml (the default
-          # GITHUB_TOKEN intentionally does NOT trigger downstream workflows).
-          token: ${{ secrets.BOT_PAT_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -53,14 +56,19 @@ jobs:
       - name: Build (HARD GATE — must pass or we abort, leaving prod untouched)
         run: npm run build
 
-      - name: Commit & push to dev (only reached when the build passed)
+      - name: Commit & push to main (only reached when the build passed)
         run: |
-          git config user.name "grapevine-bot"
-          git config user.email "grapevine-bot@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/build-info.json
           if git diff --cached --quiet; then
             echo "No build-info changes to commit; skipping."
             exit 0
           fi
           git commit -m "chore: daily safe deploy — build-info $(date -u +%Y-%m-%dT%H:%MZ)"
-          git push origin dev
+          git push origin HEAD:main
+          # Keep dev/release aligned with main (best-effort). A human commit on
+          # those branches makes the sync a non-fast-forward, which we skip
+          # rather than force — main (production) has already been updated.
+          git push origin HEAD:release || echo "release not fast-forward; sync skipped"
+          git push origin HEAD:dev || echo "dev not fast-forward; sync skipped"
