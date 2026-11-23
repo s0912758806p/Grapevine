@@ -11,6 +11,7 @@ import styles from "./forum.module.css";
 
 export async function Leaderboard() {
   const leaders = await getLeaderboard();
+  if (leaders.length === 0) return null;
   return (
     <section className={`card ${styles.widget}`} aria-labelledby="leaders-h">
       <h2 id="leaders-h" className={styles.widgetTitle}>
@@ -42,6 +43,7 @@ export async function Leaderboard() {
 
 export async function HotTags() {
   const tags = await getHotTags();
+  if (tags.length === 0) return null;
   return (
     <section className={`card ${styles.widget}`} aria-labelledby="tags-h">
       <h2 id="tags-h" className={styles.widgetTitle}>

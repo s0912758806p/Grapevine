@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icon";
 import { Avatar, BoardChip, Markdown, MemberLink, SolvedChip } from "@/components/forum/bits";
 import { BookmarkButton } from "@/components/forum/BookmarkButton";
 import { FeedSkeleton } from "@/components/forum/Feed";
-import { CredibilityVote, ReactionBar, ReplyBox } from "@/components/forum/Interactive";
+import { CredibilityVote, PollVote, ReactionBar, ReplyBox } from "@/components/forum/Interactive";
 import { RelativeTime } from "@/components/forum/RelativeTime";
 import styles from "@/components/forum/forum.module.css";
 import { Columns } from "@/components/layout/Columns";
@@ -15,9 +15,17 @@ import { dataSource, getThread, listThreads } from "@/lib/forum";
 import { upCount } from "@/lib/forum/query";
 import type { Reply, ThreadDetail } from "@/lib/forum/types";
 
+// Prerender the newest threads; others render on first visit. Cache Components
+// requires at least one entry, so an empty forum (or a GitHub outage at build
+// time) falls back to a placeholder that simply renders "not found".
 export async function generateStaticParams() {
-  const threads = await listThreads({ sort: "new" });
-  return threads.map((t) => ({ number: String(t.number) }));
+  try {
+    const threads = (await listThreads({ sort: "new", limit: 50 })).filter((t) => !t.external);
+    if (threads.length > 0) return threads.map((t) => ({ number: String(t.number) }));
+  } catch (err) {
+    console.warn("Could not list threads for prerendering:", err instanceof Error ? err.message : err);
+  }
+  return [{ number: "1" }];
 }
 
 async function load(params: PageProps<"/t/[number]">["params"]) {
@@ -128,6 +136,12 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
               </div>
             )}
             <BookmarkButton number={thread.number} title={thread.title} board={thread.board} withLabel />
+            {thread.url && (
+              <a href={thread.url} className="btn btn-quiet" style={{ justifyContent: "flex-start" }}>
+                <Icon name="github" size={16} />
+                在 GitHub 開啟
+              </a>
+            )}
           </section>
           {thread.related.length > 0 && (
             <section className={`card ${styles.widget}`}>
@@ -190,8 +204,16 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
             <div><dt className="muted" style={{ display: "inline" }}>薪資 </dt><dd style={{ display: "inline", margin: 0 }}>{thread.job.pay}</dd></div>
           </dl>
         )}
+        {thread.meetup && (
+          <dl className="row text-2" style={{ gap: 18, fontSize: 14, margin: "12px 0 0" }}>
+            <div><dt className="muted" style={{ display: "inline" }}>城市 </dt><dd style={{ display: "inline", margin: 0 }}>{thread.meetup.city}</dd></div>
+            <div><dt className="muted" style={{ display: "inline" }}>時間 </dt><dd style={{ display: "inline", margin: 0 }}>{thread.meetup.when || "見內文"}</dd></div>
+            <div><dt className="muted" style={{ display: "inline" }}>地點 </dt><dd style={{ display: "inline", margin: 0 }}>{thread.meetup.venue || "見內文"}</dd></div>
+          </dl>
+        )}
         {thread.poll && (
           <section aria-label="投票結果" className="stack" style={{ gap: 10, marginTop: 16 }}>
+            {thread.pollQuestion && <strong>{thread.pollQuestion}</strong>}
             {thread.poll.map((o) => {
               const pct = pollTotal ? Math.round((o.votes / pollTotal) * 100) : 0;
               return (
@@ -204,15 +226,16 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
                 </div>
               );
             })}
+            <PollVote options={thread.poll} threadNumber={thread.number} />
           </section>
         )}
         {thread.credibility && (
           <div className="stack" style={{ gap: 10, marginTop: 16, maxWidth: 420 }}>
-            <CredibilityVote believe={thread.credibility.believe} doubt={thread.credibility.doubt} />
+            <CredibilityVote believe={thread.credibility.believe} doubt={thread.credibility.doubt} subjectId={thread.id} threadNumber={thread.number} />
           </div>
         )}
         <div className="row" style={{ gap: 8, marginTop: 16 }}>
-          <ReactionBar reactions={thread.reactions.filter((r) => r.count > 0 || r.kind === "up")} />
+          <ReactionBar reactions={thread.reactions} subjectId={thread.id} threadNumber={thread.number} />
           <span style={{ flex: 1 }} />
           <BookmarkButton number={thread.number} title={thread.title} board={thread.board} withLabel />
         </div>
@@ -239,16 +262,23 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
       )}
 
       <h2 style={{ margin: "8px 0 0", fontSize: 18 }}>{thread.replyCount} 則回覆</h2>
-      {dataSource() === "fixtures" && shownReplies < thread.replyCount && (
+      {shownReplies < thread.replyCount && (
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-          範例資料只收錄了其中 {shownReplies} 則。
+          {dataSource() === "fixtures" ? (
+            <>範例資料只收錄了其中 {shownReplies} 則。</>
+          ) : (
+            <>
+              這裡顯示前 {shownReplies} 則，
+              {thread.url ? <a href={thread.url}>到 GitHub 看全部回覆</a> : "其餘請到 GitHub 查看"}。
+            </>
+          )}
         </p>
       )}
       {thread.replies.map((r) => (
         <ReplyItem key={r.id} reply={r} />
       ))}
 
-      <ReplyBox threadNumber={thread.number} />
+      <ReplyBox threadNumber={thread.number} discussionId={thread.id} />
     </Columns>
   );
 }

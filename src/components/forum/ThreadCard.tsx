@@ -12,7 +12,7 @@ import { RelativeTime } from "./RelativeTime";
 import styles from "./forum.module.css";
 
 export function ThreadCard({ thread, showBoard = true }: { thread: Thread; showBoard?: boolean }) {
-  const href = `/t/${thread.number}`;
+  const href = thread.href ?? `/t/${thread.number}`;
   return (
     <article className={`card ${styles.threadCard}`}>
       <div className="row" style={{ gap: 8 }}>
@@ -52,7 +52,7 @@ export function ThreadCard({ thread, showBoard = true }: { thread: Thread; showB
             <span className="sr-only">回覆</span>
             {thread.replyCount}
           </span>
-          <BookmarkButton number={thread.number} title={thread.title} board={thread.board} />
+          <BookmarkButton number={thread.number} href={thread.href} title={thread.title} board={thread.board} />
         </span>
       </div>
     </article>

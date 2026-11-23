@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/forum/ThreadCard";
 import styles from "@/components/forum/forum.module.css";
 import { Columns } from "@/components/layout/Columns";
 import { BOARDS, getBoard, type Board } from "@/lib/boards";
-import { listThreads } from "@/lib/forum";
+import { getBoardStatus, listThreads } from "@/lib/forum";
 import { parseSort } from "@/lib/forum/query";
 import type { Thread } from "@/lib/forum/types";
 
@@ -110,7 +110,7 @@ function JobCard({ thread }: { thread: Thread }) {
       </span>
       <div style={{ flex: "1 1 360px", minWidth: 0 }} className="stack">
         <h2 style={{ margin: 0, fontSize: 17 }}>
-          <Link href={`/t/${thread.number}`} style={{ color: "var(--text)" }}>
+          <Link href={thread.href ?? `/t/${thread.number}`} style={{ color: "var(--text)" }}>
             {thread.title}
           </Link>
         </h2>
@@ -147,6 +147,7 @@ async function RumorWall() {
   return (
     <>
       <RumorBox />
+      {rumors.length === 0 && <EmptyState title="還沒有八卦" body="匿名發文開放後，這裡會出現大家聽到的消息。" />}
       <div className="grid-2">
         {rumors.map((t) => (
           <article key={t.number} className={`card ${styles.rumor}`}>
@@ -161,7 +162,9 @@ async function RumorWall() {
                 {t.title}
               </Link>
             </p>
-            {t.credibility && <CredibilityVote believe={t.credibility.believe} doubt={t.credibility.doubt} />}
+            {t.credibility && (
+              <CredibilityVote believe={t.credibility.believe} doubt={t.credibility.doubt} subjectId={t.id} threadNumber={t.number} />
+            )}
           </article>
         ))}
       </div>
@@ -177,6 +180,7 @@ async function MeetupList() {
         <Icon name="mapPin" />
         在地圖上查看
       </Link>
+      {meetups.length === 0 && <EmptyState title="目前沒有聚會" body="在這個看板發文並選擇城市，聚會就會出現在地圖上。" />}
       {meetups.map((t) => (
         <article key={t.number} className="card card-pad stack" style={{ gap: 4 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--grape)" }}>{t.meetup?.city}</span>
@@ -189,7 +193,7 @@ async function MeetupList() {
             {t.meetup?.when} · {t.meetup?.venue}
           </span>
           <span className="muted" style={{ fontSize: 13 }}>
-            {t.meetup?.going} 人報名
+            {t.meetup?.going} 人想參加
           </span>
         </article>
       ))}
@@ -221,6 +225,14 @@ async function BoardView({ params, searchParams }: { params: PageProps<"/c/[slug
   const { slug } = await params;
   const board = getBoard(slug);
   if (!board) notFound();
+  const status = await getBoardStatus();
+  const hasCategory = status[board.slug] !== false;
+  const cta =
+    board.maintainersOnly || board.kind === "anonymous" || !hasCategory
+      ? null
+      : board.slug === "jobs" && board.mirror
+        ? { href: `https://github.com/${board.mirror.owner}/${board.mirror.repo}/issues/new`, label: "到 F2E Jobs 張貼職缺" }
+        : { href: `/new?board=${board.slug}`, label: board.kind === "mirror" ? "發起討論" : "在這裡發文" };
   return (
     <>
       <section className={`${styles.boardHero} tone-${board.tone}`}>
@@ -239,9 +251,9 @@ async function BoardView({ params, searchParams }: { params: PageProps<"/c/[slug
               {board.description}
             </p>
           </div>
-          {!board.maintainersOnly && (
-            <Link className="btn btn-primary" href={`/new?board=${board.slug}`}>
-              {board.slug === "jobs" ? "張貼職缺" : board.kind === "anonymous" ? "匿名爆料" : "在這裡發文"}
+          {cta && (
+            <Link className="btn btn-primary" href={cta.href}>
+              {cta.label}
             </Link>
           )}
         </div>
@@ -255,7 +267,7 @@ async function BoardView({ params, searchParams }: { params: PageProps<"/c/[slug
               <section className="card card-pad stack" style={{ gap: 8, fontSize: 14 }}>
                 <h2 style={{ margin: 0, fontSize: 15 }}>資料來源</h2>
                 <p className="text-2" style={{ margin: 0 }}>
-                  內容唯讀同步自 {board.mirror.label}；在這裡的留言會存成對應的 Discussion。
+                  內容唯讀同步自 {board.mirror.label}，留言請到 GitHub 原文；想在 Grapevine 聊，可以另外發起討論。
                 </p>
                 <a href={`https://github.com/${board.mirror.owner}/${board.mirror.repo}`}>查看原始 repo</a>
               </section>
@@ -265,6 +277,15 @@ async function BoardView({ params, searchParams }: { params: PageProps<"/c/[slug
           </>
         }
       >
+        {!hasCategory && (
+          <p className="notice tone-amber" style={{ margin: 0 }}>
+            <Icon name="info" className="ico-sm" />
+            <span>
+              這個看板對應的 GitHub Discussions 分類「{board.discussionCategory}」還沒建立，所以暫時不能發文
+              {board.mirror ? "；同步過來的內容仍會顯示" : ""}。
+            </span>
+          </p>
+        )}
         <BoardBody board={board} searchParams={searchParams} />
       </Columns>
     </>

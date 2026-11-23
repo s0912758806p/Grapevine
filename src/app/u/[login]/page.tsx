@@ -11,9 +11,15 @@ import { getLeaderboard, getProfile } from "@/lib/forum";
 import { upCount } from "@/lib/forum/query";
 import { badgesFor, levelFor, xpFromStats } from "@/lib/levels";
 
+// Prerender active members; Cache Components needs at least one entry (see /t/[number]).
 export async function generateStaticParams() {
-  const leaders = await getLeaderboard();
-  return leaders.map((l) => ({ login: l.member.login }));
+  try {
+    const leaders = await getLeaderboard();
+    if (leaders.length > 0) return leaders.map((l) => ({ login: l.member.login }));
+  } catch (err) {
+    console.warn("Could not list members for prerendering:", err instanceof Error ? err.message : err);
+  }
+  return [{ login: "grapevine" }];
 }
 
 export async function generateMetadata(props: PageProps<"/u/[login]">): Promise<Metadata> {

@@ -1,46 +1,92 @@
 "use client";
 
 /**
- * Client-side interactive pieces: reaction toggles, rumor credibility votes,
- * the reply box and the anonymous rumor box. Votes and reactions are local
- * until the GitHub adapter persists them; forms submit to Server Actions.
+ * Client-side interactive pieces: reactions, rumor credibility votes, poll
+ * votes, the reply box and the anonymous rumor box. Toggles update
+ * optimistically and roll back if the Server Action fails.
  */
-import { useActionState, useState } from "react";
-import { createReply, postRumor, type ActionState } from "@/app/actions";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useActionState, useState, useTransition } from "react";
+import { createReply, postRumor, react, vote, type ActionState, type ReactionKind } from "@/app/actions";
 import { Icon } from "@/components/Icon";
-import type { ReactionCount } from "@/lib/forum/types";
+import type { PollOption, ReactionCount } from "@/lib/forum/types";
 import styles from "./forum.module.css";
 
 const REACTION_LABEL: Record<ReactionCount["kind"], string> = { up: "推", helpful: "有幫助", thanks: "感謝" };
 
-export function ReactionBar({ reactions }: { reactions: ReactionCount[] }) {
-  const [mine, setMine] = useState<Record<string, boolean>>({});
+export function FormStatus({ state }: { state: ActionState | null }) {
+  const pathname = usePathname();
+  if (!state || !state.message) return null;
   return (
-    <div className="row" style={{ gap: 8 }}>
-      {reactions.map((r) => {
-        const on = !!mine[r.kind];
-        return (
-          <button
-            key={r.kind}
-            type="button"
-            className="react"
-            aria-pressed={on}
-            onClick={() => setMine((m) => ({ ...m, [r.kind]: !on }))}
-          >
-            {REACTION_LABEL[r.kind]} <span>{r.count + (on ? 1 : 0)}</span>
-          </button>
-        );
-      })}
+    <p role="status" className={`notice ${state.ok ? "tone-vine" : "tone-amber"}`} style={{ margin: 0 }}>
+      <Icon name={state.ok ? "check" : "info"} className="ico-sm" />
+      <span>
+        {state.message}
+        {state.needsLogin && (
+          <>
+            {" "}
+            <a href={`/api/auth/login?returnTo=${encodeURIComponent(pathname)}`}>用 GitHub 登入</a>
+          </>
+        )}
+      </span>
+    </p>
+  );
+}
+
+/** Shared optimistic toggle: flips local state, calls `react`, rolls back on failure. */
+function useToggle(subjectId: string | undefined, threadNumber: number) {
+  const [mine, setMine] = useState<Partial<Record<ReactionKind, boolean>>>({});
+  const [error, setError] = useState<ActionState | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function toggle(kind: ReactionKind, on: boolean, also?: { kind: ReactionKind; on: boolean }) {
+    const before = mine;
+    setMine({ ...mine, [kind]: on, ...(also ? { [also.kind]: also.on } : {}) });
+    setError(null);
+    if (!subjectId) return; // sample data: local only
+    startTransition(async () => {
+      let result = await react({ subjectId, threadNumber, kind, on });
+      if (result.ok && also) result = await react({ subjectId, threadNumber, kind: also.kind, on: also.on });
+      if (!result.ok) {
+        setMine(before);
+        setError(result);
+      }
+    });
+  }
+  return { mine, toggle, error, pending };
+}
+
+export function ReactionBar({ reactions, subjectId, threadNumber }: { reactions: ReactionCount[]; subjectId?: string; threadNumber: number }) {
+  const { mine, toggle, error, pending } = useToggle(subjectId, threadNumber);
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 8 }} aria-busy={pending}>
+        {reactions.map((r) => {
+          const on = !!mine[r.kind];
+          return (
+            <button key={r.kind} type="button" className="react" aria-pressed={on} onClick={() => toggle(r.kind, !on)}>
+              {REACTION_LABEL[r.kind]} <span>{r.count + (on ? 1 : 0)}</span>
+            </button>
+          );
+        })}
+      </div>
+      <FormStatus state={error} />
     </div>
   );
 }
 
-export function CredibilityVote({ believe, doubt }: { believe: number; doubt: number }) {
-  const [vote, setVote] = useState<0 | 1 | -1>(0);
-  const up = believe + (vote === 1 ? 1 : 0);
-  const down = doubt + (vote === -1 ? 1 : 0);
+export function CredibilityVote({ believe, doubt, subjectId, threadNumber }: { believe: number; doubt: number; subjectId?: string; threadNumber: number }) {
+  const { mine, toggle, error } = useToggle(subjectId, threadNumber);
+  const up = believe + (mine.believe ? 1 : 0);
+  const down = doubt + (mine.doubt ? 1 : 0);
   const total = up + down;
   const pct = total === 0 ? 0 : Math.round((up / total) * 100);
+  const pick = (kind: "believe" | "doubt") => {
+    const other = kind === "believe" ? "doubt" : "believe";
+    if (mine[kind]) toggle(kind, false);
+    else toggle(kind, true, mine[other] ? { kind: other, on: false } : undefined);
+  };
   return (
     <>
       <div>
@@ -53,37 +99,57 @@ export function CredibilityVote({ believe, doubt }: { believe: number; doubt: nu
         </div>
       </div>
       <div className="row" style={{ gap: 8, flexWrap: "nowrap" }}>
-        <button type="button" className={styles.vote} aria-pressed={vote === 1} onClick={() => setVote(vote === 1 ? 0 : 1)}>
+        <button type="button" className={styles.vote} aria-pressed={!!mine.believe} onClick={() => pick("believe")}>
           <Icon name="check" size={16} />
           可信
         </button>
-        <button type="button" className={styles.vote} aria-pressed={vote === -1} onClick={() => setVote(vote === -1 ? 0 : -1)}>
+        <button type="button" className={styles.vote} aria-pressed={!!mine.doubt} onClick={() => pick("doubt")}>
           <Icon name="question" size={16} />
           存疑
         </button>
-        <button type="button" className="icon-btn" aria-label="檢舉這則八卦" style={{ width: 40, height: 40 }}>
-          <Icon name="flag" size={16} />
-        </button>
       </div>
+      <FormStatus state={error} />
     </>
   );
 }
 
-export function FormStatus({ state }: { state: ActionState | null }) {
-  if (!state) return null;
+export function PollVote({ options, threadNumber }: { options: PollOption[]; threadNumber: number }) {
+  const [state, setState] = useState<ActionState | null>(null);
+  const [pending, startTransition] = useTransition();
+  if (!options.some((o) => o.id)) return null;
   return (
-    <p role="status" className={`notice ${state.ok ? "tone-vine" : "tone-amber"}`} style={{ margin: 0 }}>
-      <Icon name={state.ok ? "check" : "info"} className="ico-sm" />
-      <span>{state.message}</span>
-    </p>
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 8 }}>
+        {options.map((o) =>
+          o.id ? (
+            <button
+              key={o.id}
+              type="button"
+              className="btn"
+              disabled={pending}
+              onClick={() => startTransition(async () => setState(await vote({ pollOptionId: o.id!, threadNumber })))}
+            >
+              投給「{o.label}」
+            </button>
+          ) : null,
+        )}
+      </div>
+      <FormStatus state={state} />
+    </div>
   );
 }
 
-export function ReplyBox({ threadNumber }: { threadNumber: number }) {
-  const [state, action, pending] = useActionState(createReply, null);
+export function ReplyBox({ threadNumber, discussionId }: { threadNumber: number; discussionId?: string }) {
+  const [body, setBody] = useState("");
+  const [state, action, pending] = useActionState(async (prev: ActionState | null, formData: FormData) => {
+    const result = await createReply(prev, formData);
+    if (result.ok) setBody("");
+    return result;
+  }, null);
   return (
     <form action={action} className="card card-pad stack" style={{ gap: 12 }} aria-labelledby="reply-h">
       <input type="hidden" name="thread" value={threadNumber} />
+      <input type="hidden" name="discussionId" value={discussionId ?? ""} />
       <label id="reply-h" htmlFor="reply-body" className="label" style={{ margin: 0 }}>
         回覆這個主題
       </label>
@@ -92,6 +158,8 @@ export function ReplyBox({ threadNumber }: { threadNumber: number }) {
         name="body"
         rows={5}
         className="field"
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
         placeholder="分享你的看法。支援 Markdown，程式碼請用 ``` 包起來。"
         aria-invalid={!!state?.fieldErrors?.body}
       />
@@ -126,5 +194,17 @@ export function RumorBox() {
         </button>
       </div>
     </form>
+  );
+}
+
+export function SignInPrompt({ returnTo, children }: { returnTo: string; children: React.ReactNode }) {
+  return (
+    <div className="card card-pad stack" style={{ gap: 10, alignItems: "flex-start" }}>
+      <p style={{ margin: 0 }}>{children}</p>
+      <Link className="btn btn-primary" href={`/api/auth/login?returnTo=${encodeURIComponent(returnTo)}`} prefetch={false}>
+        <Icon name="github" />
+        用 GitHub 登入
+      </Link>
+    </div>
   );
 }

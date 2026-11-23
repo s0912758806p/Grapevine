@@ -42,7 +42,7 @@ export default async function MeetupsPage() {
               {t.meetup!.when} · {t.meetup!.venue}
             </span>
             <span className="muted" style={{ fontSize: 13 }}>
-              {t.meetup!.going} 人報名
+              {t.meetup!.going} 人想參加
             </span>
           </li>
         ))}

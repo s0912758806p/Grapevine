@@ -87,7 +87,7 @@ export const BOARDS: Board[] = [
     slug: "jobs",
     name: "職缺",
     hint: "徵才、求職",
-    description: "前端與全端職缺，資料同步自社群維護的 F2E Jobs repo。每則職缺都能留言詢問面試流程、團隊文化。",
+    description: "前端與全端職缺，唯讀同步自社群維護的 F2E Jobs repo。想問面試流程、團隊文化，可以到原文留言或在這裡發起討論。",
     rules: ["請寫明地點、工作型態與薪資範圍。", "同一職缺 30 天內請勿重複張貼。", "獵頭請註明委託公司產業。"],
     tone: "teal",
     kind: "mirror",
