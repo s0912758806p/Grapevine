@@ -4,7 +4,7 @@
  *
  * Run standalone via `npm run build:info`, or automatically by the
  * "Daily Safe Deploy" GitHub Actions workflow. The file is a static asset
- * (copied verbatim into dist/ by Vite) and is NOT imported by application
+ * (served as-is from public/ by Next.js) and is NOT imported by application
  * code, so updating it carries zero runtime risk for the live site.
  */
 import { execSync } from "node:child_process";

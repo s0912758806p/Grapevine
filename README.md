@@ -1,222 +1,108 @@
 # Grapevine
 
-Grapevine is a modern forum application that integrates with GitHub issues to create a clean, collaborative discussion platform with analytics capabilities.
+建立在 **GitHub Discussions** 上的開發者論壇：技術問答、作者專欄、週刊共讀、職缺、匿名八卦牆與在地聚會。
+v2 從 Vite 單頁應用改寫成 **Next.js 16（App Router）**，主題頁與看板頁在伺服器端渲染，方便搜尋引擎收錄。
 
-![Grapevine Screenshot](./src/assets/Screenshot.png)
+[正式站](https://grapevine-six-gr925.vercel.app/)
 
-[DEMO](grapevine-six-gr925.vercel.app/)
+> **目前狀態**：介面與所有頁面已完成，但資料來源還是內建的**範例資料**（頁面頂端會顯示提示條）。
+> 發文、回覆、投票會通過欄位檢查，但不會儲存。接上 GitHub Discussions 與 GitHub 登入是下一個 PR。
 
-## Features
+## 功能
 
-- **GitHub Integration**: Connect to GitHub repositories for content management
-- **Multiple Repository Support**: Manage content from various GitHub repositories
-- **Repository Management**: Add, remove, and track repositories
-- **Interactive Comments**: Integrated comment system with Utterances
-- **Dual Content Sources**: Display community discussions and F2E jobs
-- **Analytics Dashboard**: Visualize data with interactive charts
-- **Location Services**: GPS-based positioning with interactive maps
-- **Reverse Geocoding**: Convert coordinates to human-readable addresses
-- **Search & Filtering**: Advanced search and tag filtering functionality
-- **Create New Issues**: Submit new content directly through the platform
-- **Modern UI**: Clean design built with Ant Design
-- **Responsive Design**: Optimized for all device sizes
-- **Data Visualization**: Interactive charts using Ant Design Charts
-- **Community Features**:
-  - **Anonymous Rumor Wall**: Share and vote on tech industry gossip without attribution
-  - **Active Commenters Leaderboard**: Showcase top community contributors
-  - **Weekly Rumor Digest**: Newsletter-style compilation of trending rumors
+| 頁面 | 路徑 | 說明 |
+|---|---|---|
+| 動態牆 | `/` | 所有看板的主題，可依熱門／最新／精華／未回覆排序；右欄有本週活躍、熱門標籤、週刊共讀、下一場聚會 |
+| 看板 | `/c/[slug]` | 8 個看板；職缺看板有地點與類型篩選，八卦牆有可信度投票，在地聚會連到地圖 |
+| 主題 | `/t/[number]` | Markdown 內文、反應、投票結果、提問者採納的解答、巢狀回覆、相關主題；含 JSON-LD 與 Open Graph |
+| 發表主題 | `/new` | 選看板、Markdown 編輯與預覽、標籤、附加投票，草稿存在本機 |
+| 個人頁 | `/u/[login]` | 等級與進度、統計、近半年參與熱度圖、徽章（全部由真實活動計算） |
+| 搜尋 | `/search` | 關鍵字或 `?tag=` 標籤搜尋；任何頁面按 ⌘K／Ctrl+K 會聚焦搜尋框 |
+| 收藏 | `/bookmarks` | 只存在這台裝置的瀏覽器（localStorage） |
+| 聚會地圖 | `/meetups` | Leaflet 地圖與聚會列表（取代 v1 的 Location 頁） |
+| 論壇數據 | `/stats` | 每週新主題、回覆、首次回覆時間、問答解決率（取代 v1 的 Analytics 頁） |
+| 所有看板 | `/boards` | 看板總覽（手機底部分頁的「看板」） |
 
-## Quick Start
+另外：深色模式（跟隨系統，可手動切換且不閃爍）、手機版底部分頁列、`sitemap.xml`、`robots.txt`，
+以及 v1 舊網址的永久轉址（設定在 `next.config.ts`）。
 
-### Installation
+## 快速開始
 
-1. Clone this repository
+需要 Node.js 20.9 以上。
 
-   ```
-   git clone https://github.com/yourusername/grapevine.git
-   cd grapevine
-   ```
-
-2. Install dependencies
-
-   ```
-   npm install
-   ```
-
-3. Set up environment variables
-
-   Create a `.env` file with:
-
-   ```
-   VITE_GITHUB_TOKEN=your-github-personal-access-token
-   VITE_DEFAULT_REPO_OWNER=your-default-repo-owner
-   VITE_DEFAULT_REPO_NAME=your-default-repo-name
-   ```
-
-4. Start the development server
-
-   ```
-   npm run dev
-   ```
-
-5. Open your browser and visit `http://localhost:5173`
-
-### Build for Production
-
-```
-npm run build
+```bash
+npm install
+npm run dev
 ```
 
-Generated files will be in the `dist` folder.
+打開 http://localhost:3000 。不需要任何密鑰，沒有設定 GitHub 時會自動使用範例資料。
 
-## Usage Guide
+| 指令 | 用途 |
+|---|---|
+| `npm run dev` | 開發伺服器 |
+| `npm run build` | 正式建置（CI 的硬性關卡） |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript 型別檢查 |
+| `npm test` | Vitest 單元測試（含本 README 的結構檢查） |
 
-### Landing Page
+環境變數範本在 `.env.example`。
 
-The landing page provides an overview of the platform and quick access to main features.
-
-### Repository Management
-
-- Add and manage multiple GitHub repositories
-- Track activity and statistics for each repository
-- Configure display settings for different repositories
-
-### Browse Issues and Discussions
-
-- View issues from different repositories in a unified interface
-- Filter issues by tags, status, or custom search terms
-- Sort and organize content for easier navigation
-
-### Comments
-
-The application uses Utterances for comments, allowing GitHub-based authentication and interactions directly in the interface.
-
-### Analytics Dashboard
-
-Visualize repository data with interactive charts:
-
-- Issue activity over time
-- Tag distribution
-- User engagement metrics
-- Content performance statistics
-
-### Location Services
-
-Access location-based features:
-
-- Current location detection
-- Map visualization
-- Address details via reverse geocoding
-- Dedicated location services page
-
-### Community Features
-
-Engage with the community through specialized features:
-
-- **Anonymous Rumor Wall**: Share short, anonymous tech rumors and vote on their credibility
-- **Active Commenters Leaderboard**: See who's most actively contributing to discussions
-- **Weekly Rumor Digest**: Browse a curated collection of the week's most popular rumors in a newsletter format
-
-## Project Structure
+## 專案結構
 
 ```
 src/
-├── api/
-│   ├── githubApi.ts           # GitHub API integration
-│   └── repositoryApi.ts       # Repository data handling
-├── assets/                    # Static assets
+├── app/                       # 路由（App Router）
+│   ├── layout.tsx             # 根版面：頂欄、範例資料提示、頁尾、手機分頁列、防閃爍的主題腳本
+│   ├── globals.css            # 設計系統 token（淺色／深色）與共用元件樣式
+│   ├── actions.ts             # Server Actions：發文、回覆、匿名爆料（目前只做檢查、不儲存）
+│   ├── page.tsx               # 動態牆
+│   ├── c/[slug]/page.tsx      # 看板（含職缺篩選、八卦牆、聚會列表）
+│   ├── t/[number]/page.tsx    # 主題頁
+│   ├── u/[login]/page.tsx     # 個人頁
+│   ├── new/page.tsx           # 發表主題
+│   ├── search/page.tsx        # 搜尋
+│   ├── bookmarks/page.tsx     # 本機收藏
+│   ├── meetups/page.tsx       # 聚會地圖
+│   ├── stats/page.tsx         # 論壇數據
+│   ├── boards/page.tsx        # 所有看板
+│   ├── login/page.tsx         # 登入說明（GitHub 登入尚未開放）
+│   ├── sitemap.ts             # sitemap.xml
+│   └── robots.ts              # robots.txt
 ├── components/
-│   ├── AppLayout.tsx          # Main application layout
-│   ├── AntConfigProvider.tsx  # Ant Design configuration
-│   ├── CategoryTabs.tsx       # Content categorization
-│   ├── CommentSection.tsx     # Comments component
-│   ├── F2EIssueDetail.tsx     # F2E job issue details
-│   ├── F2EIssueList.tsx       # F2E jobs listing
-│   ├── GeoLocation.tsx        # Location services
-│   ├── HomePage.tsx           # Main landing page
-│   ├── IssueDetail.tsx        # Issue details
-│   ├── IssueList.tsx          # Issue listing
-│   ├── LocationMap.tsx        # Map component
-│   ├── NewIssue.tsx           # Create new issues
-│   ├── RepositoryIssueDetail.tsx  # Repository-specific issue details
-│   ├── RepositoryIssueList.tsx    # Repository-specific issue listing
-│   ├── RepositoryManagementPage.tsx  # Repository management
-│   ├── SearchAndFilter.tsx    # Search & filtering
-│   ├── UtterancesComments.tsx # GitHub comments integration
-│   ├── charts/                # Data visualization components
-│   └── community/             # Community features components
-│       ├── AnonymousRumors.tsx   # Anonymous rumor wall
-│       ├── ActiveLeaderboard.tsx # Active commenters leaderboard
-│       ├── RumorDigest.tsx       # Weekly rumor digest
-│       └── CommunityFeatures.tsx # Main community component
-├── pages/
-│   ├── AnalyticsDashboard.tsx # Data analytics page
-│   ├── CommentsExample.tsx    # Comment example page
-│   ├── CommunityPage.tsx      # Community features page
-│   ├── CreatedIssuesPage.tsx  # User-created issues
-│   ├── GitHubIssuesPage.tsx   # GitHub issues page
-│   ├── IssueSubmissionPage.tsx# Issue submission confirmation
-│   ├── LandingPage.tsx        # Landing page
-│   └── LocationPage.tsx       # Location services page
-├── routes/
-│   └── index.tsx              # Application routing
-├── services/                  # Service modules
-├── store/
-│   ├── commentsSlice.ts       # Comments state
-│   ├── f2eIssuesSlice.ts      # F2E issues state
-│   ├── githubIssuesSlice.ts   # GitHub issues state
-│   ├── index.ts               # Redux store configuration
-│   ├── locationSlice.ts       # Location state
-│   ├── repositoriesSlice.ts   # Repositories state
-│   ├── searchSlice.ts         # Search state
-│   └── userSlice.ts           # User state
-├── styles/                    # Global styles
-└── types/                     # TypeScript interfaces
+│   ├── Icon.tsx               # 線條圖示與 Logo
+│   ├── layout/                # 頂欄、側邊看板導覽、手機分頁列、三欄版型、深色模式切換、搜尋框
+│   └── forum/                 # 主題卡片、動態牆、側欄小工具、互動元件、發文表單、聚會地圖
+└── lib/
+    ├── boards.ts              # 看板設定（對應 Discussions 分類）
+    ├── levels.ts              # 等級與徽章計算
+    ├── format.ts              # 日期與頭像格式化
+    ├── bookmarks.ts           # 本機收藏
+    └── forum/
+        ├── index.ts           # 頁面唯一的資料入口（"use cache" + cacheLife）
+        ├── types.ts           # 論壇資料模型與 adapter 介面
+        ├── query.ts           # 排序與篩選（熱門分數等）
+        └── fixtures.ts        # 範例資料 adapter
+test/                          # Vitest 測試
 ```
 
-## Technology Stack
+## 資料架構
 
-- **Frontend Framework**: React 18
-- **Language**: TypeScript
-- **State Management**: Redux Toolkit
-- **UI Framework**: Ant Design
-- **Routing**: React Router 6
-- **Data Fetching**: Octokit for GitHub API
-- **Comments**: Utterances
-- **Maps**: Leaflet with React-Leaflet
-- **Visualization**: Ant Design Charts
-- **Markdown Rendering**: React Markdown with remark-gfm
-- **Code Highlighting**: React Syntax Highlighter
-- **Build Tool**: Vite
-- **Styling**: SCSS
-- **Deployment**: Vercel
+頁面只透過 `src/lib/forum/index.ts` 讀資料。那裡的每個函式都用 `"use cache"` 加上 `cacheLife`，
+由 Next.js 負責預先渲染與重新驗證，再交給 adapter（`ForumAdapter`，定義在 `types.ts`）。
 
-## Configuration
+- **範例資料 adapter**（`fixtures.ts`）：目前唯一的 adapter。時間以固定時刻計算，排序結果穩定。
+- **GitHub Discussions adapter**（下一個 PR）：看板對應 Discussions 分類（見 `boards.ts` 的 `discussionCategory`），
+  讀取在伺服器端帶 `GITHUB_READ_TOKEN`，寫入用會員自己的 OAuth token。設定好環境變數後會自動切換，頁面不用改。
 
-### GitHub Integration
+## 技術
 
-The application connects to GitHub repositories for:
+Next.js 16（App Router、Cache Components、Partial Prefetching）· React 19 · TypeScript ·
+CSS Modules + CSS 變數 · react-markdown（remark-gfm、rehype-sanitize）· Leaflet / react-leaflet· Vitest · Vercel
 
-1. Default repository - Set via environment variables
-2. User-added repositories - Managed through the repository management interface
-3. F2E Jobs - Connects to f2etw/jobs repository for job listings
+## 部署
 
-### Theme Customization
+見 [DEPLOY.md](./DEPLOY.md)。
 
-The Ant Design theme is configured in `src/components/AntConfigProvider.tsx`.
+## 授權
 
-### Location Services
-
-Location services use:
-
-- Browser's Geolocation API for user coordinates
-- OpenStreetMap's Nominatim API for reverse geocoding
-- Leaflet for interactive maps
-
-## License
-
-This project is licensed under the MIT License.
-
-## Author
-
-Gorman
+MIT，見 [LICENSE](./LICENSE)。

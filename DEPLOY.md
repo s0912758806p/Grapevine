@@ -1,98 +1,43 @@
 # 部署指南
 
-本專案使用 Vercel 進行部署，並使用 GitHub OAuth 進行用戶認證。以下是部署步驟和注意事項。
+Grapevine v2 是 Next.js 16 應用，部署在 Vercel。
 
-## 部署到 Vercel
+## Vercel 設定
 
-1. 將專案推送到 GitHub 存儲庫
-2. 在 Vercel 上創建新項目並連接到該存儲庫
-3. 配置以下環境變量：
+- `vercel.json` 指定 `"framework": "nextjs"`。如果 Vercel 專案設定裡還留著 v1 的 Vite 設定
+  （Framework Preset = Vite、Output Directory = `dist`），請在 Project Settings → Build & Deployment 改回預設，
+  否則建置會找不到輸出目錄。
+- Node.js 版本：20.9 以上。
 
-### 環境變量設置
+## 環境變數
 
-在 Vercel 的項目設置中，添加以下環境變量：
+範本在 `.env.example`。目前只需要：
 
-```
-# GitHub OAuth 配置（必須）
-GITHUB_CLIENT_ID=您的GitHub客戶端ID
-GITHUB_CLIENT_SECRET=您的GitHub客戶端密鑰
-HOST=您的應用URL（例如：https://your-app.vercel.app）
+| 變數 | 必要 | 說明 |
+|---|---|---|
+| `SITE_URL` | 建議 | 正式網址，用在 canonical、Open Graph 與 sitemap；未設定時用 `https://grapevine-six-gr925.vercel.app` |
 
-# Giscus 配置（如果需要）
-GISCUS_REPO_ID=您的Giscus存儲庫ID
-GISCUS_CATEGORY=Announcements
-GISCUS_CATEGORY_ID=您的Giscus分類ID
+沒有設定 GitHub 相關變數時，網站會顯示內建範例資料，並在頁面頂端提示。
 
-# JWT 配置（如果需要）
-JWT_SECRET=您的JWT密鑰
-```
+GitHub Discussions 與登入（下一個 PR）會需要 `GITHUB_FORUM_REPO`、`GITHUB_READ_TOKEN`、`GITHUB_CLIENT_ID`、
+`GITHUB_CLIENT_SECRET`、`GITHUB_BOT_TOKEN`、`SESSION_SECRET`。這些都只在伺服器端使用，**絕對不要**加上 `NEXT_PUBLIC_` 前綴。
 
-## 安全考量
+> v1 曾要求設定 `VITE_GITHUB_TOKEN`，那會被打包進公開的前端程式碼。如果正式站設定過，請到 GitHub 撤銷該 token，
+> 並從 Vercel 刪除這個變數。
 
-- 客戶端密鑰（Client Secret）永遠不應該暴露在前端代碼中
-- 所有敏感操作都通過 Serverless 函數處理
-- OAuth 回調使用安全的後端路由處理
+## 自動部署流程
 
-## 本地開發
+兩個 GitHub Actions workflow 都會先跑 `npm run lint`、`npm test`、`npm run build`，全部通過才推到 `main`；
+Vercel 透過自己的 GitHub App webhook 部署 `main`。
 
-對於本地開發，請創建 `.env` 文件並添加相同的環境變量：
+- **Auto Deploy**（`.github/workflows/Auto-deploy.yml`）：推到 `dev` 後，檢查通過就快轉 `release` 與 `main`。
+- **Daily Safe Deploy**（`.github/workflows/daily-deploy.yml`）：每天更新 `public/build-info.json`，檢查通過才提交並推到 `main`。
 
-```
-VITE_GITHUB_CLIENT_ID=您的GitHub客戶端ID
-VITE_GITHUB_CLIENT_SECRET=您的GitHub客戶端密鑰
-VITE_HOST=http://localhost:5173
+## 本機開發
+
+```bash
+npm install
+npm run dev
 ```
 
-使用 `npm run dev` 啟動開發服務器。
-
-## 自動部署流程（Auto Deploy）
-
-本專案採用分支串接的自動部署：
-
-```
-push 到 dev  ──►  自動建立 PR (dev → release) ──► 自動核准 + 合併
-            ──►  自動建立 PR (release → main) ──► 自動核准 + 合併
-            ──►  Vercel 偵測 main 更新 ──► 部署到正式站
-```
-
-相關設定見 `.github/workflows/Auto-deploy.yml`。只要把變更推送到 `dev`，
-其餘流程會自動完成並部署。
-
-> ⚠️ 此串接依賴 repository secret `BOT_PAT_TOKEN`。若該 PAT 過期或缺失，
-> checkout 步驟會失敗（`could not read Username for 'https://github.com'`），整條串接停擺。
-> 此時請到 repo Settings → Secrets 更新 `BOT_PAT_TOKEN`；在修復前，正式部署改由下方
-> 「每日安全部署」負責（它不依賴此 PAT）。
-
-## 每日安全部署（Daily Safe Deploy）
-
-`.github/workflows/daily-deploy.yml` 會每天定時執行，確保專案「每天至少部署一次、
-且部署前一定有檔案變更」，同時**不會弄壞線上網站**：
-
-1. 重新產生 `public/build-info.json`（當日的檔案變更，純靜態資產，不被程式碼 import，零執行期風險）。
-2. 執行 `npm run build` 作為**硬性閘門**：若建置失敗，工作流程在此中止，
-   **不會 commit、不會 push、不會觸發部署**，線上網站維持原狀。
-3. 只有在建置成功時，才會 commit 並**直接 push 到 `main`**（並盡量同步 `dev`/`release`）。
-   Vercel 透過自己的 GitHub App webhook 偵測 `main` 的 push 而部署，且**僅在 Vercel 端建置也成功時
-   才切換線上版本**（atomic deploy）——即使建置失敗，線上網站仍維持前一版。
-
-可在 GitHub Actions 頁面以 **Run workflow**（`workflow_dispatch`）手動觸發。
-
-> 本工作流程刻意**不依賴 `BOT_PAT_TOKEN`**，改用內建的 `GITHUB_TOKEN`。
-> 因為本 repo 為 public、`main`/`release` 無分支保護，且 Vercel 由 webhook 觸發部署（與 PAT 無關），
-> 所以即使 `Auto-deploy.yml` 所需的 PAT 過期，每日部署仍可照常運作。
-
-### build-info.json
-
-部署後可在 `/build-info.json` 查看目前線上版本的建置資訊：
-
-```json
-{
-  "name": "grapevine",
-  "buildDate": "YYYY-MM-DD",
-  "buildTime": "ISO-8601 UTC timestamp",
-  "commit": "<short SHA>",
-  "branch": "<branch>"
-}
-```
-
-本機可用 `npm run build:info` 重新產生。
+需要時把 `.env.example` 複製成 `.env.local` 再填值。

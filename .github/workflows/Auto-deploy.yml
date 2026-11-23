@@ -44,6 +44,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint and unit tests (HARD GATE)
+        run: |
+          npm run lint
+          npm test
+
       - name: Build (HARD GATE — must pass before anything reaches production)
         run: npm run build
 

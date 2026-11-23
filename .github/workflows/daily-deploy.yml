@@ -53,6 +53,11 @@ jobs:
       - name: Update build info (the daily file change)
         run: npm run build:info
 
+      - name: Lint and unit tests (HARD GATE)
+        run: |
+          npm run lint
+          npm test
+
       - name: Build (HARD GATE — must pass or we abort, leaving prod untouched)
         run: npm run build
 
