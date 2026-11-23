@@ -76,6 +76,23 @@ openssl rand -base64 48
 
 全部只在伺服器端使用，**絕對不要**加上 `NEXT_PUBLIC_` 前綴。
 
+### 6. 檢查設定
+
+```bash
+npm run check:setup
+```
+
+會逐項檢查網址、讀取 token、Discussions 分類與 GitHub App 變數（不會印出密鑰值），全部打勾就能開始測試。
+本機沒有專用的讀取 token 時，可以暫時用 GitHub CLI 的登入：
+
+```bash
+GITHUB_READ_TOKEN="$(gh auth token)" npm run check:setup
+```
+
+```bash
+GITHUB_READ_TOKEN="$(gh auth token)" npm run dev
+```
+
 - 只設定 `GITHUB_FORUM_REPO` 和 `GITHUB_READ_TOKEN`：論壇顯示真實內容，但不能登入發文。
 - 都沒設定：顯示內建範例資料，頁面頂端有提示條。
 

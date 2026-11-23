@@ -5,7 +5,7 @@ import { signOut } from "@/app/actions";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/forum/bits";
 import { Columns } from "@/components/layout/Columns";
-import { githubApp } from "@/lib/config";
+import { githubApp, missingSignInEnv } from "@/lib/config";
 import { safeReturnTo } from "@/lib/github/return-to";
 import { getViewer } from "@/lib/session";
 
@@ -69,7 +69,15 @@ async function LoginPanel({ searchParams }: { searchParams: PageProps<"/login">[
         <>
           <p className="notice tone-amber" style={{ margin: 0 }}>
             <Icon name="info" className="ico-sm" />
-            <span>GitHub 登入還沒有開放。目前可以瀏覽內容，收藏會存在這台裝置上。</span>
+            <span>
+              這個網站還沒有設定 GitHub 登入，所以暫時只能瀏覽；收藏會存在這台裝置上。
+              {process.env.NODE_ENV !== "production" && (
+                <>
+                  {" "}
+                  （站長請在 <code>.env.local</code> 補上：{missingSignInEnv().join("、")}，步驟見 DEPLOY.md）
+                </>
+              )}
+            </span>
           </p>
           <button type="button" className="btn btn-primary" disabled>
             <Icon name="github" />

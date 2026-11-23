@@ -15,7 +15,7 @@ import { getBoard } from "@/lib/boards";
 import { githubApp } from "@/lib/config";
 import { GitHubError } from "@/lib/github/graphql";
 import { dataSource } from "@/lib/forum";
-import { addComment, createDiscussion, setReaction, setUpvote, votePoll, type ReactionContent } from "@/lib/forum/github-write";
+import { addComment, createDiscussion, setAnswer, setReaction, setUpvote, votePoll, type ReactionContent } from "@/lib/forum/github-write";
 import { MEETUP_CITIES, normalizeTags } from "@/lib/forum/meta";
 import { getWriteSession, SESSION_COOKIE } from "@/lib/session";
 
@@ -152,6 +152,21 @@ export async function vote(input: { pollOptionId: string; threadNumber: number }
   }
   updateTag(`thread-${input.threadNumber}`);
   return { ok: true, message: "已投票。" };
+}
+
+/** Mark (or unmark) a reply as the accepted answer. GitHub only allows the question's author or maintainers. */
+export async function markAnswer(input: { commentId: string; threadNumber: number; on: boolean }): Promise<ActionState> {
+  if (!input.commentId) return { ok: false, message: "無效的回覆。" };
+  const w = await writer();
+  if (!("token" in w)) return w;
+  try {
+    await setAnswer(w.token, input.commentId, input.on);
+  } catch (err) {
+    return fromGitHubError(err);
+  }
+  updateTag(`thread-${input.threadNumber}`);
+  updateTag("threads");
+  return { ok: true, message: input.on ? "已採納為解答。" : "已取消採納。" };
 }
 
 export async function postRumor(_prev: ActionState | null, formData: FormData): Promise<ActionState> {

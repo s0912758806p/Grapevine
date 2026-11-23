@@ -6,7 +6,8 @@ import { Icon } from "@/components/Icon";
 import { Avatar, BoardChip, Markdown, MemberLink, SolvedChip } from "@/components/forum/bits";
 import { BookmarkButton } from "@/components/forum/BookmarkButton";
 import { FeedSkeleton } from "@/components/forum/Feed";
-import { CredibilityVote, PollVote, ReactionBar, ReplyBox } from "@/components/forum/Interactive";
+import { CommentActions, CredibilityVote, PollVote, ReactionBar, ReplyBox } from "@/components/forum/Interactive";
+import { getViewer } from "@/lib/session";
 import { RelativeTime } from "@/components/forum/RelativeTime";
 import styles from "@/components/forum/forum.module.css";
 import { Columns } from "@/components/layout/Columns";
@@ -46,7 +47,15 @@ export async function generateMetadata(props: PageProps<"/t/[number]">): Promise
   };
 }
 
-function ReplyItem({ reply }: { reply: Reply }) {
+interface ReplyContext {
+  threadNumber: number;
+  discussionId?: string;
+  /** Viewer is the question's author on a Q&A thread. */
+  canMarkAnswer: boolean;
+}
+
+function ReplyItem({ reply, ctx }: { reply: Reply; ctx: ReplyContext }) {
+  const live = !!ctx.discussionId;
   return (
     <article className={`card ${styles.reply}`}>
       <div className="row" style={{ marginBottom: 8 }}>
@@ -57,9 +66,16 @@ function ReplyItem({ reply }: { reply: Reply }) {
         </span>
       </div>
       <Markdown source={reply.body} />
-      <div className="row" style={{ gap: 4, marginTop: 10 }}>
-        <span className="react">推 {reply.ups}</span>
-      </div>
+      <CommentActions
+        commentId={reply.id}
+        parentId={reply.id}
+        threadNumber={ctx.threadNumber}
+        discussionId={ctx.discussionId}
+        ups={reply.ups}
+        live={live}
+        canMarkAnswer={ctx.canMarkAnswer}
+        isAnswer={reply.isAnswer}
+      />
       {reply.replies && reply.replies.length > 0 && (
         <details open>
           <summary className={styles.childToggle}>{reply.replies.length} 則回覆</summary>
@@ -74,6 +90,14 @@ function ReplyItem({ reply }: { reply: Reply }) {
                   </span>
                 </div>
                 <Markdown source={child.body} />
+                <CommentActions
+                  commentId={child.id}
+                  parentId={reply.id}
+                  threadNumber={ctx.threadNumber}
+                  discussionId={ctx.discussionId}
+                  ups={child.ups}
+                  live={live}
+                />
               </div>
             ))}
           </div>
@@ -107,6 +131,12 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
   if (!thread) notFound();
   const board = getBoard(thread.board);
   const shownReplies = thread.replies.length + (thread.answer ? 1 : 0);
+  const viewer = await getViewer();
+  const ctx: ReplyContext = {
+    threadNumber: thread.number,
+    discussionId: thread.id,
+    canMarkAnswer: !!viewer && board?.kind === "qa" && !thread.anonymous && viewer.login === thread.author.login,
+  };
   const pollTotal = thread.poll?.reduce((n, o) => n + o.votes, 0) ?? 0;
 
   return (
@@ -255,9 +285,16 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
             </span>
           </div>
           <Markdown source={thread.answer.body} />
-          <div className="row" style={{ gap: 8, marginTop: 10 }}>
-            <span className="react">推 {thread.answer.ups}</span>
-          </div>
+          <CommentActions
+            commentId={thread.answer.id}
+            parentId={thread.answer.id}
+            threadNumber={thread.number}
+            discussionId={thread.id}
+            ups={thread.answer.ups}
+            live={!!thread.id}
+            canMarkAnswer={ctx.canMarkAnswer}
+            isAnswer
+          />
         </section>
       )}
 
@@ -275,7 +312,7 @@ async function ThreadView({ params }: { params: PageProps<"/t/[number]">["params
         </p>
       )}
       {thread.replies.map((r) => (
-        <ReplyItem key={r.id} reply={r} />
+        <ReplyItem key={r.id} reply={r} ctx={ctx} />
       ))}
 
       <ReplyBox threadNumber={thread.number} discussionId={thread.id} />

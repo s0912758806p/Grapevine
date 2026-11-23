@@ -17,7 +17,7 @@ v2 從 Vite 單頁應用改寫成 **Next.js 16（App Router）**，主題頁與�
 | 動態牆 | `/` | 所有看板的主題，可依熱門／最新／精華／未回覆排序；右欄有本週活躍、熱門標籤、週刊共讀、下一場聚會 |
 | 看板 | `/c/[slug]` | 8 個看板，各對應一個 Discussions 分類；職缺看板有地點與類型篩選，八卦牆有可信度投票（👍／👎），在地聚會連到地圖 |
 | 同步文章 | `/c/[slug]/[number]` | 週刊共讀（ruanyf/weekly）與職缺（f2etw/jobs）同步過來的唯讀內容，留言在 GitHub 原文 |
-| 主題 | `/t/[number]` | Markdown 內文、反應、投票結果、提問者採納的解答、巢狀回覆、相關主題；含 JSON-LD 與 Open Graph |
+| 主題 | `/t/[number]` | Markdown 內文、反應、投票、巢狀回覆（可直接回覆某則留言、對留言按推）、相關主題；問答看板的提問者可以採納或取消採納解答；含 JSON-LD 與 Open Graph |
 | 發表主題 | `/new` | 選看板、Markdown 編輯與預覽、標籤，聚會可填城市／時間／地點；草稿存在本機。需要先登入（GitHub API 不能建立投票，所以沒有投票選項） |
 | 個人頁 | `/u/[login]` | 等級與進度、統計、近半年參與熱度圖、徽章（全部由真實活動計算） |
 | 搜尋 | `/search` | 關鍵字或 `?tag=` 標籤搜尋；任何頁面按 ⌘K／Ctrl+K 會聚焦搜尋框 |
@@ -49,6 +49,7 @@ npm run dev
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript 型別檢查 |
 | `npm test` | Vitest 單元測試（含本 README 的結構檢查） |
+| `npm run check:setup` | 檢查 `.env.local`、GitHub 連線與 Discussions 分類是否就緒（不會印出密鑰） |
 
 環境變數範本在 `.env.example`。
 
@@ -59,7 +60,7 @@ src/
 ├── app/                       # 路由（App Router）
 │   ├── layout.tsx             # 根版面：頂欄、範例資料提示、頁尾、手機分頁列、防閃爍的主題腳本
 │   ├── globals.css            # 設計系統 token（淺色／深色）與共用元件樣式
-│   ├── actions.ts             # Server Actions：發文、回覆、反應、投票、登出（匿名發文尚未開放）
+│   ├── actions.ts             # Server Actions：發文、回覆、反應、投票、採納解答、登出（匿名發文尚未開放）
 │   ├── error.tsx              # 頁面錯誤畫面（例如 GitHub 暫時無回應）
 │   ├── page.tsx               # 動態牆
 │   ├── c/[slug]/page.tsx      # 看板（含職缺篩選、八卦牆、聚會列表）
@@ -101,6 +102,9 @@ src/
         ├── meta.ts            # 藏在內文裡的標籤／聚會資訊、摘要
         ├── mirror.ts          # 同步看板（週刊、職缺）的 issue 轉換
         └── fixtures.ts        # 範例資料 adapter
+scripts/
+├── check-setup.mjs            # npm run check:setup
+└── update-build-info.mjs      # 每日部署更新 public/build-info.json
 test/                          # Vitest 測試
 ```
 

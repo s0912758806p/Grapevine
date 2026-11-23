@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
-import { createReply, postRumor, react, vote, type ActionState, type ReactionKind } from "@/app/actions";
+import { createReply, markAnswer, postRumor, react, vote, type ActionState, type ReactionKind } from "@/app/actions";
 import { Icon } from "@/components/Icon";
 import type { PollOption, ReactionCount } from "@/lib/forum/types";
 import styles from "./forum.module.css";
@@ -139,24 +139,42 @@ export function PollVote({ options, threadNumber }: { options: PollOption[]; thr
   );
 }
 
-export function ReplyBox({ threadNumber, discussionId }: { threadNumber: number; discussionId?: string }) {
+export function ReplyBox({
+  threadNumber,
+  discussionId,
+  replyToId,
+  label = "回覆這個主題",
+  onDone,
+}: {
+  threadNumber: number;
+  discussionId?: string;
+  /** Top-level comment to reply under (GitHub allows one level of nesting). */
+  replyToId?: string;
+  label?: string;
+  onDone?: () => void;
+}) {
   const [body, setBody] = useState("");
+  const fieldId = replyToId ? `reply-${replyToId}` : "reply-body";
   const [state, action, pending] = useActionState(async (prev: ActionState | null, formData: FormData) => {
     const result = await createReply(prev, formData);
-    if (result.ok) setBody("");
+    if (result.ok) {
+      setBody("");
+      onDone?.();
+    }
     return result;
   }, null);
   return (
-    <form action={action} className="card card-pad stack" style={{ gap: 12 }} aria-labelledby="reply-h">
+    <form action={action} className={replyToId ? "stack" : "card card-pad stack"} style={{ gap: 12 }}>
       <input type="hidden" name="thread" value={threadNumber} />
       <input type="hidden" name="discussionId" value={discussionId ?? ""} />
-      <label id="reply-h" htmlFor="reply-body" className="label" style={{ margin: 0 }}>
-        回覆這個主題
+      {replyToId && <input type="hidden" name="replyTo" value={replyToId} />}
+      <label htmlFor={fieldId} className="label" style={{ margin: 0 }}>
+        {label}
       </label>
       <textarea
-        id="reply-body"
+        id={fieldId}
         name="body"
-        rows={5}
+        rows={replyToId ? 3 : 5}
         className="field"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -173,6 +191,64 @@ export function ReplyBox({ threadNumber, discussionId }: { threadNumber: number;
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Actions under a reply: upvote, reply (nested under the top-level comment),
+ * and — for the question's author on Q&A threads — mark as the accepted answer.
+ */
+export function CommentActions({
+  commentId,
+  parentId,
+  threadNumber,
+  discussionId,
+  ups,
+  live,
+  canMarkAnswer = false,
+  isAnswer = false,
+}: {
+  commentId: string;
+  parentId: string;
+  threadNumber: number;
+  discussionId?: string;
+  ups: number;
+  /** False for sample data: toggles stay local and nothing is sent. */
+  live: boolean;
+  canMarkAnswer?: boolean;
+  isAnswer?: boolean;
+}) {
+  const { mine, toggle, error } = useToggle(live ? commentId : undefined, threadNumber);
+  const [replying, setReplying] = useState(false);
+  const [answerState, setAnswerState] = useState<ActionState | null>(null);
+  const [pending, startTransition] = useTransition();
+  return (
+    <div className="stack" style={{ gap: 8, marginTop: 10 }}>
+      <div className="row" style={{ gap: 4 }}>
+        <button type="button" className="react" aria-pressed={!!mine.up} onClick={() => toggle("up", !mine.up)}>
+          推 <span>{ups + (mine.up ? 1 : 0)}</span>
+        </button>
+        <button type="button" className="btn btn-quiet" aria-expanded={replying} onClick={() => setReplying(!replying)}>
+          回覆
+        </button>
+        {canMarkAnswer && live && (
+          <button
+            type="button"
+            className="btn btn-quiet"
+            disabled={pending}
+            onClick={() => startTransition(async () => setAnswerState(await markAnswer({ commentId, threadNumber, on: !isAnswer })))}
+          >
+            <Icon name="checkCircle" size={16} />
+            {isAnswer ? "取消採納" : "採納為解答"}
+          </button>
+        )}
+      </div>
+      <FormStatus state={error} />
+      <FormStatus state={answerState} />
+      {replying && (
+        <ReplyBox threadNumber={threadNumber} discussionId={discussionId} replyToId={parentId} label="回覆這則留言" onDone={() => setReplying(false)} />
+      )}
+    </div>
   );
 }
 

@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build:info": "node scripts/update-build-info.mjs"
+    "build:info": "node scripts/update-build-info.mjs",
+    "check:setup": "node scripts/check-setup.mjs"
   },
   "dependencies": {
     "jose": "6.2.18",

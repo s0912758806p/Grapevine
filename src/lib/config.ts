@@ -31,3 +31,8 @@ export function githubApp(): { clientId: string; clientSecret: string; sessionSe
   if (sessionSecret.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters");
   return { clientId, clientSecret, sessionSecret };
 }
+
+/** Names of the sign-in variables that are still empty (for setup hints; never their values). */
+export function missingSignInEnv(): string[] {
+  return (["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "SESSION_SECRET"] as const).filter((k) => !process.env[k]?.trim());
+}

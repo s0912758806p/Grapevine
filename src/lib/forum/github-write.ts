@@ -76,3 +76,9 @@ export async function votePoll(token: string, pollOptionId: string): Promise<voi
     token,
   );
 }
+
+/** Only the discussion author (or a repo maintainer) may do this; GitHub enforces it. */
+export async function setAnswer(token: string, commentId: string, on: boolean): Promise<void> {
+  const mutation = on ? "markDiscussionCommentAsAnswer" : "unmarkDiscussionCommentAsAnswer";
+  await graphql(`mutation($id: ID!) { ${mutation}(input: { id: $id }) { clientMutationId } }`, { id: commentId }, token);
+}
