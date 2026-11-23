@@ -1,22 +1,40 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Composer } from "@/components/forum/Composer";
+import { Composer, type ComposerBoard } from "@/components/forum/Composer";
+import { SignInPrompt } from "@/components/forum/Interactive";
 import { Columns } from "@/components/layout/Columns";
 import { BOARDS } from "@/lib/boards";
+import { dataSource, getBoardStatus } from "@/lib/forum";
+import { MEETUP_CITIES } from "@/lib/forum/meta";
+import { getViewer } from "@/lib/session";
 
 export const metadata: Metadata = { title: "發表主題", robots: { index: false } };
 
-async function ComposerWithBoard({ searchParams }: { searchParams: PageProps<"/new">["searchParams"] }) {
-  const requested = (await searchParams).board;
-  const slug = typeof requested === "string" && BOARDS.some((b) => b.slug === requested && !b.maintainersOnly) ? requested : "qa";
-  return (
-    <Composer
-      key={slug}
-      initialBoard={slug}
-      boards={BOARDS.map(({ slug: s, name, hint, kind, maintainersOnly }) => ({ slug: s, name, hint, kind, maintainersOnly }))}
-    />
-  );
+async function ComposerForViewer({ searchParams }: { searchParams: PageProps<"/new">["searchParams"] }) {
+  const [sp, status, viewer] = await Promise.all([searchParams, getBoardStatus(), getViewer()]);
+  const requested = typeof sp.board === "string" ? sp.board : "";
+
+  if (dataSource() === "github" && !viewer) {
+    const returnTo = requested ? `/new?board=${encodeURIComponent(requested)}` : "/new";
+    return <SignInPrompt returnTo={returnTo}>發文會以你的 GitHub 帳號發佈到 Discussions，請先登入。</SignInPrompt>;
+  }
+
+  const boards: ComposerBoard[] = BOARDS.map((b) => ({
+    slug: b.slug,
+    name: b.name,
+    hint: b.hint,
+    kind: b.kind,
+    disabledReason: b.maintainersOnly
+      ? "僅版主可發"
+      : b.kind === "anonymous"
+        ? "匿名發文尚未開放"
+        : status[b.slug] === false
+          ? "分類尚未建立"
+          : undefined,
+  }));
+  const initial = boards.find((b) => b.slug === requested && !b.disabledReason)?.slug ?? boards.find((b) => !b.disabledReason)?.slug ?? "qa";
+  return <Composer key={initial} initialBoard={initial} boards={boards} cities={Object.keys(MEETUP_CITIES)} />;
 }
 
 export default function NewThreadPage(props: PageProps<"/new">) {
@@ -47,7 +65,7 @@ export default function NewThreadPage(props: PageProps<"/new">) {
         <h1 className="page-title">發表主題</h1>
       </div>
       <Suspense fallback={null}>
-        <ComposerWithBoard searchParams={props.searchParams} />
+        <ComposerForViewer searchParams={props.searchParams} />
       </Suspense>
     </Columns>
   );

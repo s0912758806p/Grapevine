@@ -7,6 +7,7 @@
  * never be replaced with invented "real" values. The UI shows a banner whenever
  * this adapter is active, so sample data is never mistaken for live data.
  */
+import { BOARDS } from "../boards";
 import { applyQuery } from "./query";
 import type {
   ForumAdapter,
@@ -468,6 +469,14 @@ export const fixtureAdapter: ForumAdapter = {
   async getThread(number) {
     const thread = THREADS.find((t) => t.number === number);
     return thread ? detailFor(thread) : null;
+  },
+
+  async getMirrorThread() {
+    return null;
+  },
+
+  async boardStatus() {
+    return Object.fromEntries(BOARDS.map((b) => [b.slug, true]));
   },
 
   async getProfile(login) {

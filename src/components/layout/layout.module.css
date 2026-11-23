@@ -105,3 +105,11 @@
   .bottomNav { display: flex; }
   .actions .hideMobile { display: none; }
 }
+
+/* Signed-in member menu (native <details>, works without JS) */
+.userMenu { position: relative; }
+.userMenu > summary { list-style: none; cursor: pointer; display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 50%; }
+.userMenu > summary::-webkit-details-marker { display: none; }
+.menuPanel { position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px; padding: 8px; display: flex; flex-direction: column; gap: 2px; z-index: 70; }
+.menuItem { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font-size: 14px; text-align: left; }
+.menuItem:hover { background: var(--surface-2); text-decoration: none; color: var(--text); }

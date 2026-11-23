@@ -8,6 +8,8 @@ import { useSyncExternalStore } from "react";
 
 export interface Bookmark {
   number: number;
+  /** Page link; older entries (before mirrored boards) lack it and use /t/[number]. */
+  href?: string;
   title: string;
   board: string;
   savedAt: string;
@@ -62,12 +64,15 @@ export function useBookmarks(): Bookmark[] {
   return useSyncExternalStore(subscribe, read, () => EMPTY);
 }
 
+export const bookmarkHref = (b: Pick<Bookmark, "number" | "href">) => b.href ?? `/t/${b.number}`;
+
 export function toggleBookmark(item: Omit<Bookmark, "savedAt">) {
   const list = read();
-  const exists = list.some((b) => b.number === item.number);
-  write(exists ? list.filter((b) => b.number !== item.number) : [{ ...item, savedAt: new Date().toISOString() }, ...list]);
+  const key = bookmarkHref(item);
+  const exists = list.some((b) => bookmarkHref(b) === key);
+  write(exists ? list.filter((b) => bookmarkHref(b) !== key) : [{ ...item, savedAt: new Date().toISOString() }, ...list]);
 }
 
-export function removeBookmark(number: number) {
-  write(read().filter((b) => b.number !== number));
+export function removeBookmark(href: string) {
+  write(read().filter((b) => bookmarkHref(b) !== href));
 }

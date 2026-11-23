@@ -18,11 +18,13 @@ export interface ReactionCount {
 }
 
 export interface PollOption {
+  id?: string;
   label: string;
   votes: number;
 }
 
 export interface Reply {
+  /** GitHub node id (or a stable fixture id). */
   id: string;
   author: Member;
   /** Markdown source. */
@@ -36,6 +38,12 @@ export interface Reply {
 export interface Thread {
   /** Discussion number (or mirrored issue number for mirror boards). */
   number: number;
+  /** GitHub node id, needed for writes (replies, reactions). Absent for fixtures. */
+  id?: string;
+  /** Page link; defaults to /t/[number]. Mirrored issues use /c/[board]/[number]. */
+  href?: string;
+  /** Mirrored from an external repo: read-only here, discussed on GitHub. */
+  external?: boolean;
   board: string;
   title: string;
   /** Plain-text summary used on cards and in meta descriptions. */
@@ -53,6 +61,7 @@ export interface Thread {
   featured?: boolean;
   pinned?: boolean;
   poll?: PollOption[];
+  pollQuestion?: string;
   /** Link to the original discussion or issue on GitHub. */
   url?: string;
   /** Job boards only. */
@@ -125,8 +134,14 @@ export interface CreateThreadInput {
 export interface ForumAdapter {
   /** Human-readable source label, shown in the footer. */
   readonly source: "github" | "fixtures";
+  /** Repository that hosts the Discussions (github source only). */
+  readonly repoUrl?: string;
   listThreads(query: ThreadQuery): Promise<Thread[]>;
   getThread(number: number): Promise<ThreadDetail | null>;
+  /** A read-only item from a mirrored board (週刊共讀, 職缺). */
+  getMirrorThread(board: string, number: number): Promise<Thread | null>;
+  /** Which boards can accept new threads (their Discussions category exists). */
+  boardStatus(): Promise<Record<string, boolean>>;
   getProfile(login: string): Promise<MemberProfile | null>;
   leaderboard(): Promise<LeaderboardEntry[]>;
   hotTags(): Promise<string[]>;

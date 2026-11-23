@@ -2,14 +2,16 @@
 
 /**
  * New-thread form (design: 發表主題). Board picker, title, Markdown body with
- * a live preview tab, tags and an optional poll. Submits to the createThread
- * Server Action; the draft is kept in localStorage until it is published.
+ * a live preview tab, tags, and city/time/venue for meetups. Submits to the
+ * createThread Server Action (which redirects to the new thread). Polls can't be
+ * created through the GitHub API, so there is no poll option here. The draft is
+ * kept in localStorage until it is published.
  */
 import { useActionState, useState, useSyncExternalStore } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import { createThread } from "@/app/actions";
+import { createThread, type ActionState } from "@/app/actions";
 import { Icon } from "@/components/Icon";
 import type { Board } from "@/lib/boards";
 import { FormStatus } from "./Interactive";
@@ -35,15 +37,34 @@ function readDraft(): Draft | null {
 
 const noopSubscribe = () => () => {};
 
-export function Composer({ boards, initialBoard }: { boards: Pick<Board, "slug" | "name" | "hint" | "kind" | "maintainersOnly">[]; initialBoard: string }) {
+export interface ComposerBoard extends Pick<Board, "slug" | "name" | "hint" | "kind"> {
+  /** Why this board can't take new threads right now, if it can't. */
+  disabledReason?: string;
+}
+
+export function Composer({ boards, initialBoard, cities }: { boards: ComposerBoard[]; initialBoard: string; cities: string[] }) {
   const [draft, setDraft] = useState<Draft>({ board: initialBoard, title: "", body: "", tags: "" });
   const [restored, setRestored] = useState(false);
   // The saved draft is only readable in the browser, so offer it after hydration instead of rendering it on the server.
   const hasSavedDraft = useSyncExternalStore(noopSubscribe, () => readDraft() !== null, () => false);
   const [tab, setTab] = useState<"write" | "preview">("write");
-  const [poll, setPoll] = useState(false);
-  const [options, setOptions] = useState(["", ""]);
-  const [state, action, pending] = useActionState(createThread, null);
+  // Clear the saved draft as the post goes out; put it back if the post fails.
+  const [state, action, pending] = useActionState(async (prev: ActionState | null, formData: FormData) => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // storage unavailable
+    }
+    const result = await createThread(prev, formData);
+    if (!result.ok) {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      } catch {
+        // storage unavailable
+      }
+    }
+    return result;
+  }, null);
   const current = boards.find((b) => b.slug === draft.board);
   const err = state?.fieldErrors ?? {};
 
@@ -82,19 +103,19 @@ export function Composer({ boards, initialBoard }: { boards: Pick<Board, "slug" 
         <legend className="label">選擇看板</legend>
         <div className={styles.boardGrid}>
           {boards.map((b) => (
-            <label key={b.slug} className={styles.boardOpt} data-disabled={b.maintainersOnly || undefined}>
+            <label key={b.slug} className={styles.boardOpt} data-disabled={b.disabledReason ? true : undefined} title={b.disabledReason}>
               <input
                 type="radio"
                 name="board"
                 value={b.slug}
                 checked={draft.board === b.slug}
-                disabled={b.maintainersOnly}
+                disabled={!!b.disabledReason}
                 onChange={() => update({ board: b.slug })}
                 className="sr-only"
               />
               <span style={{ fontWeight: 700, fontSize: 14 }}>{b.name}</span>
               <span className="muted" style={{ fontSize: 12 }}>
-                {b.hint}
+                {b.disabledReason ?? b.hint}
               </span>
             </label>
           ))}
@@ -171,46 +192,32 @@ export function Composer({ boards, initialBoard }: { boards: Pick<Board, "slug" 
         {err.tags && <p className={styles.error}>{err.tags}</p>}
       </div>
 
-      <div className="card card-flat card-pad stack" style={{ gap: 14 }}>
-        <div className="row" style={{ flexWrap: "nowrap" }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 14 }}>附加投票</div>
-            <div className="muted" style={{ fontSize: 13 }}>
-              讓大家用選的表態，結果會顯示在主題頁上。
-            </div>
+      {current?.kind === "meetup" && (
+        <div className="card card-flat card-pad stack" style={{ gap: 12 }}>
+          <div className="grid-2">
+            <label className="text-2" style={{ fontSize: 13 }}>
+              城市（顯示在聚會地圖上）
+              <select name="city" className="field" defaultValue="" style={{ marginTop: 4 }} aria-invalid={!!err.city}>
+                <option value="" disabled>
+                  選擇城市
+                </option>
+                {cities.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-2" style={{ fontSize: 13 }}>
+              時間
+              <input name="when" className="field" placeholder="例如 12/6（六）14:00" style={{ marginTop: 4 }} />
+            </label>
           </div>
-          <button type="button" role="switch" aria-checked={poll} aria-label="附加投票" className={styles.switch} onClick={() => setPoll(!poll)}>
-            <span className={styles.knob} />
-          </button>
+          <label className="text-2" style={{ fontSize: 13 }}>
+            地點
+            <input name="venue" className="field" placeholder="場地名稱或「線上」" style={{ marginTop: 4 }} />
+          </label>
+          {err.city && <p className={styles.error}>{err.city}</p>}
         </div>
-        {poll && (
-          <div className="stack" style={{ gap: 8 }}>
-            {options.map((o, i) => (
-              <label key={i} className="text-2" style={{ fontSize: 13 }}>
-                選項 {i + 1}
-                <input
-                  className="field"
-                  name="poll"
-                  value={o}
-                  onChange={(e) => setOptions(options.map((x, j) => (j === i ? e.target.value : x)))}
-                  style={{ marginTop: 4 }}
-                />
-              </label>
-            ))}
-            {options.length < 6 && (
-              <button type="button" className="btn" style={{ alignSelf: "flex-start" }} onClick={() => setOptions([...options, ""])}>
-                新增選項
-              </button>
-            )}
-          </div>
-        )}
-        {current?.kind === "anonymous" && (
-          <div className="notice tone-rose">
-            <Icon name="eyeOff" />
-            <span>八卦牆的貼文會以「匿名葡萄」顯示。為了防止濫用，伺服器仍會記錄你的帳號並限制發文頻率，版主可處理檢舉。</span>
-          </div>
-        )}
-      </div>
+      )}
 
       <FormStatus state={state} />
       <div className="row" style={{ justifyContent: "flex-end" }}>
