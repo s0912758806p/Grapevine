@@ -1,14 +1,33 @@
 # Grapevine
 
 建立在 **GitHub Discussions** 上的開發者論壇：技術問答、作者專欄、週刊共讀、職缺、匿名八卦牆與在地聚會。
-v2 從 Vite 單頁應用改寫成 **Next.js 16（App Router）**，主題頁與看板頁在伺服器端渲染，方便搜尋引擎收錄。
+以 **Next.js 16（App Router）** 打造，主題頁與看板頁在伺服器端渲染，方便搜尋引擎收錄。
 
-[正式站](https://grapevine-six-gr925.vercel.app/)
+**網站入口：<https://grapevine-six-gr925.vercel.app/>**
 
-> **資料來源**：設定好 `GITHUB_FORUM_REPO` 與 `GITHUB_READ_TOKEN` 後，論壇讀取該 repo 的 **GitHub Discussions**；
-> 再設定 GitHub App（`GITHUB_CLIENT_ID`／`GITHUB_CLIENT_SECRET`／`SESSION_SECRET`），會員就能用 GitHub 登入並發文、回覆、按反應、投票。
-> 沒有設定時會使用內建的**範例資料**（頁面頂端有提示條），寫入動作只做檢查、不會儲存。
-> 匿名八卦牆目前**只能投票、不能發文**，要等設定代發用的 bot 帳號。
+![動態牆（桌面版）](docs/screenshots/home.png)
+
+## 目前狀態
+
+> 以下是 2026-11-26 的快照。
+
+- 正式站讀取論壇 repo 的 GitHub Discussions，會員可以用 GitHub 登入。
+- 作者專欄、週刊共讀、職缺、八卦牆、在地聚會這 5 個看板對應的 Discussions 分類還沒建立，
+  看板上會顯示提示並暫停發文；週刊共讀與職缺的同步內容照常顯示。
+- 匿名八卦牆目前**只能投票、不能發文**，要等設定代發用的 bot 帳號。
+- 本機或 CI 沒有設定 GitHub 時，會改用內建的**範例資料**（頁面頂端有提示條），寫入動作只做檢查、不會儲存。
+
+## 畫面
+
+| 所有看板 | 深色模式 |
+|---|---|
+| ![所有看板](docs/screenshots/boards.png) | ![深色模式的所有看板](docs/screenshots/boards-dark.png) |
+
+| 登入 | 手機版動態牆 | 手機版看板 |
+|---|---|---|
+| ![用 GitHub 登入](docs/screenshots/login.png) | ![手機版動態牆](docs/screenshots/mobile-home.png) | ![手機版所有看板](docs/screenshots/mobile-boards.png) |
+
+截圖取自正式站，用未登入的瀏覽器擷取；刻意避開會顯示其他使用者名稱或頭像的頁面。
 
 ## 功能
 
@@ -22,8 +41,8 @@ v2 從 Vite 單頁應用改寫成 **Next.js 16（App Router）**，主題頁與�
 | 個人頁 | `/u/[login]` | 等級與進度、統計、近半年參與熱度圖、徽章（全部由真實活動計算） |
 | 搜尋 | `/search` | 關鍵字或 `?tag=` 標籤搜尋；任何頁面按 ⌘K／Ctrl+K 會聚焦搜尋框 |
 | 收藏 | `/bookmarks` | 只存在這台裝置的瀏覽器（localStorage） |
-| 聚會地圖 | `/meetups` | Leaflet 地圖與聚會列表（取代 v1 的 Location 頁） |
-| 論壇數據 | `/stats` | 每週新主題、回覆、首次回覆時間、問答解決率（取代 v1 的 Analytics 頁） |
+| 聚會地圖 | `/meetups` | Leaflet 地圖與聚會列表 |
+| 論壇數據 | `/stats` | 每週新主題、回覆、首次回覆時間、問答解決率 |
 | 所有看板 | `/boards` | 看板總覽（手機底部分頁的「看板」） |
 | 登入 | `/login` | 用 GitHub App 登入；已登入時顯示帳號與登出 |
 
@@ -51,7 +70,7 @@ npm run dev
 | `npm test` | Vitest 單元測試（含本 README 的結構檢查） |
 | `npm run check:setup` | 檢查 `.env.local`、GitHub 連線與 Discussions 分類是否就緒（不會印出密鑰） |
 
-環境變數範本在 `.env.example`。
+環境變數範本在 `.env.example`，各變數的用途與取得方式見 [DEPLOY.md](./DEPLOY.md)。
 
 ## 專案結構
 
@@ -62,6 +81,7 @@ src/
 │   ├── globals.css            # 設計系統 token（淺色／深色）與共用元件樣式
 │   ├── actions.ts             # Server Actions：發文、回覆、反應、投票、採納解答、登出（匿名發文尚未開放）
 │   ├── error.tsx              # 頁面錯誤畫面（例如 GitHub 暫時無回應）
+│   ├── not-found.tsx          # 404 頁
 │   ├── page.tsx               # 動態牆
 │   ├── c/[slug]/page.tsx      # 看板（含職缺篩選、八卦牆、聚會列表）
 │   ├── c/[slug]/[number]/page.tsx # 同步文章（週刊、職缺）
@@ -106,6 +126,8 @@ scripts/
 ├── check-setup.mjs            # npm run check:setup
 └── update-build-info.mjs      # 每日部署更新 public/build-info.json
 test/                          # Vitest 測試
+docs/
+└── screenshots/               # README 用的正式站截圖
 ```
 
 ## 資料架構
@@ -123,10 +145,24 @@ test/                          # Vitest 測試
 - **登入**：GitHub App 的使用者授權。token 只能操作安裝了 App 的論壇 repo，存在用 `SESSION_SECRET` 加密的 httpOnly cookie，
   過期前自動續期。
 
+## 安全
+
+- **密鑰只在伺服器端**：所有環境變數都沒有 `NEXT_PUBLIC_` 前綴，不會進入瀏覽器的程式碼；
+  `src/lib/config.ts` 與 `session.ts` 標記為 `server-only`。
+- **最小權限**：會員登入不要求任何 OAuth scope，token 只能在安裝了 GitHub App 的論壇 repo 讀寫 Discussions；
+  伺服器的讀取 token 只需要公開 repo 的唯讀權限。
+- **Session**：token 用 `SESSION_SECRET` 加密（JWE）後存在 httpOnly、SameSite=Lax 的 cookie（正式環境另加 Secure）；
+  登入流程用 `state` 防 CSRF，登入後的導回路徑只接受站內路徑（`return-to.ts`）。
+- **內容**：Markdown 經過 `rehype-sanitize` 過濾後才渲染；八卦牆不顯示作者，版規要求勿指名道姓、勿洩漏個資。
+- **檢查工具**：`npm run check:setup` 只回報每個設定是否就緒，不會印出密鑰的值。
+
+請勿把 `.env.local` 或任何 token、client secret 提交進 repo（`.gitignore` 已排除 `.env*`）。
+發現安全問題時，請不要在公開的 issue 或討論中貼出細節或可重現的攻擊步驟，請先私下通知維護者。
+
 ## 技術
 
 Next.js 16（App Router、Cache Components、Partial Prefetching）· React 19 · TypeScript ·
-CSS Modules + CSS 變數 · jose（session 加密）· react-markdown（remark-gfm、rehype-sanitize）· Leaflet / react-leaflet· Vitest · Vercel
+CSS Modules + CSS 變數 · jose（session 加密）· react-markdown（remark-gfm、rehype-sanitize）· Leaflet / react-leaflet · Vitest · Vercel
 
 ## 部署
 
